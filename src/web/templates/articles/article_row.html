@@ -66,11 +66,11 @@
             <!-- Article summary/content -->
             {% if article.summary.is_some() %}
             <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
-                <p>{{ article.summary.as_ref().unwrap() }}</p>
+                {{ article.summary.as_ref().unwrap()|safe }}
             </div>
             {% else if article.content.is_some() %}
             <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 line-clamp-3">
-                <p>{{ article.content.as_ref().unwrap()|truncate(300) }}</p>
+                {{ article.content.as_ref().unwrap()|truncate(300)|safe }}
             </div>
             {% endif %}
         </div>

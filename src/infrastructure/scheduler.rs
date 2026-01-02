@@ -172,11 +172,14 @@ fn extract_content(entry: &feed_rs::model::Entry) -> Option<String> {
     entry.content.as_ref().and_then(|c| {
         c.body.as_ref().map(|body| {
             // Limit content size to avoid bloat (100KB max)
-            if body.len() > 100_000 {
+            let content = if body.len() > 100_000 {
                 format!("{}...", &body[..100_000])
             } else {
                 body.clone()
-            }
+            };
+
+            // Sanitize HTML to prevent XSS attacks
+            ammonia::clean(&content)
         })
     })
 }
@@ -184,11 +187,14 @@ fn extract_content(entry: &feed_rs::model::Entry) -> Option<String> {
 fn extract_summary(entry: &feed_rs::model::Entry) -> Option<String> {
     entry.summary.as_ref().map(|s| {
         // Limit summary size
-        if s.content.len() > 1000 {
+        let summary = if s.content.len() > 1000 {
             format!("{}...", &s.content[..1000])
         } else {
             s.content.clone()
-        }
+        };
+
+        // Sanitize HTML to prevent XSS attacks
+        ammonia::clean(&summary)
     })
 }
 

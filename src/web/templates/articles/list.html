@@ -122,14 +122,14 @@
 
                     {% if item.article.summary.is_some() %}
                     <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
-                        <p>{{ item.article.summary.as_ref().unwrap() }}</p>
+                        {{ item.article.summary.as_ref().unwrap()|safe }}
                     </div>
                     {% else if item.article.content.is_some() %}
                     <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
                         {% if item.article.content.as_ref().unwrap().len() > 300 %}
-                        <p>{{ item.article.content.as_ref().unwrap()|truncate(300) }}...</p>
+                        {{ item.article.content.as_ref().unwrap()|truncate(300)|safe }}...
                         {% else %}
-                        <p>{{ item.article.content.as_ref().unwrap() }}</p>
+                        {{ item.article.content.as_ref().unwrap()|safe }}
                         {% endif %}
                     </div>
                     {% endif %}
