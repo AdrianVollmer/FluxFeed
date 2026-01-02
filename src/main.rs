@@ -49,6 +49,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         db_pool: db_pool.clone(),
     };
 
+    // Start background scheduler for RSS fetching
+    tracing::info!("Starting RSS feed scheduler");
+    let _scheduler = infrastructure::scheduler::start_scheduler(state.clone()).await?;
+
     // Build router
     let app = Router::new()
         .route("/", get(index))
@@ -56,6 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/feeds", get(api::feeds::list_feeds).post(api::feeds::create_feed))
         .route("/feeds/new", get(api::feeds::show_feed_form))
         .route("/feeds/:id", delete(api::feeds::delete_feed))
+        .route("/api/fetch", post(api::manual_fetch::trigger_fetch))
         .nest_service("/static", ServeDir::new("static"))
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())
