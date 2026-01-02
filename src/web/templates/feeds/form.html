@@ -1,0 +1,66 @@
+<!-- Modal overlay -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="modal-overlay">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Add RSS Feed</h2>
+            <button
+                onclick="document.getElementById('feed-form-modal').innerHTML = ''"
+                class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form
+            hx-post="/feeds"
+            hx-target="#feed-list"
+            hx-swap="afterbegin"
+            hx-on::after-request="if(event.detail.successful) document.getElementById('feed-form-modal').innerHTML = ''">
+
+            <div class="mb-4">
+                <label for="url" class="block text-sm font-medium mb-2">
+                    Feed URL <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="url"
+                    id="url"
+                    name="url"
+                    required
+                    placeholder="https://example.com/feed.xml"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                    autofocus>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Enter the URL of an RSS or Atom feed
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <label for="title" class="block text-sm font-medium mb-2">
+                    Custom Title (optional)
+                </label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    placeholder="Leave empty to auto-detect"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700">
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Optional: Provide a custom name for this feed
+                </p>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button
+                    type="button"
+                    onclick="document.getElementById('feed-form-modal').innerHTML = ''"
+                    class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Add Feed
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

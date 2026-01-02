@@ -17,7 +17,7 @@ askama = { version = "0.12", features = ["with-axum"] }
 askama_axum = "0.4"
 
 # Database
-sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "migrate"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "migrate", "chrono"] }
 
 # RSS/Atom parsing
 feed-rs = "2.0"

@@ -1,9 +1,12 @@
 mod api;
 mod config;
+mod domain;
 mod infrastructure;
 mod web;
 
-use axum::{response::Html, routing::get, Router};
+use api::feeds::AppState;
+use askama::Template;
+use axum::{response::Html, routing::{delete, get, post}, Router};
 use config::Config;
 use infrastructure::database::setup_database;
 use std::net::SocketAddr;
@@ -11,7 +14,6 @@ use tower_http::{
     compression::CompressionLayer, services::ServeDir, trace::TraceLayer,
 };
 use web::templates::IndexTemplate;
-use askama::Template;
 
 async fn index() -> Html<String> {
     let template = IndexTemplate;
@@ -42,13 +44,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     sqlx::migrate!().run(&db_pool).await?;
     tracing::info!("Migrations complete");
 
+    // Create shared application state
+    let state = AppState {
+        db_pool: db_pool.clone(),
+    };
+
     // Build router
     let app = Router::new()
         .route("/", get(index))
         .route("/health", get(api::health::check))
+        .route("/feeds", get(api::feeds::list_feeds).post(api::feeds::create_feed))
+        .route("/feeds/new", get(api::feeds::show_feed_form))
+        .route("/feeds/:id", delete(api::feeds::delete_feed))
         .nest_service("/static", ServeDir::new("static"))
         .layer(CompressionLayer::new())
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .with_state(state);
 
     // Start server
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));

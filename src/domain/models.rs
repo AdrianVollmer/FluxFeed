@@ -1,0 +1,41 @@
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Feed {
+    pub id: i64,
+    pub url: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub site_url: Option<String>,
+    pub last_fetched_at: Option<DateTime<Utc>>,
+    pub last_modified: Option<String>,
+    pub etag: Option<String>,
+    pub fetch_interval_minutes: i64,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateFeed {
+    pub url: String,
+    pub title: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Article {
+    pub id: i64,
+    pub feed_id: i64,
+    pub guid: String,
+    pub title: String,
+    pub url: Option<String>,
+    pub content: Option<String>,
+    pub summary: Option<String>,
+    pub author: Option<String>,
+    pub published_at: Option<DateTime<Utc>>,
+    pub is_read: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}

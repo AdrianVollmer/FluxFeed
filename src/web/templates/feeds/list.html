@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Feeds - FluxFeed{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">RSS Feeds</h1>
+        <button
+            hx-get="/feeds/new"
+            hx-target="#feed-form-modal"
+            hx-swap="innerHTML"
+            class="btn btn-primary">
+            + Add Feed
+        </button>
+    </div>
+
+    <!-- Modal container for add feed form -->
+    <div id="feed-form-modal"></div>
+
+    <!-- Feed list -->
+    <div id="feed-list" class="space-y-4">
+        {% if feeds.is_empty() %}
+        <div class="card text-center py-12">
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                No feeds yet. Add your first RSS feed to get started!
+            </p>
+            <button
+                hx-get="/feeds/new"
+                hx-target="#feed-form-modal"
+                hx-swap="innerHTML"
+                class="btn btn-primary">
+                + Add Your First Feed
+            </button>
+        </div>
+        {% else %}
+        {% for feed in feeds %}
+        {% include "feeds/feed_row.html" %}
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
