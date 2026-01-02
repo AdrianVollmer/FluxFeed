@@ -206,3 +206,112 @@ pub async fn get_feeds_to_update(pool: &SqlitePool) -> Result<Vec<Feed>, SqlxErr
 
     Ok(feeds)
 }
+
+// Article query methods
+
+pub async fn list_articles(
+    pool: &SqlitePool,
+    feed_id: Option<i64>,
+    is_read: Option<bool>,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<Article>, SqlxError> {
+    let mut query_str = String::from(
+        "SELECT * FROM articles WHERE 1=1"
+    );
+
+    if feed_id.is_some() {
+        query_str.push_str(" AND feed_id = ?");
+    }
+    if is_read.is_some() {
+        query_str.push_str(" AND is_read = ?");
+    }
+
+    query_str.push_str(" ORDER BY published_at DESC, created_at DESC LIMIT ? OFFSET ?");
+
+    let mut query = sqlx::query_as::<_, Article>(&query_str);
+
+    if let Some(fid) = feed_id {
+        query = query.bind(fid);
+    }
+    if let Some(read) = is_read {
+        query = query.bind(read);
+    }
+
+    let articles = query
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(pool)
+        .await?;
+
+    Ok(articles)
+}
+
+pub async fn get_article_by_id(
+    pool: &SqlitePool,
+    article_id: i64,
+) -> Result<Option<Article>, SqlxError> {
+    let article = sqlx::query_as::<_, Article>(
+        "SELECT * FROM articles WHERE id = ?"
+    )
+    .bind(article_id)
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(article)
+}
+
+pub async fn update_article_read_status(
+    pool: &SqlitePool,
+    article_id: i64,
+    is_read: bool,
+) -> Result<(), SqlxError> {
+    let now = Utc::now();
+
+    sqlx::query(
+        "UPDATE articles SET is_read = ?, updated_at = ? WHERE id = ?"
+    )
+    .bind(is_read)
+    .bind(now)
+    .bind(article_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn mark_all_articles_read(
+    pool: &SqlitePool,
+    feed_id: Option<i64>,
+) -> Result<u64, SqlxError> {
+    let now = Utc::now();
+
+    let result = if let Some(fid) = feed_id {
+        sqlx::query(
+            "UPDATE articles SET is_read = 1, updated_at = ? WHERE feed_id = ? AND is_read = 0"
+        )
+        .bind(now)
+        .bind(fid)
+        .execute(pool)
+        .await?
+    } else {
+        sqlx::query(
+            "UPDATE articles SET is_read = 1, updated_at = ? WHERE is_read = 0"
+        )
+        .bind(now)
+        .execute(pool)
+        .await?
+    };
+
+    Ok(result.rows_affected())
+}
+
+pub async fn get_total_unread_count(pool: &SqlitePool) -> Result<i64, SqlxError> {
+    let count: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM articles WHERE is_read = 0"
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(count.0)
+}

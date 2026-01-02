@@ -60,6 +60,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/feeds", get(api::feeds::list_feeds).post(api::feeds::create_feed))
         .route("/feeds/new", get(api::feeds::show_feed_form))
         .route("/feeds/:id", delete(api::feeds::delete_feed))
+        .route("/articles", get(api::articles::list_articles))
+        .route("/articles/:id/toggle-read", post(api::articles::toggle_read_status))
         .route("/api/fetch", post(api::manual_fetch::trigger_fetch))
         .nest_service("/static", ServeDir::new("static"))
         .layer(CompressionLayer::new())

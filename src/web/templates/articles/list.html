@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Articles - FluxFeed{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
+        <h1 class="text-3xl font-bold">Articles</h1>
+
+        <div class="flex gap-3">
+            <!-- Filter buttons -->
+            <a href="/articles" class="btn {% if filter_read.is_none() %}btn-primary{% else %}btn-secondary{% endif %}">
+                All
+            </a>
+            <a href="/articles?is_read=false" class="btn {% if filter_read.is_some() && !filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
+                Unread ({{ unread_count }})
+            </a>
+            <a href="/articles?is_read=true" class="btn {% if filter_read.is_some() && filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
+                Read
+            </a>
+        </div>
+    </div>
+
+    <!-- Feed filter -->
+    {% if feeds.len() > 0 %}
+    <div class="mb-6">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Feed:</label>
+        <div class="flex flex-wrap gap-2">
+            <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}"
+               class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+                All Feeds
+            </a>
+            {% for feed in feeds %}
+            <a href="/articles?feed_id={{ feed.id }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}"
+               class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_some() && filter_feed.unwrap() == feed.id %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                {{ feed.title }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Article list -->
+    <div id="articles-list" class="space-y-4">
+        {% if articles.len() == 0 %}
+        <div class="card text-center py-16">
+            <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+            </svg>
+            <p class="text-xl text-gray-600 dark:text-gray-400 mb-2">No articles yet</p>
+            <p class="text-sm text-gray-500 dark:text-gray-500">
+                {% if feeds.len() == 0 %}
+                    <a href="/feeds" class="text-blue-600 hover:underline">Add some feeds</a> to get started!
+                {% else %}
+                    Articles will appear here automatically. The next fetch is scheduled soon.
+                {% endif %}
+            </p>
+        </div>
+        {% else %}
+        {% for item in articles %}
+        <article class="card {% if item.article.is_read %}opacity-60{% endif %} transition-opacity" id="article-{{ item.article.id }}">
+            <div class="flex gap-4">
+                <div class="flex-shrink-0 pt-1">
+                    <button
+                        hx-post="/articles/{{ item.article.id }}/toggle-read"
+                        hx-target="#article-{{ item.article.id }}"
+                        hx-swap="outerHTML"
+                        class="w-3 h-3 rounded-full border-2 {% if item.article.is_read %}bg-gray-400 border-gray-400{% else %}bg-blue-600 border-blue-600{% endif %} hover:scale-125 transition-transform"
+                        title="{% if item.article.is_read %}Mark as unread{% else %}Mark as read{% endif %}">
+                    </button>
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                        <h3 class="text-lg font-semibold {% if item.article.is_read %}text-gray-600 dark:text-gray-400{% endif %}">
+                            {% if item.article.url.is_some() %}
+                            <a href="{{ item.article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 dark:hover:text-blue-400">
+                                {{ item.article.title }}
+                                <svg class="inline w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                            </a>
+                            {% else %}
+                            {{ item.article.title }}
+                            {% endif %}
+                        </h3>
+
+                        <button
+                            hx-post="/articles/{{ item.article.id }}/toggle-read"
+                            hx-target="#article-{{ item.article.id }}"
+                            hx-swap="outerHTML"
+                            class="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap flex-shrink-0">
+                            {% if item.article.is_read %}Mark Unread{% else %}Mark Read{% endif %}
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            {% if item.article.published_at.is_some() %}
+                            {{ item.article.published_at.as_ref().unwrap().format("%b %d, %Y %H:%M") }}
+                            {% else %}
+                            No date
+                            {% endif %}
+                        </span>
+
+                        {% if item.article.author.is_some() %}
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            {{ item.article.author.as_ref().unwrap() }}
+                        </span>
+                        {% endif %}
+
+                        <span class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800">
+                            {{ item.feed_title }}
+                        </span>
+                    </div>
+
+                    {% if item.article.summary.is_some() %}
+                    <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                        <p>{{ item.article.summary.as_ref().unwrap() }}</p>
+                    </div>
+                    {% else if item.article.content.is_some() %}
+                    <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                        {% if item.article.content.as_ref().unwrap().len() > 300 %}
+                        <p>{{ item.article.content.as_ref().unwrap()|truncate(300) }}...</p>
+                        {% else %}
+                        <p>{{ item.article.content.as_ref().unwrap() }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Load more button -->
+    {% if has_more %}
+    <div class="mt-8 text-center">
+        <button
+            hx-get="/articles?offset={{ offset + limit }}{% if filter_feed.is_some() %}&feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}"
+            hx-target="#articles-list"
+            hx-swap="beforeend"
+            class="btn btn-primary">
+            Load More Articles
+        </button>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

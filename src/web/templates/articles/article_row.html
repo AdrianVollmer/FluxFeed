@@ -1,0 +1,78 @@
+<article class="card {% if article.is_read %}opacity-60{% endif %} transition-opacity" id="article-{{ article.id }}">
+    <div class="flex gap-4">
+        <!-- Read/Unread indicator -->
+        <div class="flex-shrink-0 pt-1">
+            <button
+                hx-post="/articles/{{ article.id }}/toggle-read"
+                hx-target="#article-{{ article.id }}"
+                hx-swap="outerHTML"
+                class="w-3 h-3 rounded-full border-2 {% if article.is_read %}bg-gray-400 border-gray-400{% else %}bg-blue-600 border-blue-600{% endif %} hover:scale-125 transition-transform"
+                title="{% if article.is_read %}Mark as unread{% else %}Mark as read{% endif %}">
+            </button>
+        </div>
+
+        <div class="flex-1 min-w-0">
+            <!-- Article header -->
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                <h3 class="text-lg font-semibold {% if article.is_read %}text-gray-600 dark:text-gray-400{% endif %}">
+                    {% if article.url.is_some() %}
+                    <a href="{{ article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 dark:hover:text-blue-400">
+                        {{ article.title }}
+                        <svg class="inline w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </a>
+                    {% else %}
+                    {{ article.title }}
+                    {% endif %}
+                </h3>
+
+                <button
+                    hx-post="/articles/{{ article.id }}/toggle-read"
+                    hx-target="#article-{{ article.id }}"
+                    hx-swap="outerHTML"
+                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap flex-shrink-0">
+                    {% if article.is_read %}Mark Unread{% else %}Mark Read{% endif %}
+                </button>
+            </div>
+
+            <!-- Article metadata -->
+            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    {% if article.published_at.is_some() %}
+                    {{ article.published_at.as_ref().unwrap().format("%b %d, %Y %H:%M") }}
+                    {% else %}
+                    No date
+                    {% endif %}
+                </span>
+
+                {% if article.author.is_some() %}
+                <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    {{ article.author.as_ref().unwrap() }}
+                </span>
+                {% endif %}
+
+                <span class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800">
+                    {{ feed_title }}
+                </span>
+            </div>
+
+            <!-- Article summary/content -->
+            {% if article.summary.is_some() %}
+            <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                <p>{{ article.summary.as_ref().unwrap() }}</p>
+            </div>
+            {% else if article.content.is_some() %}
+            <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 line-clamp-3">
+                <p>{{ article.content.as_ref().unwrap()|truncate(300) }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</article>
