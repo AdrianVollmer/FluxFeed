@@ -1,7 +1,7 @@
 use crate::api::feeds::AppState;
 use crate::domain::{article_service, feed_service};
 use crate::infrastructure::repository;
-use crate::web::templates::{ArticleRowTemplate, ArticlesListTemplate, ArticleWithFeed};
+use crate::web::templates::{ArticleCompactRowTemplate, ArticleRowTemplate, ArticlesListTemplate, ArticleWithFeed};
 use askama::Template;
 use axum::{
     extract::{Path, Query, State},
@@ -121,6 +121,41 @@ pub async fn toggle_read_status(
         });
 
     let template = ArticleRowTemplate {
+        article,
+        feed_title: feed.title,
+    };
+
+    Ok(Html(template.render()?))
+}
+
+pub async fn toggle_read_status_compact(
+    State(state): State<AppState>,
+    Path(article_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    let article = article_service::toggle_read_status(&state.db_pool, article_id).await?;
+
+    // Get feed title
+    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+        .await?
+        .unwrap_or_else(|| {
+            crate::domain::models::Feed {
+                id: article.feed_id,
+                url: String::new(),
+                title: "Unknown Feed".to_string(),
+                description: None,
+                site_url: None,
+                last_fetched_at: None,
+                last_modified: None,
+                etag: None,
+                fetch_interval_minutes: 30,
+                color: "#3B82F6".to_string(),
+                fetch_frequency: "smart".to_string(),
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+            }
+        });
+
+    let template = ArticleCompactRowTemplate {
         article,
         feed_title: feed.title,
     };

@@ -8,6 +8,22 @@
         <h1 class="text-3xl font-bold">Articles</h1>
 
         <div class="flex flex-col sm:flex-row gap-3">
+            <!-- View toggle -->
+            <div class="flex gap-2 border border-gray-300 dark:border-gray-600 rounded p-1">
+                <button id="view-cards" onclick="setView('cards')" class="px-3 py-1 rounded text-sm transition">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                    </svg>
+                    Cards
+                </button>
+                <button id="view-compact" onclick="setView('compact')" class="px-3 py-1 rounded text-sm transition">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                    </svg>
+                    Compact
+                </button>
+            </div>
+
             <!-- Filter buttons -->
             <div class="flex gap-3">
                 <a href="/articles" class="btn {% if filter_read.is_none() %}btn-primary{% else %}btn-secondary{% endif %}">
@@ -52,8 +68,8 @@
     </div>
     {% endif %}
 
-    <!-- Article list -->
-    <div id="articles-list" class="space-y-4">
+    <!-- Article list - Cards View -->
+    <div id="articles-cards" class="space-y-4">
         {% if articles.len() == 0 %}
         <div class="card text-center py-16">
             <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,6 +168,97 @@
         {% endif %}
     </div>
 
+    <!-- Article list - Compact Table View -->
+    <div id="articles-compact" class="hidden">
+        {% if articles.len() == 0 %}
+        <div class="card text-center py-16">
+            <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+            </svg>
+            <p class="text-xl text-gray-600 dark:text-gray-400 mb-2">No articles yet</p>
+            <p class="text-sm text-gray-500 dark:text-gray-500">
+                {% if feeds.len() == 0 %}
+                    <a href="/feeds" class="text-blue-600 hover:underline">Add some feeds</a> to get started!
+                {% else %}
+                    Articles will appear here automatically. The next fetch is scheduled soon.
+                {% endif %}
+            </p>
+        </div>
+        {% else %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                        <th scope="col" class="w-8 px-3 py-3"></th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Feed</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="w-8 px-3 py-3"></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for item in articles %}
+                    <tr id="article-compact-{{ item.article.id }}" class="{% if item.article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity">
+                        <td class="px-3 py-4 whitespace-nowrap">
+                            <button
+                                hx-post="/articles/{{ item.article.id }}/toggle-read"
+                                hx-target="#article-compact-{{ item.article.id }}"
+                                hx-swap="outerHTML"
+                                class="w-3 h-3 rounded-full border-2 {% if item.article.is_read %}bg-gray-400 border-gray-400{% else %}bg-blue-600 border-blue-600{% endif %} hover:scale-125 transition-transform"
+                                title="{% if item.article.is_read %}Mark as unread{% else %}Mark as read{% endif %}">
+                            </button>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium {% if item.article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %}">
+                                {% if item.article.url.is_some() %}
+                                <a href="{{ item.article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 dark:hover:text-blue-400">
+                                    {{ item.article.title }}
+                                    <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                </a>
+                                {% else %}
+                                {{ item.article.title }}
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                {{ item.feed_title }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {% if item.article.author.is_some() %}
+                            {{ item.article.author.as_ref().unwrap() }}
+                            {% else %}
+                            <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {% if item.article.published_at.is_some() %}
+                            {{ item.article.published_at.as_ref().unwrap().format("%b %d, %Y") }}
+                            {% else %}
+                            <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-3 py-4 whitespace-nowrap text-right text-sm">
+                            <button
+                                hx-post="/articles/{{ item.article.id }}/toggle-read"
+                                hx-target="#article-compact-{{ item.article.id }}"
+                                hx-swap="outerHTML"
+                                class="text-blue-600 dark:text-blue-400 hover:underline">
+                                {% if item.article.is_read %}Unread{% else %}Read{% endif %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
     <!-- Load more button -->
     {% if has_more %}
     <div class="mt-8 text-center">
@@ -165,4 +272,40 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+// View toggle with localStorage persistence
+function setView(view) {
+    // Save preference
+    localStorage.setItem('articleView', view);
+
+    // Update UI
+    const cardsView = document.getElementById('articles-cards');
+    const compactView = document.getElementById('articles-compact');
+    const cardsBtn = document.getElementById('view-cards');
+    const compactBtn = document.getElementById('view-compact');
+
+    if (view === 'compact') {
+        cardsView.classList.add('hidden');
+        compactView.classList.remove('hidden');
+        cardsBtn.classList.remove('bg-blue-600', 'text-white');
+        cardsBtn.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+        compactBtn.classList.add('bg-blue-600', 'text-white');
+        compactBtn.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+    } else {
+        cardsView.classList.remove('hidden');
+        compactView.classList.add('hidden');
+        cardsBtn.classList.add('bg-blue-600', 'text-white');
+        cardsBtn.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+        compactBtn.classList.remove('bg-blue-600', 'text-white');
+        compactBtn.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+    }
+}
+
+// Initialize view on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const savedView = localStorage.getItem('articleView') || 'cards';
+    setView(savedView);
+});
+</script>
 {% endblock %}

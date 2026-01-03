@@ -1,0 +1,53 @@
+<tr id="article-compact-{{ article.id }}" class="{% if article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity">
+    <td class="px-3 py-4 whitespace-nowrap">
+        <button
+            hx-post="/articles/{{ article.id }}/toggle-read-compact"
+            hx-target="#article-compact-{{ article.id }}"
+            hx-swap="outerHTML"
+            class="w-3 h-3 rounded-full border-2 {% if article.is_read %}bg-gray-400 border-gray-400{% else %}bg-blue-600 border-blue-600{% endif %} hover:scale-125 transition-transform"
+            title="{% if article.is_read %}Mark as unread{% else %}Mark as read{% endif %}">
+        </button>
+    </td>
+    <td class="px-6 py-4">
+        <div class="text-sm font-medium {% if article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %}">
+            {% if article.url.is_some() %}
+            <a href="{{ article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 dark:hover:text-blue-400">
+                {{ article.title }}
+                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+            </a>
+            {% else %}
+            {{ article.title }}
+            {% endif %}
+        </div>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+        <span class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+            {{ feed_title }}
+        </span>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+        {% if article.author.is_some() %}
+        {{ article.author.as_ref().unwrap() }}
+        {% else %}
+        <span class="text-gray-400">—</span>
+        {% endif %}
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+        {% if article.published_at.is_some() %}
+        {{ article.published_at.as_ref().unwrap().format("%b %d, %Y") }}
+        {% else %}
+        <span class="text-gray-400">—</span>
+        {% endif %}
+    </td>
+    <td class="px-3 py-4 whitespace-nowrap text-right text-sm">
+        <button
+            hx-post="/articles/{{ article.id }}/toggle-read-compact"
+            hx-target="#article-compact-{{ article.id }}"
+            hx-swap="outerHTML"
+            class="text-blue-600 dark:text-blue-400 hover:underline">
+            {% if article.is_read %}Unread{% else %}Read{% endif %}
+        </button>
+    </td>
+</tr>
