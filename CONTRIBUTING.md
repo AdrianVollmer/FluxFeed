@@ -2,6 +2,9 @@
 
 FluxFeed is a web-based RSS feed reader.
 
+We are still in "greenfield project mode", as there is no release yet,
+so never worry about backwards compatibility.
+
 ## Tech Stack and Philosophy
 
 - Written in Rust
