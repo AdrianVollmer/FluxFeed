@@ -18,6 +18,11 @@ pub struct ArticleListParams {
     pub offset: Option<i64>,
 }
 
+#[derive(Deserialize)]
+pub struct MarkAllReadParams {
+    pub feed_id: Option<i64>,
+}
+
 pub async fn list_articles(
     State(state): State<AppState>,
     Query(params): Query<ArticleListParams>,
@@ -117,6 +122,23 @@ pub async fn toggle_read_status(
     };
 
     Ok(Html(template.render()?))
+}
+
+pub async fn mark_all_read(
+    State(state): State<AppState>,
+    Query(params): Query<MarkAllReadParams>,
+) -> Result<Response, AppError> {
+    let count = article_service::mark_all_read(&state.db_pool, params.feed_id).await?;
+
+    tracing::info!("Marked {} articles as read", count);
+
+    // Return HX-Refresh header to reload the page
+    Ok((
+        StatusCode::OK,
+        [("HX-Refresh", "true")],
+        format!("Marked {} articles as read", count),
+    )
+        .into_response())
 }
 
 // Error handling

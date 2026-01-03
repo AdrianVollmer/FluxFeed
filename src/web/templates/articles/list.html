@@ -7,17 +7,29 @@
     <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
         <h1 class="text-3xl font-bold">Articles</h1>
 
-        <div class="flex gap-3">
+        <div class="flex flex-col sm:flex-row gap-3">
             <!-- Filter buttons -->
-            <a href="/articles" class="btn {% if filter_read.is_none() %}btn-primary{% else %}btn-secondary{% endif %}">
-                All
-            </a>
-            <a href="/articles?is_read=false" class="btn {% if filter_read.is_some() && !filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                Unread ({{ unread_count }})
-            </a>
-            <a href="/articles?is_read=true" class="btn {% if filter_read.is_some() && filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                Read
-            </a>
+            <div class="flex gap-3">
+                <a href="/articles" class="btn {% if filter_read.is_none() %}btn-primary{% else %}btn-secondary{% endif %}">
+                    All
+                </a>
+                <a href="/articles?is_read=false" class="btn {% if filter_read.is_some() && !filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
+                    Unread ({{ unread_count }})
+                </a>
+                <a href="/articles?is_read=true" class="btn {% if filter_read.is_some() && filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
+                    Read
+                </a>
+            </div>
+
+            <!-- Mark all as read button -->
+            {% if unread_count > 0 %}
+            <button
+                hx-post="/articles/mark-all-read{% if filter_feed.is_some() %}?feed_id={{ filter_feed.unwrap() }}{% endif %}"
+                hx-confirm="Are you sure you want to mark all {% if filter_feed.is_some() %}filtered {% endif %}articles as read?"
+                class="btn btn-secondary">
+                Mark All as Read
+            </button>
+            {% endif %}
         </div>
     </div>
 
