@@ -60,6 +60,8 @@ pub async fn list_articles(
                     last_modified: None,
                     etag: None,
                     fetch_interval_minutes: 30,
+                    color: "#3B82F6".to_string(),
+                    fetch_frequency: "smart".to_string(),
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 }
@@ -111,6 +113,8 @@ pub async fn toggle_read_status(
                 last_modified: None,
                 etag: None,
                 fetch_interval_minutes: 30,
+                color: "#3B82F6".to_string(),
+                fetch_frequency: "smart".to_string(),
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
             }

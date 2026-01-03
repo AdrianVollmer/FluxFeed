@@ -1,5 +1,6 @@
 use crate::domain::feed_service;
-use crate::web::templates::{FeedFormTemplate, FeedRowTemplate, FeedsListTemplate};
+use crate::infrastructure::repository;
+use crate::web::templates::{FeedDetailTemplate, FeedFormTemplate, FeedRowTemplate, FeedsListTemplate};
 use askama::Template;
 use axum::{
     extract::{Path, State},
@@ -48,6 +49,21 @@ pub async fn create_feed(
     Ok(Html(template.render()?))
 }
 
+pub async fn show_feed(
+    State(state): State<AppState>,
+    Path(feed_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    let feed = repository::get_feed_by_id(&state.db_pool, feed_id)
+        .await?
+        .ok_or(feed_service::FeedServiceError::NotFound)?;
+
+    // Get tags for this feed
+    let tags = repository::get_feed_tags(&state.db_pool, feed_id).await?;
+
+    let template = FeedDetailTemplate { feed, tags };
+    Ok(Html(template.render()?))
+}
+
 pub async fn delete_feed(
     State(state): State<AppState>,
     Path(feed_id): Path<i64>,
@@ -60,6 +76,7 @@ pub async fn delete_feed(
 pub enum AppError {
     TemplateError(askama::Error),
     ServiceError(feed_service::FeedServiceError),
+    DatabaseError(sqlx::Error),
 }
 
 impl From<askama::Error> for AppError {
@@ -71,6 +88,12 @@ impl From<askama::Error> for AppError {
 impl From<feed_service::FeedServiceError> for AppError {
     fn from(err: feed_service::FeedServiceError) -> Self {
         AppError::ServiceError(err)
+    }
+}
+
+impl From<sqlx::Error> for AppError {
+    fn from(err: sqlx::Error) -> Self {
+        AppError::DatabaseError(err)
     }
 }
 
@@ -95,6 +118,14 @@ impl IntoResponse for AppError {
                 (StatusCode::BAD_REQUEST, msg).into_response()
             }
             AppError::ServiceError(feed_service::FeedServiceError::DatabaseError(err)) => {
+                tracing::error!("Database error: {}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal server error",
+                )
+                    .into_response()
+            }
+            AppError::DatabaseError(err) => {
                 tracing::error!("Database error: {}", err);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,

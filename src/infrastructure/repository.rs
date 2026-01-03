@@ -1,4 +1,4 @@
-use crate::domain::models::{Article, CreateFeed, Feed};
+use crate::domain::models::{Article, CreateFeed, Feed, Tag};
 use chrono::{DateTime, Utc};
 use sqlx::{Error as SqlxError, SqlitePool};
 
@@ -314,4 +314,21 @@ pub async fn get_total_unread_count(pool: &SqlitePool) -> Result<i64, SqlxError>
     .await?;
 
     Ok(count.0)
+}
+
+// Tag operations
+pub async fn get_feed_tags(pool: &SqlitePool, feed_id: i64) -> Result<Vec<Tag>, SqlxError> {
+    let tags = sqlx::query_as::<_, Tag>(
+        r#"
+        SELECT t.* FROM tags t
+        INNER JOIN feed_tags ft ON ft.tag_id = t.id
+        WHERE ft.feed_id = ?
+        ORDER BY t.name ASC
+        "#,
+    )
+    .bind(feed_id)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(tags)
 }

@@ -1,5 +1,5 @@
 use askama::Template;
-use crate::domain::models::{Article, Feed};
+use crate::domain::models::{Article, Feed, Tag};
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -20,6 +20,13 @@ pub struct FeedRowTemplate {
 #[derive(Template)]
 #[template(path = "feeds/form.html")]
 pub struct FeedFormTemplate;
+
+#[derive(Template)]
+#[template(path = "feeds/detail.html")]
+pub struct FeedDetailTemplate {
+    pub feed: Feed,
+    pub tags: Vec<Tag>,
+}
 
 #[derive(Template)]
 #[template(path = "articles/list.html")]

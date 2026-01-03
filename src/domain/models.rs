@@ -13,6 +13,8 @@ pub struct Feed {
     pub last_modified: Option<String>,
     pub etag: Option<String>,
     pub fetch_interval_minutes: i64,
+    pub color: String,
+    pub fetch_frequency: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -38,4 +40,18 @@ pub struct Article {
     pub is_read: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Tag {
+    pub id: i64,
+    pub name: String,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct FeedTag {
+    pub feed_id: i64,
+    pub tag_id: i64,
+    pub created_at: DateTime<Utc>,
 }
