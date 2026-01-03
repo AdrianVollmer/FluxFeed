@@ -202,7 +202,7 @@
                     <tr id="article-compact-{{ item.article.id }}" class="{% if item.article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity">
                         <td class="px-3 py-4 whitespace-nowrap">
                             <button
-                                hx-post="/articles/{{ item.article.id }}/toggle-read"
+                                hx-post="/articles/{{ item.article.id }}/toggle-read-compact"
                                 hx-target="#article-compact-{{ item.article.id }}"
                                 hx-swap="outerHTML"
                                 class="w-3 h-3 rounded-full border-2 {% if item.article.is_read %}bg-gray-400 border-gray-400{% else %}bg-blue-600 border-blue-600{% endif %} hover:scale-125 transition-transform"
@@ -244,7 +244,7 @@
                         </td>
                         <td class="px-3 py-4 whitespace-nowrap text-right text-sm">
                             <button
-                                hx-post="/articles/{{ item.article.id }}/toggle-read"
+                                hx-post="/articles/{{ item.article.id }}/toggle-read-compact"
                                 hx-target="#article-compact-{{ item.article.id }}"
                                 hx-swap="outerHTML"
                                 class="text-blue-600 dark:text-blue-400 hover:underline">
