@@ -25,6 +25,9 @@ feed-rs = "2.0"
 # HTML sanitization
 ammonia = "4.0"
 
+# OpenGraph metadata extraction
+webpage = "2.0"
+
 # HTTP client
 reqwest = { version = "0.12", features = ["gzip", "brotli"] }
 

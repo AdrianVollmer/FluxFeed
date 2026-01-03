@@ -82,6 +82,9 @@ async fn fetch_all_feeds(state: &AppState) -> Result<(), Box<dyn std::error::Err
                     let author = extract_author(&entry);
                     let published_at = extract_published_date(&entry);
 
+                    // Extract OpenGraph metadata from article URL
+                    let (og_image, og_description, og_site_name) = extract_opengraph(&url).await;
+
                     match repository::insert_article_if_new(
                         &state.db_pool,
                         feed.id,
@@ -92,6 +95,9 @@ async fn fetch_all_feeds(state: &AppState) -> Result<(), Box<dyn std::error::Err
                         summary,
                         author,
                         published_at,
+                        og_image,
+                        og_description,
+                        og_site_name,
                     )
                     .await
                     {
@@ -204,4 +210,45 @@ fn extract_author(entry: &feed_rs::model::Entry) -> Option<String> {
 
 fn extract_published_date(entry: &feed_rs::model::Entry) -> Option<chrono::DateTime<Utc>> {
     entry.published.or(entry.updated).map(|dt| dt.with_timezone(&Utc))
+}
+
+async fn extract_opengraph(
+    url: &Option<String>,
+) -> (Option<String>, Option<String>, Option<String>) {
+    // If no URL, return None for all fields
+    let Some(url_str) = url else {
+        return (None, None, None);
+    };
+
+    // Try to fetch and parse OpenGraph metadata
+    match webpage::Webpage::from_url(url_str, webpage::WebpageOptions::default()) {
+        Ok(webpage) => {
+            let og_image = webpage.html.opengraph.images.first().map(|img| img.url.clone());
+            let og_description = webpage
+                .html
+                .opengraph
+                .properties
+                .get("og:description")
+                .cloned();
+            let og_site_name = webpage
+                .html
+                .opengraph
+                .properties
+                .get("og:site_name")
+                .cloned();
+
+            tracing::debug!(
+                "Extracted OpenGraph: image={:?}, desc={:?}, site={:?}",
+                og_image.is_some(),
+                og_description.is_some(),
+                og_site_name.is_some()
+            );
+
+            (og_image, og_description, og_site_name)
+        }
+        Err(e) => {
+            tracing::debug!("Failed to extract OpenGraph from {}: {}", url_str, e);
+            (None, None, None)
+        }
+    }
 }

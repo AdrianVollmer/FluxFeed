@@ -95,6 +95,9 @@ async fn perform_fetch(
                         summary,
                         author,
                         published_at,
+                        None, // og_image - not extracted in manual fetch
+                        None, // og_description
+                        None, // og_site_name
                     )
                     .await
                     {

@@ -116,13 +116,16 @@ pub async fn insert_article_if_new(
     summary: Option<String>,
     author: Option<String>,
     published_at: Option<DateTime<Utc>>,
+    og_image: Option<String>,
+    og_description: Option<String>,
+    og_site_name: Option<String>,
 ) -> Result<Option<Article>, SqlxError> {
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Article>(
         r#"
-        INSERT INTO articles (feed_id, guid, title, url, content, summary, author, published_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO articles (feed_id, guid, title, url, content, summary, author, published_at, og_image, og_description, og_site_name, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(feed_id, guid) DO NOTHING
         RETURNING *
         "#,
@@ -135,6 +138,9 @@ pub async fn insert_article_if_new(
     .bind(&summary)
     .bind(&author)
     .bind(published_at)
+    .bind(&og_image)
+    .bind(&og_description)
+    .bind(&og_site_name)
     .bind(now)
     .bind(now)
     .fetch_optional(pool)

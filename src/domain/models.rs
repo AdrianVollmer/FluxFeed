@@ -38,6 +38,9 @@ pub struct Article {
     pub author: Option<String>,
     pub published_at: Option<DateTime<Utc>>,
     pub is_read: bool,
+    pub og_image: Option<String>,
+    pub og_description: Option<String>,
+    pub og_site_name: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
