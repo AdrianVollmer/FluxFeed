@@ -96,6 +96,51 @@ footer {
   border-top: 1px solid var(--glass-border) !important;
 }
 
+/* Mobile Navigation Menu */
+@layer components {
+  .mobile-nav-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-left: 1px solid var(--glass-border);
+    box-shadow:
+      -4px 0 6px -1px rgba(0, 0, 0, 0.1),
+      -2px 0 4px -1px rgba(0, 0, 0, 0.06),
+      0 0 30px -10px var(--shadow-glow);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .mobile-nav-panel {
+      background: rgba(17, 24, 39, 0.95);
+      border-left-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  /* Screen reader only (accessible but invisible) */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
+
+/* Focus states for accessibility */
+input[type="checkbox"]:focus-visible + label {
+  @apply outline outline-2 outline-offset-2 outline-blue-600;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.mobile-nav-panel a:focus-visible,
+#article-controls-toggle:focus-visible + label {
+  @apply outline outline-2 outline-offset-2 outline-blue-600;
+}
+
 /* Enhanced buttons */
 .btn {
   @apply px-4 py-2 rounded font-medium;

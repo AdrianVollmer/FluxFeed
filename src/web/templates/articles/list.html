@@ -4,9 +4,23 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto">
-    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
+    <div class="flex justify-between items-center mb-4 md:mb-8">
         <h1 class="text-3xl font-bold">Articles</h1>
 
+        <!-- Mobile Controls Toggle -->
+        <div class="md:hidden">
+            <input type="checkbox" id="article-controls-toggle" class="sr-only peer" autocomplete="off" />
+            <label for="article-controls-toggle" class="btn btn-secondary cursor-pointer flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filters
+            </label>
+        </div>
+    </div>
+
+    <!-- Desktop Controls (visible >= md) -->
+    <div class="hidden md:flex md:flex-row md:justify-between md:items-center mb-8 gap-4">
         <div class="flex flex-col sm:flex-row gap-3">
             <!-- View toggle -->
             <div class="flex gap-2 border border-gray-300 dark:border-gray-600 rounded p-1">
@@ -49,9 +63,90 @@
         </div>
     </div>
 
-    <!-- Feed filter -->
+    <!-- Mobile Controls Accordion -->
+    <input type="checkbox" id="article-controls-toggle" class="hidden peer" autocomplete="off" />
+    <div class="max-h-0 opacity-0 overflow-hidden peer-checked:max-h-[1000px] peer-checked:opacity-100 transition-all duration-300 ease-in-out md:hidden mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-lg space-y-4">
+
+            <!-- View Mode Section -->
+            <div>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">View Mode</h3>
+                <div class="flex gap-2 border border-gray-300 dark:border-gray-600 rounded p-1">
+                    <button id="view-cards-mobile" onclick="setView('cards')" class="px-3 py-1 rounded text-sm transition">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                        </svg>
+                        Cards
+                    </button>
+                    <button id="view-compact-mobile" onclick="setView('compact')" class="px-3 py-1 rounded text-sm transition">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        </svg>
+                        Compact
+                    </button>
+                </div>
+            </div>
+
+            <!-- Read Status Filter Section -->
+            <div>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Read Status</h3>
+                <div class="flex flex-wrap gap-2">
+                    <a href="/articles"
+                       onclick="document.getElementById('article-controls-toggle').checked = false"
+                       class="btn {% if filter_read.is_none() %}btn-primary{% else %}btn-secondary{% endif %}">
+                        All
+                    </a>
+                    <a href="/articles?is_read=false"
+                       onclick="document.getElementById('article-controls-toggle').checked = false"
+                       class="btn {% if filter_read.is_some() && !filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
+                        Unread ({{ unread_count }})
+                    </a>
+                    <a href="/articles?is_read=true"
+                       onclick="document.getElementById('article-controls-toggle').checked = false"
+                       class="btn {% if filter_read.is_some() && filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
+                        Read
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mark All as Read -->
+            {% if unread_count > 0 %}
+            <div>
+                <button
+                    hx-post="/articles/mark-all-read{% if filter_feed.is_some() %}?feed_id={{ filter_feed.unwrap() }}{% endif %}"
+                    hx-confirm="Are you sure you want to mark all {% if filter_feed.is_some() %}filtered {% endif %}articles as read?"
+                    class="btn btn-secondary w-full">
+                    Mark All as Read
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Feed Filter Section -->
+            {% if feeds.len() > 0 %}
+            <div>
+                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter by Feed</h3>
+                <div class="flex flex-wrap gap-2">
+                    <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}"
+                       onclick="document.getElementById('article-controls-toggle').checked = false"
+                       class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+                        All Feeds
+                    </a>
+                    {% for feed in feeds %}
+                    <a href="/articles?feed_id={{ feed.id }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}"
+                       onclick="document.getElementById('article-controls-toggle').checked = false"
+                       class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_some() && filter_feed.unwrap() == feed.id %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                        {{ feed.title }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Feed filter (Desktop only) -->
     {% if feeds.len() > 0 %}
-    <div class="mb-6">
+    <div class="hidden md:block mb-6">
         <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Feed:</label>
         <div class="flex flex-wrap gap-2">
             <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}"
