@@ -1,0 +1,7 @@
+<button
+    hx-get="/logs?offset={{ next_offset }}{% if filter_feed.is_some() %}&feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
+    hx-target="tbody"
+    hx-swap="beforeend"
+    class="btn btn-primary">
+    Load More Logs
+</button>

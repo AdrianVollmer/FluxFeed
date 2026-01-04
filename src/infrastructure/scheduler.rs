@@ -68,6 +68,10 @@ async fn fetch_all_feeds(state: &AppState) -> Result<(), Box<dyn std::error::Err
                     parsed_feed.entries.len()
                 );
 
+                // Log successful fetch
+                repository::insert_log(&state.db_pool, feed.id, "success", None, None, None)
+                    .await?;
+
                 // Update feed metadata
                 repository::update_feed_metadata(&state.db_pool, feed.id, etag, last_modified)
                     .await?;
@@ -117,11 +121,36 @@ async fn fetch_all_feeds(state: &AppState) -> Result<(), Box<dyn std::error::Err
             }
             Ok(rss_fetcher::FetchResult::NotModified) => {
                 tracing::debug!("Feed not modified: {}", feed.title);
+
+                // Log not modified fetch
+                repository::insert_log(&state.db_pool, feed.id, "not_modified", None, None, None)
+                    .await?;
+
                 // Just update last_fetched_at
                 repository::touch_feed(&state.db_pool, feed.id).await?;
             }
             Err(e) => {
                 tracing::warn!("Failed to fetch feed {}: {}", feed.url, e);
+
+                // Extract error details for logging
+                let (log_type, status_code, retry_after) = match &e {
+                    rss_fetcher::FetchError::RequestFailed { status, retry_after, .. } => {
+                        let log_type = if status.as_u16() == 429 {
+                            "rate_limited"
+                        } else {
+                            "error"
+                        };
+                        (log_type, Some(status.as_u16() as i32), retry_after.as_deref())
+                    }
+                    _ => ("error", None, None),
+                };
+
+                let error_message = e.to_string();
+
+                // Log the fetch failure
+                repository::insert_log(&state.db_pool, feed.id, log_type, status_code, Some(&error_message), retry_after)
+                    .await?;
+
                 // Still update last_fetched_at to avoid hammering broken feeds
                 repository::touch_feed(&state.db_pool, feed.id).await?;
             }

@@ -5,8 +5,15 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum FetchError {
-    #[error("HTTP request failed: {0}")]
-    RequestFailed(#[from] reqwest::Error),
+    #[error("HTTP request failed with status {status}: {message}")]
+    RequestFailed {
+        status: StatusCode,
+        message: String,
+        retry_after: Option<String>,
+    },
+
+    #[error("Network error: {0}")]
+    NetworkError(#[from] reqwest::Error),
 
     #[error("Feed parsing failed: {0}")]
     ParseError(String),
@@ -67,10 +74,26 @@ impl RssFetcher {
 
         // Check for successful response
         if !response.status().is_success() {
-            tracing::warn!("Feed fetch failed with status {}: {}", response.status(), url);
-            return Err(FetchError::RequestFailed(
-                response.error_for_status().unwrap_err(),
-            ));
+            let status = response.status();
+            let retry_after = response
+                .headers()
+                .get(header::RETRY_AFTER)
+                .and_then(|v| v.to_str().ok())
+                .map(String::from);
+
+            tracing::warn!("Feed fetch failed with status {}: {}", status, url);
+
+            let message = format!(
+                "{} - {}",
+                status.as_u16(),
+                status.canonical_reason().unwrap_or("Unknown")
+            );
+
+            return Err(FetchError::RequestFailed {
+                status,
+                message,
+                retry_after,
+            });
         }
 
         // Extract new cache headers

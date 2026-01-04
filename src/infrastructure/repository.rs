@@ -1,6 +1,6 @@
-use crate::domain::models::{Article, CreateFeed, Feed, Tag};
+use crate::domain::models::{Article, CreateFeed, Feed, Log, LogWithFeed, Tag};
 use chrono::{DateTime, Utc};
-use sqlx::{Error as SqlxError, SqlitePool};
+use sqlx::{Error as SqlxError, Row, SqlitePool};
 
 pub async fn create_feed(
     pool: &SqlitePool,
@@ -337,4 +337,95 @@ pub async fn get_feed_tags(pool: &SqlitePool, feed_id: i64) -> Result<Vec<Tag>, 
     .await?;
 
     Ok(tags)
+}
+
+// Log operations
+pub async fn insert_log(
+    pool: &SqlitePool,
+    feed_id: i64,
+    log_type: &str,
+    status_code: Option<i32>,
+    error_message: Option<&str>,
+    retry_after: Option<&str>,
+) -> Result<(), SqlxError> {
+    sqlx::query(
+        r#"
+        INSERT INTO logs (feed_id, log_type, status_code, error_message, retry_after)
+        VALUES (?, ?, ?, ?, ?)
+        "#,
+    )
+    .bind(feed_id)
+    .bind(log_type)
+    .bind(status_code)
+    .bind(error_message)
+    .bind(retry_after)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn list_logs_with_feeds(
+    pool: &SqlitePool,
+    feed_id: Option<i64>,
+    log_type: Option<&str>,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<LogWithFeed>, SqlxError> {
+    let mut query = String::from(
+        r#"
+        SELECT
+            l.id, l.feed_id, l.log_type, l.status_code, l.error_message, l.retry_after, l.fetched_at,
+            f.title as feed_title, f.url as feed_url
+        FROM logs l
+        INNER JOIN feeds f ON f.id = l.feed_id
+        WHERE 1=1
+        "#,
+    );
+
+    let mut bindings: Vec<String> = Vec::new();
+
+    if feed_id.is_some() {
+        query.push_str(" AND l.feed_id = ?");
+        bindings.push(feed_id.unwrap().to_string());
+    }
+
+    if log_type.is_some() {
+        query.push_str(" AND l.log_type = ?");
+        bindings.push(log_type.unwrap().to_string());
+    }
+
+    query.push_str(" ORDER BY l.fetched_at DESC LIMIT ? OFFSET ?");
+    bindings.push(limit.to_string());
+    bindings.push(offset.to_string());
+
+    let mut sqlx_query = sqlx::query(&query);
+    for binding in &bindings {
+        sqlx_query = sqlx_query.bind(binding);
+    }
+
+    let rows = sqlx_query.fetch_all(pool).await?;
+
+    let mut logs = Vec::new();
+    for row in rows {
+        let log = Log {
+            id: row.get("id"),
+            feed_id: row.get("feed_id"),
+            log_type: row.get("log_type"),
+            status_code: row.get("status_code"),
+            error_message: row.get("error_message"),
+            retry_after: row.get("retry_after"),
+            fetched_at: row.get("fetched_at"),
+        };
+
+        let log_with_feed = LogWithFeed {
+            log,
+            feed_title: row.get("feed_title"),
+            feed_url: row.get("feed_url"),
+        };
+
+        logs.push(log_with_feed);
+    }
+
+    Ok(logs)
 }

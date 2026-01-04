@@ -58,3 +58,21 @@ pub struct FeedTag {
     pub tag_id: i64,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Log {
+    pub id: i64,
+    pub feed_id: i64,
+    pub log_type: String,
+    pub status_code: Option<i32>,
+    pub error_message: Option<String>,
+    pub retry_after: Option<String>,
+    pub fetched_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogWithFeed {
+    pub log: Log,
+    pub feed_title: String,
+    pub feed_url: String,
+}

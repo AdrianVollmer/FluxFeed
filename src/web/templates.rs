@@ -1,5 +1,5 @@
 use askama::Template;
-use crate::domain::models::{Article, Feed, Tag};
+use crate::domain::models::{Article, Feed, LogWithFeed, Tag};
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -74,4 +74,30 @@ pub struct LoadMoreButtonTemplate {
     pub next_offset: i64,
     pub filter_feed: Option<i64>,
     pub filter_read: Option<bool>,
+}
+
+#[derive(Template)]
+#[template(path = "logs/list.html")]
+pub struct LogsListTemplate {
+    pub logs: Vec<LogWithFeed>,
+    pub feeds: Vec<Feed>,
+    pub offset: i64,
+    pub limit: i64,
+    pub has_more: bool,
+    pub filter_feed: Option<i64>,
+    pub filter_log_type: Option<String>,
+}
+
+#[derive(Template)]
+#[template(path = "logs/_log_rows.html")]
+pub struct LogRowsTemplate {
+    pub logs: Vec<LogWithFeed>,
+}
+
+#[derive(Template)]
+#[template(path = "logs/_load_more_button.html")]
+pub struct LoadMoreButtonLogsTemplate {
+    pub next_offset: i64,
+    pub filter_feed: Option<i64>,
+    pub filter_log_type: Option<String>,
 }

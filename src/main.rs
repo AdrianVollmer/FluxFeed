@@ -64,6 +64,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/articles/:id/toggle-read", post(api::articles::toggle_read_status))
         .route("/articles/:id/toggle-read-compact", post(api::articles::toggle_read_status_compact))
         .route("/articles/mark-all-read", post(api::articles::mark_all_read))
+        .route("/logs", get(api::logs::list_logs))
         .route("/api/fetch", post(api::manual_fetch::trigger_fetch))
         .nest_service("/static", ServeDir::new("static"))
         .layer(CompressionLayer::new())
