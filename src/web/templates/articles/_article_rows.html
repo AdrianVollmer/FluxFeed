@@ -38,17 +38,45 @@
                     {% endif %}
                 </h3>
 
-                <div class="flex gap-3 flex-shrink-0">
+                <div class="flex gap-2 flex-shrink-0">
+                    <button
+                        hx-post="/articles/{{ item.article.id }}/toggle-starred"
+                        hx-target="#article-{{ item.article.id }}"
+                        hx-swap="outerHTML"
+                        class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                        title="{% if item.article.is_starred %}Unstar article{% else %}Star article{% endif %}">
+                        {% if item.article.is_starred %}
+                        <svg class="w-5 h-5 text-yellow-500 fill-current" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        {% else %}
+                        <svg class="w-5 h-5 text-gray-400 hover:text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                        </svg>
+                        {% endif %}
+                    </button>
                     <a href="/articles/{{ item.article.id }}/reader"
-                        class="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap">
-                        Open in reader mode
+                        class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                        title="Open in reader mode">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
                     </a>
                     <button
                         hx-post="/articles/{{ item.article.id }}/toggle-read"
                         hx-target="#article-{{ item.article.id }}"
                         hx-swap="outerHTML"
-                        class="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap">
-                        {% if item.article.is_read %}Mark Unread{% else %}Mark Read{% endif %}
+                        class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                        title="{% if item.article.is_read %}Mark as unread{% else %}Mark as read{% endif %}">
+                        {% if item.article.is_read %}
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76"/>
+                        </svg>
+                        {% else %}
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        {% endif %}
                     </button>
                 </div>
             </div>
