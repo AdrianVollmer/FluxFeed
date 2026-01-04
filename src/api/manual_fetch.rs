@@ -35,9 +35,7 @@ pub async fn trigger_fetch(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
-async fn perform_fetch(
-    state: &AppState,
-) -> Result<(usize, usize), Box<dyn std::error::Error>> {
+async fn perform_fetch(state: &AppState) -> Result<(usize, usize), Box<dyn std::error::Error>> {
     tracing::info!("Manual feed fetch triggered");
 
     let feeds = repository::get_feeds_to_update(&state.db_pool).await?;
@@ -138,10 +136,18 @@ fn generate_guid(entry: &feed_rs::model::Entry) -> String {
     if !entry.id.is_empty() {
         entry.id.clone()
     } else if let Some(link) = entry.links.first() {
-        let title = entry.title.as_ref().map(|t| t.content.as_str()).unwrap_or("");
+        let title = entry
+            .title
+            .as_ref()
+            .map(|t| t.content.as_str())
+            .unwrap_or("");
         format!("{}-{}", link.href, title)
     } else {
-        let title = entry.title.as_ref().map(|t| t.content.as_str()).unwrap_or("untitled");
+        let title = entry
+            .title
+            .as_ref()
+            .map(|t| t.content.as_str())
+            .unwrap_or("untitled");
         let date = entry
             .published
             .or(entry.updated)
@@ -190,5 +196,8 @@ fn extract_author(entry: &feed_rs::model::Entry) -> Option<String> {
 }
 
 fn extract_published_date(entry: &feed_rs::model::Entry) -> Option<chrono::DateTime<Utc>> {
-    entry.published.or(entry.updated).map(|dt| dt.with_timezone(&Utc))
+    entry
+        .published
+        .or(entry.updated)
+        .map(|dt| dt.with_timezone(&Utc))
 }

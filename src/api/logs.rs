@@ -46,9 +46,7 @@ pub async fn list_logs(
         let mut html = String::new();
 
         // Render log rows using template
-        let rows_template = LogRowsTemplate {
-            logs: logs_to_show,
-        };
+        let rows_template = LogRowsTemplate { logs: logs_to_show };
         html.push_str(&rows_template.render()?);
 
         // Update the Load More button using out-of-band swap
@@ -58,7 +56,9 @@ pub async fn list_logs(
                 filter_feed: params.feed_id,
                 filter_log_type: params.log_type.clone(),
             };
-            html.push_str(r#"<div id="load-more-container" hx-swap-oob="true" class="mt-8 text-center">"#);
+            html.push_str(
+                r#"<div id="load-more-container" hx-swap-oob="true" class="mt-8 text-center">"#,
+            );
             html.push_str(&button_template.render()?);
             html.push_str("</div>");
         } else {

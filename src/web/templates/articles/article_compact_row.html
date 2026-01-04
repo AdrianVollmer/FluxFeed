@@ -1,25 +1,31 @@
-<tr id="article-compact-{{ article.id }}" class="{% if article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity">
+<tr id="article-compact-{{ article.id }}" class="compact-article-row {% if article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity cursor-pointer" data-article-id="{{ article.id }}">
     <td class="px-3 py-4 whitespace-nowrap">
         <button
             hx-post="/articles/{{ article.id }}/toggle-read-compact"
             hx-target="#article-compact-{{ article.id }}"
             hx-swap="outerHTML"
+            onclick="event.stopPropagation()"
             class="w-3 h-3 rounded-full border-2 {% if article.is_read %}bg-gray-400 border-gray-400{% else %}bg-blue-600 border-blue-600{% endif %} hover:scale-125 transition-transform"
             title="{% if article.is_read %}Mark as unread{% else %}Mark as read{% endif %}">
         </button>
     </td>
     <td class="px-6 py-4">
-        <div class="text-sm font-medium {% if article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %}">
-            {% if article.url.is_some() %}
-            <a href="{{ article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 dark:hover:text-blue-400">
+        <div class="flex items-center gap-2">
+            <svg class="expand-icon w-4 h-4 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+            <div class="text-sm font-medium {% if article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %}">
+                {% if article.url.is_some() %}
+                <a href="{{ article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="hover:text-blue-600 dark:hover:text-blue-400">
+                    {{ article.title }}
+                    <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                </a>
+                {% else %}
                 {{ article.title }}
-                <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                </svg>
-            </a>
-            {% else %}
-            {{ article.title }}
-            {% endif %}
+                {% endif %}
+            </div>
         </div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
@@ -46,8 +52,72 @@
             hx-post="/articles/{{ article.id }}/toggle-read-compact"
             hx-target="#article-compact-{{ article.id }}"
             hx-swap="outerHTML"
+            onclick="event.stopPropagation()"
             class="text-blue-600 dark:text-blue-400 hover:underline">
             {% if article.is_read %}Unread{% else %}Read{% endif %}
         </button>
+    </td>
+</tr>
+<tr id="article-compact-{{ article.id }}-expanded" class="compact-article-expanded hidden" data-article-id="{{ article.id }}">
+    <td colspan="6" class="px-6 py-4 bg-gray-50 dark:bg-gray-900">
+        <div class="flex gap-4">
+            <!-- OpenGraph Image (if available) -->
+            {% if article.og_image.is_some() %}
+            <div class="flex-shrink-0 hidden sm:block">
+                <img
+                    src="{{ article.og_image.as_ref().unwrap() }}"
+                    alt="{{ article.title }}"
+                    class="w-32 h-32 object-cover rounded"
+                    loading="lazy"
+                    onerror="this.style.display='none'">
+            </div>
+            {% endif %}
+
+            <div class="flex-1 min-w-0">
+                <!-- Article metadata -->
+                <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        {% if article.published_at.is_some() %}
+                        {{ article.published_at.as_ref().unwrap().format("%b %d, %Y %H:%M") }}
+                        {% else %}
+                        No date
+                        {% endif %}
+                    </span>
+
+                    {% if article.author.is_some() %}
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        {{ article.author.as_ref().unwrap() }}
+                    </span>
+                    {% endif %}
+
+                    {% if article.og_site_name.is_some() %}
+                    <span class="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                        {{ article.og_site_name.as_ref().unwrap() }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Article summary/content -->
+                {% if article.summary.is_some() %}
+                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                    {{ article.summary.as_ref().unwrap()|safe }}
+                </div>
+                {% else if article.content.is_some() %}
+                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                    {{ article.content.as_ref().unwrap()|safe }}
+                </div>
+                {% else if article.og_description.is_some() %}
+                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                    {{ article.og_description.as_ref().unwrap() }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </td>
 </tr>

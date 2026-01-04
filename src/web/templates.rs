@@ -1,5 +1,5 @@
-use askama::Template;
 use crate::domain::models::{Article, Feed, LogWithFeed, Tag};
+use askama::Template;
 
 #[derive(Template)]
 #[template(path = "index.html")]

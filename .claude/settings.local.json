@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:css:*)",
+      "Bash(curl:*)",
+      "Bash(cargo build:*)",
+      "Bash(/home/node/.cargo/bin/cargo build)",
+      "Bash(/home/node/.cargo/bin/cargo run)",
+      "Bash(git add:*)",
+      "Bash(git -c user.name=\"Claude Code\" -c user.email=\"noreply@anthropic.com\" commit -m \"$\\(cat <<''EOF''\nImplement feed management CRUD with HTMX-powered UI\n\nUsers can now manage their RSS feed subscriptions through an intuitive\nweb interface. This enables the core workflow of adding feeds they want\nto follow and removing feeds they no longer need, which is essential\nbefore implementing the RSS fetching functionality.\n\nThe implementation follows clean architecture principles with separated\nlayers for domain logic, data access, and HTTP handling. This makes the\ncodebase maintainable and testable as we add more features.\n\nFeed management features:\n- List all subscribed feeds with visual cards\n- Add new feeds via modal form \\(no page reload\\)\n- Delete feeds with HTMX confirmation dialog\n- URL validation prevents invalid or duplicate feeds\n- Cascading deletes remove associated articles\n\nTechnical implementation:\n- Domain models with SQLx FromRow for type-safe queries\n- Repository pattern for database operations\n- Service layer with business logic and error handling\n- Askama templates with compile-time checking\n- HTMX for progressive enhancement \\(forms/deletes inline\\)\n- AppState for shared database pool across handlers\n\nThe UI provides immediate feedback through HTMX partial updates rather\nthan full page reloads, creating a snappy user experience that aligns\nwith the project''s goal of being modern and responsive.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(uv run python:*)",
+      "Bash(pkill:*)"
+    ]
+  }
+}

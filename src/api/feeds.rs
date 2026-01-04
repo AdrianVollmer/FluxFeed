@@ -1,6 +1,8 @@
 use crate::domain::feed_service;
 use crate::infrastructure::{repository, scheduler};
-use crate::web::templates::{FeedDetailTemplate, FeedFormTemplate, FeedRowTemplate, FeedsListTemplate};
+use crate::web::templates::{
+    FeedDetailTemplate, FeedFormTemplate, FeedRowTemplate, FeedsListTemplate,
+};
 use askama::Template;
 use axum::{
     extract::{Path, State},
@@ -82,7 +84,11 @@ pub async fn fetch_feed(
 
     match scheduler::fetch_single_feed(&state.db_pool, &feed).await {
         Ok(scheduler::FetchSingleFeedResult::Updated { new_articles_count }) => {
-            tracing::info!("Fetched feed {} with {} new articles", feed_id, new_articles_count);
+            tracing::info!(
+                "Fetched feed {} with {} new articles",
+                feed_id,
+                new_articles_count
+            );
         }
         Ok(scheduler::FetchSingleFeedResult::NotModified) => {
             tracing::info!("Feed {} not modified", feed_id);
@@ -127,11 +133,7 @@ impl IntoResponse for AppError {
         match self {
             AppError::TemplateError(err) => {
                 tracing::error!("Template error: {}", err);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Internal server error",
-                )
-                    .into_response()
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
             }
             AppError::ServiceError(feed_service::FeedServiceError::NotFound) => {
                 (StatusCode::NOT_FOUND, "Feed not found").into_response()
@@ -144,26 +146,22 @@ impl IntoResponse for AppError {
             }
             AppError::ServiceError(feed_service::FeedServiceError::DatabaseError(err)) => {
                 tracing::error!("Database error: {}", err);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Internal server error",
-                )
-                    .into_response()
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
             }
-            AppError::ServiceError(feed_service::FeedServiceError::FetchError(msg)) => {
-                (StatusCode::BAD_GATEWAY, format!("Feed fetch failed: {}", msg)).into_response()
-            }
+            AppError::ServiceError(feed_service::FeedServiceError::FetchError(msg)) => (
+                StatusCode::BAD_GATEWAY,
+                format!("Feed fetch failed: {}", msg),
+            )
+                .into_response(),
             AppError::DatabaseError(err) => {
                 tracing::error!("Database error: {}", err);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Internal server error",
-                )
-                    .into_response()
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
             }
-            AppError::FetchError(msg) => {
-                (StatusCode::BAD_GATEWAY, format!("Feed fetch failed: {}", msg)).into_response()
-            }
+            AppError::FetchError(msg) => (
+                StatusCode::BAD_GATEWAY,
+                format!("Feed fetch failed: {}", msg),
+            )
+                .into_response(),
         }
     }
 }

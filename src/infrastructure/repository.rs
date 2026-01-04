@@ -2,10 +2,7 @@ use crate::domain::models::{Article, CreateFeed, Feed, Log, LogWithFeed, Tag};
 use chrono::{DateTime, Utc};
 use sqlx::{Error as SqlxError, Row, SqlitePool};
 
-pub async fn create_feed(
-    pool: &SqlitePool,
-    create_feed: CreateFeed,
-) -> Result<Feed, SqlxError> {
+pub async fn create_feed(pool: &SqlitePool, create_feed: CreateFeed) -> Result<Feed, SqlxError> {
     let now = Utc::now();
 
     let feed = sqlx::query_as::<_, Feed>(
@@ -39,10 +36,7 @@ pub async fn list_feeds(pool: &SqlitePool) -> Result<Vec<Feed>, SqlxError> {
     Ok(feeds)
 }
 
-pub async fn get_feed_by_id(
-    pool: &SqlitePool,
-    feed_id: i64,
-) -> Result<Option<Feed>, SqlxError> {
+pub async fn get_feed_by_id(pool: &SqlitePool, feed_id: i64) -> Result<Option<Feed>, SqlxError> {
     let feed = sqlx::query_as::<_, Feed>(
         r#"
         SELECT * FROM feeds
@@ -70,10 +64,7 @@ pub async fn delete_feed(pool: &SqlitePool, feed_id: i64) -> Result<bool, SqlxEr
     Ok(result.rows_affected() > 0)
 }
 
-pub async fn get_feed_article_count(
-    pool: &SqlitePool,
-    feed_id: i64,
-) -> Result<i64, SqlxError> {
+pub async fn get_feed_article_count(pool: &SqlitePool, feed_id: i64) -> Result<i64, SqlxError> {
     let count: (i64,) = sqlx::query_as(
         r#"
         SELECT COUNT(*) FROM articles
@@ -87,10 +78,7 @@ pub async fn get_feed_article_count(
     Ok(count.0)
 }
 
-pub async fn get_feed_unread_count(
-    pool: &SqlitePool,
-    feed_id: i64,
-) -> Result<i64, SqlxError> {
+pub async fn get_feed_unread_count(pool: &SqlitePool, feed_id: i64) -> Result<i64, SqlxError> {
     let count: (i64,) = sqlx::query_as(
         r#"
         SELECT COUNT(*) FROM articles
@@ -260,9 +248,7 @@ pub async fn list_articles(
     limit: i64,
     offset: i64,
 ) -> Result<Vec<Article>, SqlxError> {
-    let mut query_str = String::from(
-        "SELECT * FROM articles WHERE 1=1"
-    );
+    let mut query_str = String::from("SELECT * FROM articles WHERE 1=1");
 
     if feed_id.is_some() {
         query_str.push_str(" AND feed_id = ?");
@@ -282,11 +268,7 @@ pub async fn list_articles(
         query = query.bind(read);
     }
 
-    let articles = query
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(pool)
-        .await?;
+    let articles = query.bind(limit).bind(offset).fetch_all(pool).await?;
 
     Ok(articles)
 }
@@ -295,12 +277,10 @@ pub async fn get_article_by_id(
     pool: &SqlitePool,
     article_id: i64,
 ) -> Result<Option<Article>, SqlxError> {
-    let article = sqlx::query_as::<_, Article>(
-        "SELECT * FROM articles WHERE id = ?"
-    )
-    .bind(article_id)
-    .fetch_optional(pool)
-    .await?;
+    let article = sqlx::query_as::<_, Article>("SELECT * FROM articles WHERE id = ?")
+        .bind(article_id)
+        .fetch_optional(pool)
+        .await?;
 
     Ok(article)
 }
@@ -312,14 +292,12 @@ pub async fn update_article_read_status(
 ) -> Result<(), SqlxError> {
     let now = Utc::now();
 
-    sqlx::query(
-        "UPDATE articles SET is_read = ?, updated_at = ? WHERE id = ?"
-    )
-    .bind(is_read)
-    .bind(now)
-    .bind(article_id)
-    .execute(pool)
-    .await?;
+    sqlx::query("UPDATE articles SET is_read = ?, updated_at = ? WHERE id = ?")
+        .bind(is_read)
+        .bind(now)
+        .bind(article_id)
+        .execute(pool)
+        .await?;
 
     Ok(())
 }
@@ -362,30 +340,26 @@ pub async fn mark_all_articles_read(
 
     let result = if let Some(fid) = feed_id {
         sqlx::query(
-            "UPDATE articles SET is_read = 1, updated_at = ? WHERE feed_id = ? AND is_read = 0"
+            "UPDATE articles SET is_read = 1, updated_at = ? WHERE feed_id = ? AND is_read = 0",
         )
         .bind(now)
         .bind(fid)
         .execute(pool)
         .await?
     } else {
-        sqlx::query(
-            "UPDATE articles SET is_read = 1, updated_at = ? WHERE is_read = 0"
-        )
-        .bind(now)
-        .execute(pool)
-        .await?
+        sqlx::query("UPDATE articles SET is_read = 1, updated_at = ? WHERE is_read = 0")
+            .bind(now)
+            .execute(pool)
+            .await?
     };
 
     Ok(result.rows_affected())
 }
 
 pub async fn get_total_unread_count(pool: &SqlitePool) -> Result<i64, SqlxError> {
-    let count: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM articles WHERE is_read = 0"
-    )
-    .fetch_one(pool)
-    .await?;
+    let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM articles WHERE is_read = 0")
+        .fetch_one(pool)
+        .await?;
 
     Ok(count.0)
 }

@@ -125,7 +125,10 @@ impl RssFetcher {
 
         tracing::info!(
             "Successfully parsed feed: {} ({} entries)",
-            feed.title.as_ref().map(|t| t.content.as_str()).unwrap_or("Untitled"),
+            feed.title
+                .as_ref()
+                .map(|t| t.content.as_str())
+                .unwrap_or("Untitled"),
             feed.entries.len()
         );
 

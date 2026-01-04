@@ -10,16 +10,13 @@ impl Config {
     pub fn from_env() -> Result<Self, Box<dyn std::error::Error>> {
         dotenvy::dotenv().ok();
 
-        let database_url = env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "sqlite://fluxfeed.db".to_string());
+        let database_url =
+            env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://fluxfeed.db".to_string());
 
         let port = env::var("PORT")
             .unwrap_or_else(|_| "3000".to_string())
             .parse::<u16>()?;
 
-        Ok(Config {
-            database_url,
-            port,
-        })
+        Ok(Config { database_url, port })
     }
 }

@@ -4,9 +4,7 @@ use chrono::Utc;
 use std::time::Duration;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
-pub async fn start_scheduler(
-    state: AppState,
-) -> Result<JobScheduler, Box<dyn std::error::Error>> {
+pub async fn start_scheduler(state: AppState) -> Result<JobScheduler, Box<dyn std::error::Error>> {
     let scheduler = JobScheduler::new().await?;
 
     // Fetch all feeds every 5 minutes
@@ -62,24 +60,17 @@ pub async fn fetch_single_feed(
             repository::insert_log(pool, feed.id, "success", None, None, None).await?;
 
             // Update feed metadata from RSS (including title, description, site_url)
-            let rss_title = parsed_feed
-                .title
-                .as_ref()
-                .map(|t| t.content.clone());
-            let rss_description = parsed_feed
-                .description
-                .as_ref()
-                .map(|d| d.content.clone());
-            let feed_site_url = parsed_feed
-                .links
-                .first()
-                .map(|link| link.href.clone());
+            let rss_title = parsed_feed.title.as_ref().map(|t| t.content.clone());
+            let rss_description = parsed_feed.description.as_ref().map(|d| d.content.clone());
+            let feed_site_url = parsed_feed.links.first().map(|link| link.href.clone());
 
             // Implement description fallback logic:
             // If no description exists in DB, use RSS feed's title
             // If RSS feed has no title, use URL as description
             let feed_description = if feed.description.is_none() {
-                rss_description.or_else(|| rss_title.clone()).or_else(|| Some(feed.url.clone()))
+                rss_description
+                    .or_else(|| rss_title.clone())
+                    .or_else(|| Some(feed.url.clone()))
             } else {
                 // Keep existing description
                 None
@@ -149,9 +140,7 @@ pub async fn fetch_single_feed(
                 });
             }
 
-            Ok(FetchSingleFeedResult::Updated {
-                new_articles_count,
-            })
+            Ok(FetchSingleFeedResult::Updated { new_articles_count })
         }
         Ok(rss_fetcher::FetchResult::NotModified) => {
             tracing::debug!("Feed not modified: {}", feed.title);
@@ -265,11 +254,19 @@ fn generate_guid(entry: &feed_rs::model::Entry) -> String {
         entry.id.clone()
     } else if let Some(link) = entry.links.first() {
         // Generate from link + title
-        let title = entry.title.as_ref().map(|t| t.content.as_str()).unwrap_or("");
+        let title = entry
+            .title
+            .as_ref()
+            .map(|t| t.content.as_str())
+            .unwrap_or("");
         format!("{}-{}", link.href, title)
     } else {
         // Fallback: use title + published date
-        let title = entry.title.as_ref().map(|t| t.content.as_str()).unwrap_or("untitled");
+        let title = entry
+            .title
+            .as_ref()
+            .map(|t| t.content.as_str())
+            .unwrap_or("untitled");
         let date = entry
             .published
             .or(entry.updated)
@@ -314,7 +311,10 @@ fn extract_author(entry: &feed_rs::model::Entry) -> Option<String> {
 }
 
 fn extract_published_date(entry: &feed_rs::model::Entry) -> Option<chrono::DateTime<Utc>> {
-    entry.published.or(entry.updated).map(|dt| dt.with_timezone(&Utc))
+    entry
+        .published
+        .or(entry.updated)
+        .map(|dt| dt.with_timezone(&Utc))
 }
 
 /// Fetch OpenGraph metadata for multiple articles in the background
@@ -323,7 +323,10 @@ async fn fetch_opengraph_for_articles(
     articles: Vec<(i64, String)>, // (article_id, url)
 ) {
     let article_count = articles.len();
-    tracing::info!("Starting background OpenGraph fetch for {} articles", article_count);
+    tracing::info!(
+        "Starting background OpenGraph fetch for {} articles",
+        article_count
+    );
 
     for (article_id, url) in articles {
         // Fetch OpenGraph metadata
@@ -344,7 +347,11 @@ async fn fetch_opengraph_for_articles(
                     tracing::debug!("Updated OpenGraph data for article {}", article_id);
                 }
                 Err(e) => {
-                    tracing::warn!("Failed to update OpenGraph for article {}: {}", article_id, e);
+                    tracing::warn!(
+                        "Failed to update OpenGraph for article {}: {}",
+                        article_id,
+                        e
+                    );
                 }
             }
         }
@@ -353,7 +360,10 @@ async fn fetch_opengraph_for_articles(
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
 
-    tracing::info!("Completed background OpenGraph fetch for {} articles", article_count);
+    tracing::info!(
+        "Completed background OpenGraph fetch for {} articles",
+        article_count
+    );
 }
 
 async fn extract_opengraph_from_url(
@@ -362,7 +372,12 @@ async fn extract_opengraph_from_url(
     // Try to fetch and parse OpenGraph metadata
     match webpage::Webpage::from_url(url_str, webpage::WebpageOptions::default()) {
         Ok(webpage) => {
-            let og_image = webpage.html.opengraph.images.first().map(|img| img.url.clone());
+            let og_image = webpage
+                .html
+                .opengraph
+                .images
+                .first()
+                .map(|img| img.url.clone());
             let og_description = webpage
                 .html
                 .opengraph

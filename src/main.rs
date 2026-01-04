@@ -6,13 +6,15 @@ mod web;
 
 use api::feeds::AppState;
 use askama::Template;
-use axum::{response::Html, routing::{get, post}, Router};
+use axum::{
+    response::Html,
+    routing::{get, post},
+    Router,
+};
 use config::Config;
 use infrastructure::database::setup_database;
 use std::net::SocketAddr;
-use tower_http::{
-    compression::CompressionLayer, services::ServeDir, trace::TraceLayer,
-};
+use tower_http::{compression::CompressionLayer, services::ServeDir, trace::TraceLayer};
 use web::templates::IndexTemplate;
 
 async fn index() -> Html<String> {
@@ -26,9 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| {
-                    "fluxfeed=debug,tower_http=debug".into()
-                }),
+                .unwrap_or_else(|_| "fluxfeed=debug,tower_http=debug".into()),
         )
         .init();
 
@@ -57,14 +57,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/", get(index))
         .route("/health", get(api::health::check))
-        .route("/feeds", get(api::feeds::list_feeds).post(api::feeds::create_feed))
+        .route(
+            "/feeds",
+            get(api::feeds::list_feeds).post(api::feeds::create_feed),
+        )
         .route("/feeds/new", get(api::feeds::show_feed_form))
-        .route("/feeds/:id", get(api::feeds::show_feed).delete(api::feeds::delete_feed))
+        .route(
+            "/feeds/:id",
+            get(api::feeds::show_feed).delete(api::feeds::delete_feed),
+        )
         .route("/feeds/:id/fetch", post(api::feeds::fetch_feed))
         .route("/articles", get(api::articles::list_articles))
-        .route("/articles/:id/toggle-read", post(api::articles::toggle_read_status))
-        .route("/articles/:id/toggle-read-compact", post(api::articles::toggle_read_status_compact))
-        .route("/articles/mark-all-read", post(api::articles::mark_all_read))
+        .route(
+            "/articles/:id/toggle-read",
+            post(api::articles::toggle_read_status),
+        )
+        .route(
+            "/articles/:id/toggle-read-compact",
+            post(api::articles::toggle_read_status_compact),
+        )
+        .route(
+            "/articles/mark-all-read",
+            post(api::articles::mark_all_read),
+        )
         .route("/logs", get(api::logs::list_logs))
         .route("/api/fetch", post(api::manual_fetch::trigger_fetch))
         .nest_service("/static", ServeDir::new("static"))

@@ -45,9 +45,7 @@ pub async fn create_feed(
 
     let feed = match repository::create_feed(pool, create_feed).await {
         Ok(feed) => feed,
-        Err(sqlx::Error::Database(db_err))
-            if db_err.message().contains("UNIQUE constraint") =>
-        {
+        Err(sqlx::Error::Database(db_err)) if db_err.message().contains("UNIQUE constraint") => {
             return Err(FeedServiceError::DuplicateUrl);
         }
         Err(e) => return Err(FeedServiceError::DatabaseError(e)),
@@ -78,10 +76,7 @@ pub async fn list_all_feeds(pool: &SqlitePool) -> Result<Vec<Feed>, FeedServiceE
     Ok(repository::list_feeds(pool).await?)
 }
 
-pub async fn delete_feed(
-    pool: &SqlitePool,
-    feed_id: i64,
-) -> Result<(), FeedServiceError> {
+pub async fn delete_feed(pool: &SqlitePool, feed_id: i64) -> Result<(), FeedServiceError> {
     let deleted = repository::delete_feed(pool, feed_id).await?;
 
     if deleted {
