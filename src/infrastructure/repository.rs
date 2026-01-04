@@ -256,14 +256,14 @@ pub async fn list_articles(
 
     // Add FTS join when search is active
     if search_query.is_some() {
-        query_str.push_str(" LEFT JOIN articles_fts fts ON a.id = fts.rowid");
+        query_str.push_str(" INNER JOIN articles_fts ON a.id = articles_fts.rowid");
     }
 
     query_str.push_str(" WHERE 1=1");
 
     // Add search filter
     if search_query.is_some() {
-        query_str.push_str(" AND fts.articles_fts MATCH ?");
+        query_str.push_str(" AND articles_fts MATCH ?");
     }
 
     // Add existing filters
