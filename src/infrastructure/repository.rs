@@ -241,31 +241,66 @@ pub async fn get_feeds_to_update(pool: &SqlitePool) -> Result<Vec<Feed>, SqlxErr
 
 // Article query methods
 
+#[allow(clippy::too_many_arguments)]
 pub async fn list_articles(
     pool: &SqlitePool,
     feed_id: Option<i64>,
     is_read: Option<bool>,
+    search_query: Option<String>,
+    date_from: Option<chrono::DateTime<chrono::Utc>>,
+    date_to: Option<chrono::DateTime<chrono::Utc>>,
     limit: i64,
     offset: i64,
 ) -> Result<Vec<Article>, SqlxError> {
-    let mut query_str = String::from("SELECT * FROM articles WHERE 1=1");
+    let mut query_str = String::from("SELECT a.* FROM articles a");
 
+    // Add FTS join when search is active
+    if search_query.is_some() {
+        query_str.push_str(" LEFT JOIN articles_fts fts ON a.id = fts.rowid");
+    }
+
+    query_str.push_str(" WHERE 1=1");
+
+    // Add search filter
+    if search_query.is_some() {
+        query_str.push_str(" AND fts.articles_fts MATCH ?");
+    }
+
+    // Add existing filters
     if feed_id.is_some() {
-        query_str.push_str(" AND feed_id = ?");
+        query_str.push_str(" AND a.feed_id = ?");
     }
     if is_read.is_some() {
-        query_str.push_str(" AND is_read = ?");
+        query_str.push_str(" AND a.is_read = ?");
     }
 
-    query_str.push_str(" ORDER BY published_at DESC, created_at DESC LIMIT ? OFFSET ?");
+    // Add date range filters
+    if date_from.is_some() {
+        query_str.push_str(" AND a.published_at >= ?");
+    }
+    if date_to.is_some() {
+        query_str.push_str(" AND a.published_at <= ?");
+    }
+
+    query_str.push_str(" ORDER BY a.published_at DESC, a.created_at DESC LIMIT ? OFFSET ?");
 
     let mut query = sqlx::query_as::<_, Article>(&query_str);
 
+    // Bind parameters in correct order
+    if let Some(search) = search_query {
+        query = query.bind(search);
+    }
     if let Some(fid) = feed_id {
         query = query.bind(fid);
     }
     if let Some(read) = is_read {
         query = query.bind(read);
+    }
+    if let Some(from) = date_from {
+        query = query.bind(from);
+    }
+    if let Some(to) = date_to {
+        query = query.bind(to);
     }
 
     let articles = query.bind(limit).bind(offset).fetch_all(pool).await?;

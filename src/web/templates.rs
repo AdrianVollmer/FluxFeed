@@ -45,6 +45,9 @@ pub struct ArticlesListTemplate {
     pub filter_feed: Option<i64>,
     pub filter_read: Option<bool>,
     pub unread_count: i64,
+    pub search_query: Option<String>,
+    pub date_from: Option<String>,
+    pub date_to: Option<String>,
 }
 
 #[derive(Template)]
@@ -86,6 +89,9 @@ pub struct LoadMoreButtonTemplate {
     pub next_offset: i64,
     pub filter_feed: Option<i64>,
     pub filter_read: Option<bool>,
+    pub search_query: Option<String>,
+    pub date_from: Option<String>,
+    pub date_to: Option<String>,
 }
 
 #[derive(Template)]

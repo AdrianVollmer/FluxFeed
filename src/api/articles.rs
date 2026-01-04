@@ -20,6 +20,9 @@ pub struct ArticleListParams {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
     pub view: Option<String>,
+    pub q: Option<String>,
+    pub date_from: Option<String>,
+    pub date_to: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -35,11 +38,27 @@ pub async fn list_articles(
     let limit = params.limit.unwrap_or(20);
     let offset = params.offset.unwrap_or(0);
 
+    // Parse date parameters
+    let date_from = params
+        .date_from
+        .as_ref()
+        .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc());
+
+    let date_to = params
+        .date_to
+        .as_ref()
+        .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .map(|d| d.and_hms_opt(23, 59, 59).unwrap().and_utc());
+
     // Get articles
     let articles = article_service::list_articles(
         &state.db_pool,
         params.feed_id,
         params.is_read,
+        params.q.clone(),
+        date_from,
+        date_to,
         limit + 1, // Fetch one extra to check if there are more
         offset,
     )
@@ -107,6 +126,9 @@ pub async fn list_articles(
                 next_offset: offset + limit,
                 filter_feed: params.feed_id,
                 filter_read: params.is_read,
+                search_query: params.q.clone(),
+                date_from: params.date_from.clone(),
+                date_to: params.date_to.clone(),
             };
             html.push_str(
                 r#"<div id="load-more-container" hx-swap-oob="true" class="mt-8 text-center">"#,
@@ -136,6 +158,9 @@ pub async fn list_articles(
         filter_feed: params.feed_id,
         filter_read: params.is_read,
         unread_count,
+        search_query: params.q.clone(),
+        date_from: params.date_from.clone(),
+        date_to: params.date_to.clone(),
     };
 
     Ok(Html(template.render()?))
