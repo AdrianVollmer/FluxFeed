@@ -69,6 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/feeds/:id/edit", get(api::feeds::show_edit_feed_form))
         .route("/feeds/:id/update", post(api::feeds::update_feed))
         .route("/articles", get(api::articles::list_articles))
+        .route("/articles/search", get(api::articles::search_articles))
         .route(
             "/articles/:id/toggle-read",
             post(api::articles::toggle_read_status),

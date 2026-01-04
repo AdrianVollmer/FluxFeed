@@ -95,6 +95,18 @@ pub struct LoadMoreButtonTemplate {
 }
 
 #[derive(Template)]
+#[template(path = "articles/search.html")]
+pub struct ArticleSearchTemplate {
+    pub articles: Vec<ArticleWithFeed>,
+    pub offset: i64,
+    pub limit: i64,
+    pub has_more: bool,
+    pub search_query: Option<String>,
+    pub date_from: Option<String>,
+    pub date_to: Option<String>,
+}
+
+#[derive(Template)]
 #[template(path = "logs/list.html")]
 pub struct LogsListTemplate {
     pub logs: Vec<LogWithFeed>,

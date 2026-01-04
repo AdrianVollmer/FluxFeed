@@ -3,7 +3,7 @@ use crate::domain::{article_service, feed_service};
 use crate::infrastructure::repository;
 use crate::web::templates::{
     ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleRowTemplate, ArticleRowsTemplate,
-    ArticleWithFeed, ArticlesListTemplate, LoadMoreButtonTemplate,
+    ArticleSearchTemplate, ArticleWithFeed, ArticlesListTemplate, LoadMoreButtonTemplate,
 };
 use askama::Template;
 use axum::{
@@ -306,4 +306,102 @@ impl IntoResponse for AppError {
             }
         }
     }
+}
+
+pub async fn search_articles(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<ArticleListParams>,
+) -> Result<Html<String>, AppError> {
+    let limit = params.limit.unwrap_or(20);
+    let offset = params.offset.unwrap_or(0);
+
+    // Parse date parameters
+    let date_from = params
+        .date_from
+        .as_ref()
+        .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc());
+
+    let date_to = params
+        .date_to
+        .as_ref()
+        .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .map(|d| d.and_hms_opt(23, 59, 59).unwrap().and_utc());
+
+    // Only search if we have a query or date filter
+    let (articles_with_feed, has_more) = if params.q.is_some() || date_from.is_some() || date_to.is_some() {
+        let articles = article_service::list_articles(
+            &state.db_pool,
+            None,  // No feed filter on search page
+            None,  // No read filter on search page
+            params.q.clone(),
+            date_from,
+            date_to,
+            limit + 1,
+            offset,
+        )
+        .await?;
+
+        let has_more_results = articles.len() > limit as usize;
+        let articles_to_show: Vec<_> = articles.into_iter().take(limit as usize).collect();
+
+        // Get feed info for each article
+        let mut articles_with_feed = Vec::new();
+        for article in articles_to_show {
+            let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+                .await?
+                .unwrap_or_else(|| {
+                    crate::domain::models::Feed {
+                        id: article.feed_id,
+                        url: String::new(),
+                        title: "Unknown Feed".to_string(),
+                        description: None,
+                        site_url: None,
+                        last_fetched_at: None,
+                        last_modified: None,
+                        etag: None,
+                        fetch_interval_minutes: 30,
+                        color: "#3B82F6".to_string(),
+                        fetch_frequency: "smart".to_string(),
+                        ttl_minutes: None,
+                        created_at: chrono::Utc::now(),
+                        updated_at: chrono::Utc::now(),
+                    }
+                });
+
+            articles_with_feed.push(ArticleWithFeed {
+                article,
+                feed_title: feed.title.clone(),
+                feed_color: feed.color,
+            });
+        }
+
+        // Check if this is an HTMX pagination request
+        let is_htmx = headers.get("HX-Request").is_some();
+
+        if is_htmx && offset > 0 {
+            // Return just the article rows for pagination
+            let rows_template = ArticleRowsTemplate {
+                articles: articles_with_feed,
+            };
+            return Ok(Html(rows_template.render()?));
+        }
+
+        (articles_with_feed, has_more_results)
+    } else {
+        (Vec::new(), false)
+    };
+
+    let template = ArticleSearchTemplate {
+        articles: articles_with_feed,
+        offset,
+        limit,
+        has_more,
+        search_query: params.q.clone(),
+        date_from: params.date_from.clone(),
+        date_to: params.date_to.clone(),
+    };
+
+    Ok(Html(template.render()?))
 }

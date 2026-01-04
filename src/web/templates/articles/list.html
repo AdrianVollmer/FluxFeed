@@ -19,83 +19,6 @@
         </label>
     </div>
 
-    <!-- Search Section (Desktop) -->
-    <div class="hidden md:block mb-6">
-        <form
-            hx-get="/articles"
-            hx-target="body"
-            hx-push-url="true"
-            class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-
-            <div class="flex flex-wrap gap-4 items-end">
-                <!-- Search Query -->
-                <div class="flex-1 min-w-[300px]">
-                    <label for="search-query" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Search Articles
-                    </label>
-                    <input
-                        type="text"
-                        id="search-query"
-                        name="q"
-                        value="{% if search_query.is_some() %}{{ search_query.as_ref().unwrap() }}{% endif %}"
-                        placeholder="Search title, content, author..."
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                </div>
-
-                <!-- Date From -->
-                <div class="flex-1 min-w-[180px]">
-                    <label for="date-from" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        From Date
-                    </label>
-                    <input
-                        type="date"
-                        id="date-from"
-                        name="date_from"
-                        value="{% if date_from.is_some() %}{{ date_from.as_ref().unwrap() }}{% endif %}"
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                </div>
-
-                <!-- Date To -->
-                <div class="flex-1 min-w-[180px]">
-                    <label for="date-to" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        To Date
-                    </label>
-                    <input
-                        type="date"
-                        id="date-to"
-                        name="date_to"
-                        value="{% if date_to.is_some() %}{{ date_to.as_ref().unwrap() }}{% endif %}"
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                </div>
-
-                <!-- Buttons -->
-                <div class="flex gap-2">
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                        Search
-                    </button>
-
-                    {% if search_query.is_some() || date_from.is_some() || date_to.is_some() %}
-                    <a href="/articles{% if filter_feed.is_some() %}?feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_read.is_some() %}{% if filter_feed.is_some() %}&{% else %}?{% endif %}is_read={{ filter_read.unwrap() }}{% endif %}"
-                       class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-                        Clear
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Hidden inputs to preserve other filters -->
-            {% if filter_feed.is_some() %}
-            <input type="hidden" name="feed_id" value="{{ filter_feed.unwrap() }}">
-            {% endif %}
-            {% if filter_read.is_some() %}
-            <input type="hidden" name="is_read" value="{{ filter_read.unwrap() }}">
-            {% endif %}
-        </form>
-    </div>
-
     <!-- Desktop Controls (visible >= md) -->
     <div class="hidden md:flex md:flex-row md:justify-between md:items-center mb-8 gap-4">
         <div class="flex flex-col sm:flex-row gap-3">
@@ -196,50 +119,6 @@
                 </button>
             </div>
             {% endif %}
-
-            <!-- Search Section -->
-            <div>
-                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</h3>
-
-                <input
-                    type="text"
-                    id="search-query-mobile"
-                    placeholder="Search articles..."
-                    value="{% if search_query.is_some() %}{{ search_query.as_ref().unwrap() }}{% endif %}"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 mb-3">
-
-                <div class="grid grid-cols-2 gap-2 mb-3">
-                    <div>
-                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">From</label>
-                        <input
-                            type="date"
-                            id="date-from-mobile"
-                            value="{% if date_from.is_some() %}{{ date_from.as_ref().unwrap() }}{% endif %}"
-                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">To</label>
-                        <input
-                            type="date"
-                            id="date-to-mobile"
-                            value="{% if date_to.is_some() %}{{ date_to.as_ref().unwrap() }}{% endif %}"
-                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    </div>
-                </div>
-
-                <div class="flex gap-2">
-                    <button onclick="performSearch()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        Search
-                    </button>
-                    {% if search_query.is_some() || date_from.is_some() || date_to.is_some() %}
-                    <a href="/articles{% if filter_feed.is_some() %}?feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_read.is_some() %}{% if filter_feed.is_some() %}&{% else %}?{% endif %}is_read={{ filter_read.unwrap() }}{% endif %}"
-                       onclick="document.getElementById('article-controls-toggle').checked = false"
-                       class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-                        Clear
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
 
             <!-- Feed Filter Section -->
             {% if feeds.len() > 0 %}
@@ -584,27 +463,5 @@ document.addEventListener('click', function(e) {
         }
     }
 });
-
-// Mobile search function
-function performSearch() {
-    const query = document.getElementById('search-query-mobile').value;
-    const dateFrom = document.getElementById('date-from-mobile').value;
-    const dateTo = document.getElementById('date-to-mobile').value;
-
-    const params = new URLSearchParams(window.location.search);
-
-    if (query) params.set('q', query);
-    else params.delete('q');
-
-    if (dateFrom) params.set('date_from', dateFrom);
-    else params.delete('date_from');
-
-    if (dateTo) params.set('date_to', dateTo);
-    else params.delete('date_to');
-
-    params.delete('offset'); // Reset to first page
-
-    window.location.href = '/articles?' + params.toString();
-}
 </script>
 {% endblock %}

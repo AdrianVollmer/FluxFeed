@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Search Articles - FluxFeed{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Search Articles</h1>
+
+    <!-- Search Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 mb-8">
+        <form
+            hx-get="/articles/search"
+            hx-target="body"
+            hx-push-url="true">
+
+            <div class="space-y-4">
+                <!-- Search Query -->
+                <div>
+                    <label for="search-query" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Search Query
+                    </label>
+                    <input
+                        type="text"
+                        id="search-query"
+                        name="q"
+                        value="{% if search_query.is_some() %}{{ search_query.as_ref().unwrap() }}{% endif %}"
+                        placeholder="Search title, content, author..."
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        autofocus>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Supports quotes for phrases, AND/OR operators, and column:term syntax
+                    </p>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="date-from" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            From Date
+                        </label>
+                        <input
+                            type="date"
+                            id="date-from"
+                            name="date_from"
+                            value="{% if date_from.is_some() %}{{ date_from.as_ref().unwrap() }}{% endif %}"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+
+                    <div>
+                        <label for="date-to" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            To Date
+                        </label>
+                        <input
+                            type="date"
+                            id="date-to"
+                            name="date_to"
+                            value="{% if date_to.is_some() %}{{ date_to.as_ref().unwrap() }}{% endif %}"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3">
+                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Search
+                    </button>
+
+                    {% if search_query.is_some() || date_from.is_some() || date_to.is_some() %}
+                    <a href="/articles/search" class="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
+                        Clear
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Search Results -->
+    {% if search_query.is_some() || date_from.is_some() || date_to.is_some() %}
+        {% if articles.len() > 0 %}
+            <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                Found {{ articles.len() }} result{% if articles.len() != 1 %}s{% endif %}
+            </div>
+
+            <!-- Articles Grid -->
+            <div id="articles-cards" class="grid gap-6 grid-cols-1">
+                {% include "articles/_article_rows.html" %}
+            </div>
+
+            <!-- Load More Button -->
+            {% if has_more %}
+            <div id="load-more-container" class="mt-8 text-center">
+                <button
+                    hx-get="/articles/search?offset={{ offset + limit }}{% if search_query.is_some() %}&q={{ search_query.as_ref().unwrap()|urlencode }}{% endif %}{% if date_from.is_some() %}&date_from={{ date_from.as_ref().unwrap() }}{% endif %}{% if date_to.is_some() %}&date_to={{ date_to.as_ref().unwrap() }}{% endif %}"
+                    hx-target="#articles-cards"
+                    hx-swap="beforeend"
+                    class="btn btn-primary">
+                    Load More Results
+                </button>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No articles found</h3>
+                <p class="text-gray-600 dark:text-gray-400">Try adjusting your search terms or date range</p>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-12">
+            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Start Searching</h3>
+            <p class="text-gray-600 dark:text-gray-400">Enter a search term or date range above to find articles</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
