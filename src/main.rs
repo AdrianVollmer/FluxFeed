@@ -6,7 +6,7 @@ mod web;
 
 use api::feeds::AppState;
 use askama::Template;
-use axum::{response::Html, routing::{delete, get, post}, Router};
+use axum::{response::Html, routing::{get, post}, Router};
 use config::Config;
 use infrastructure::database::setup_database;
 use std::net::SocketAddr;
@@ -60,6 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/feeds", get(api::feeds::list_feeds).post(api::feeds::create_feed))
         .route("/feeds/new", get(api::feeds::show_feed_form))
         .route("/feeds/:id", get(api::feeds::show_feed).delete(api::feeds::delete_feed))
+        .route("/feeds/:id/fetch", post(api::feeds::fetch_feed))
         .route("/articles", get(api::articles::list_articles))
         .route("/articles/:id/toggle-read", post(api::articles::toggle_read_status))
         .route("/articles/:id/toggle-read-compact", post(api::articles::toggle_read_status_compact))

@@ -178,6 +178,44 @@ pub async fn update_feed_metadata(
     Ok(())
 }
 
+pub async fn update_feed_details(
+    pool: &SqlitePool,
+    feed_id: i64,
+    title: Option<String>,
+    description: Option<String>,
+    site_url: Option<String>,
+    etag: Option<String>,
+    last_modified: Option<String>,
+) -> Result<(), SqlxError> {
+    let now = Utc::now();
+
+    sqlx::query(
+        r#"
+        UPDATE feeds
+        SET title = COALESCE(?, title),
+            description = COALESCE(?, description),
+            site_url = ?,
+            last_fetched_at = ?,
+            etag = ?,
+            last_modified = ?,
+            updated_at = ?
+        WHERE id = ?
+        "#,
+    )
+    .bind(title)
+    .bind(description)
+    .bind(site_url)
+    .bind(now)
+    .bind(etag)
+    .bind(last_modified)
+    .bind(now)
+    .bind(feed_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn touch_feed(pool: &SqlitePool, feed_id: i64) -> Result<(), SqlxError> {
     let now = Utc::now();
 
@@ -278,6 +316,36 @@ pub async fn update_article_read_status(
         "UPDATE articles SET is_read = ?, updated_at = ? WHERE id = ?"
     )
     .bind(is_read)
+    .bind(now)
+    .bind(article_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn update_article_opengraph(
+    pool: &SqlitePool,
+    article_id: i64,
+    og_image: Option<String>,
+    og_description: Option<String>,
+    og_site_name: Option<String>,
+) -> Result<(), SqlxError> {
+    let now = Utc::now();
+
+    sqlx::query(
+        r#"
+        UPDATE articles
+        SET og_image = COALESCE(?, og_image),
+            og_description = COALESCE(?, og_description),
+            og_site_name = COALESCE(?, og_site_name),
+            updated_at = ?
+        WHERE id = ?
+        "#,
+    )
+    .bind(og_image)
+    .bind(og_description)
+    .bind(og_site_name)
     .bind(now)
     .bind(article_id)
     .execute(pool)

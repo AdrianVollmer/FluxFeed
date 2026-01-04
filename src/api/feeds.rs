@@ -1,5 +1,5 @@
 use crate::domain::feed_service;
-use crate::infrastructure::repository;
+use crate::infrastructure::{repository, scheduler};
 use crate::web::templates::{FeedDetailTemplate, FeedFormTemplate, FeedRowTemplate, FeedsListTemplate};
 use askama::Template;
 use axum::{
@@ -72,11 +72,36 @@ pub async fn delete_feed(
     Ok(StatusCode::OK)
 }
 
+pub async fn fetch_feed(
+    State(state): State<AppState>,
+    Path(feed_id): Path<i64>,
+) -> Result<StatusCode, AppError> {
+    let feed = repository::get_feed_by_id(&state.db_pool, feed_id)
+        .await?
+        .ok_or(feed_service::FeedServiceError::NotFound)?;
+
+    match scheduler::fetch_single_feed(&state.db_pool, &feed).await {
+        Ok(scheduler::FetchSingleFeedResult::Updated { new_articles_count }) => {
+            tracing::info!("Fetched feed {} with {} new articles", feed_id, new_articles_count);
+        }
+        Ok(scheduler::FetchSingleFeedResult::NotModified) => {
+            tracing::info!("Feed {} not modified", feed_id);
+        }
+        Err(e) => {
+            tracing::warn!("Failed to fetch feed {}: {}", feed_id, e);
+            return Err(AppError::FetchError(e.to_string()));
+        }
+    }
+
+    Ok(StatusCode::OK)
+}
+
 // Error handling
 pub enum AppError {
     TemplateError(askama::Error),
     ServiceError(feed_service::FeedServiceError),
     DatabaseError(sqlx::Error),
+    FetchError(String),
 }
 
 impl From<askama::Error> for AppError {
@@ -125,6 +150,9 @@ impl IntoResponse for AppError {
                 )
                     .into_response()
             }
+            AppError::ServiceError(feed_service::FeedServiceError::FetchError(msg)) => {
+                (StatusCode::BAD_GATEWAY, format!("Feed fetch failed: {}", msg)).into_response()
+            }
             AppError::DatabaseError(err) => {
                 tracing::error!("Database error: {}", err);
                 (
@@ -132,6 +160,9 @@ impl IntoResponse for AppError {
                     "Internal server error",
                 )
                     .into_response()
+            }
+            AppError::FetchError(msg) => {
+                (StatusCode::BAD_GATEWAY, format!("Feed fetch failed: {}", msg)).into_response()
             }
         }
     }

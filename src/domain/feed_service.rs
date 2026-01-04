@@ -1,5 +1,5 @@
 use crate::domain::models::{CreateFeed, Feed};
-use crate::infrastructure::repository;
+use crate::infrastructure::{repository, scheduler};
 use sqlx::SqlitePool;
 use thiserror::Error;
 
@@ -16,6 +16,9 @@ pub enum FeedServiceError {
 
     #[error("Duplicate feed URL")]
     DuplicateUrl,
+
+    #[error("Feed fetch failed: {0}")]
+    FetchError(String),
 }
 
 pub async fn create_feed(
@@ -30,7 +33,8 @@ pub async fn create_feed(
         ));
     }
 
-    // Use provided title or default to URL
+    // Use provided title or default to URL temporarily
+    // It will be updated from RSS feed metadata after fetching
     let feed_title = title.unwrap_or_else(|| url.clone());
 
     let create_feed = CreateFeed {
@@ -39,15 +43,35 @@ pub async fn create_feed(
         description: None,
     };
 
-    match repository::create_feed(pool, create_feed).await {
-        Ok(feed) => Ok(feed),
+    let feed = match repository::create_feed(pool, create_feed).await {
+        Ok(feed) => feed,
         Err(sqlx::Error::Database(db_err))
             if db_err.message().contains("UNIQUE constraint") =>
         {
-            Err(FeedServiceError::DuplicateUrl)
+            return Err(FeedServiceError::DuplicateUrl);
         }
-        Err(e) => Err(FeedServiceError::DatabaseError(e)),
+        Err(e) => return Err(FeedServiceError::DatabaseError(e)),
+    };
+
+    // Immediately fetch the feed to populate metadata and articles
+    tracing::info!("Fetching new feed immediately: {}", feed.url);
+    match scheduler::fetch_single_feed(pool, &feed).await {
+        Ok(_) => {
+            tracing::info!("Successfully fetched new feed: {}", feed.url);
+        }
+        Err(e) => {
+            tracing::warn!("Failed to fetch new feed {}: {}", feed.url, e);
+            // Don't fail the creation, just log the error
+            // The feed is still created, it will be fetched by the scheduler later
+        }
     }
+
+    // Reload feed from database to get updated metadata
+    let updated_feed = repository::get_feed_by_id(pool, feed.id)
+        .await?
+        .ok_or(FeedServiceError::NotFound)?;
+
+    Ok(updated_feed)
 }
 
 pub async fn list_all_feeds(pool: &SqlitePool) -> Result<Vec<Feed>, FeedServiceError> {
