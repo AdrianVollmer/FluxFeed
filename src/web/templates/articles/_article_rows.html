@@ -38,13 +38,19 @@
                     {% endif %}
                 </h3>
 
-                <button
-                    hx-post="/articles/{{ item.article.id }}/toggle-read"
-                    hx-target="#article-{{ item.article.id }}"
-                    hx-swap="outerHTML"
-                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap flex-shrink-0">
-                    {% if item.article.is_read %}Mark Unread{% else %}Mark Read{% endif %}
-                </button>
+                <div class="flex gap-3 flex-shrink-0">
+                    <a href="/articles/{{ item.article.id }}/reader"
+                        class="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap">
+                        Open in reader mode
+                    </a>
+                    <button
+                        hx-post="/articles/{{ item.article.id }}/toggle-read"
+                        hx-target="#article-{{ item.article.id }}"
+                        hx-swap="outerHTML"
+                        class="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap">
+                        {% if item.article.is_read %}Mark Unread{% else %}Mark Read{% endif %}
+                    </button>
+                </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
