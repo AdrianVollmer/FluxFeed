@@ -34,13 +34,13 @@
     </nav>
 
     <!-- Mobile Navigation Overlay -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-300 z-[100] md:hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-300 z-[9998] md:hidden">
         <!-- Clickable overlay to close -->
         <label for="mobile-nav-toggle" class="absolute inset-0 cursor-pointer"></label>
     </div>
 
     <!-- Mobile Navigation Slide-in Panel -->
-    <div class="fixed top-0 left-0 h-full w-64 mobile-nav-panel transform -translate-x-full peer-checked:translate-x-0 transition-transform duration-300 ease-out flex flex-col p-6 z-[110] md:hidden">
+    <div class="fixed top-0 left-0 h-full w-64 mobile-nav-panel transform -translate-x-full peer-checked:translate-x-0 transition-transform duration-300 ease-out flex flex-col p-6 z-[9999] md:hidden">
         <!-- Close button -->
         <label for="mobile-nav-toggle" class="self-end cursor-pointer mb-8 p-2">
             <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
