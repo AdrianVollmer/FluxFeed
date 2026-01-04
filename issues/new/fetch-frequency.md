@@ -7,8 +7,9 @@ Allowed values must be a positive, integer representing the hours
 between fetching.
 
 In adaptive fetching, we use information from the server to adjust the
-fetch frequency. When doing so, make sure the AVOID the following
-behaviors:
+fetch frequency. Start with the RSS feed's `ttl` field.
+
+Also, make sure the AVOID the following behaviors:
 
 - Loading the feed way too often, like every 10 seconds, when it never
   updates anywhere near that often
