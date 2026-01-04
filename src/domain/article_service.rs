@@ -17,6 +17,7 @@ pub async fn list_articles(
     pool: &SqlitePool,
     feed_id: Option<i64>,
     is_read: Option<bool>,
+    is_starred: Option<bool>,
     search_query: Option<String>,
     date_from: Option<chrono::DateTime<chrono::Utc>>,
     date_to: Option<chrono::DateTime<chrono::Utc>>,
@@ -27,6 +28,7 @@ pub async fn list_articles(
         pool,
         feed_id,
         is_read,
+        is_starred,
         search_query,
         date_from,
         date_to,
@@ -46,6 +48,24 @@ pub async fn toggle_read_status(
 
     let new_status = !article.is_read;
     repository::update_article_read_status(pool, article_id, new_status).await?;
+
+    let updated = repository::get_article_by_id(pool, article_id)
+        .await?
+        .ok_or(ArticleServiceError::NotFound)?;
+
+    Ok(updated)
+}
+
+pub async fn toggle_starred_status(
+    pool: &SqlitePool,
+    article_id: i64,
+) -> Result<Article, ArticleServiceError> {
+    let article = repository::get_article_by_id(pool, article_id)
+        .await?
+        .ok_or(ArticleServiceError::NotFound)?;
+
+    let new_status = !article.is_starred;
+    repository::update_article_starred_status(pool, article_id, new_status).await?;
 
     let updated = repository::get_article_by_id(pool, article_id)
         .await?

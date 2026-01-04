@@ -246,6 +246,7 @@ pub async fn list_articles(
     pool: &SqlitePool,
     feed_id: Option<i64>,
     is_read: Option<bool>,
+    is_starred: Option<bool>,
     search_query: Option<String>,
     date_from: Option<chrono::DateTime<chrono::Utc>>,
     date_to: Option<chrono::DateTime<chrono::Utc>>,
@@ -273,6 +274,9 @@ pub async fn list_articles(
     if is_read.is_some() {
         query_str.push_str(" AND a.is_read = ?");
     }
+    if is_starred.is_some() {
+        query_str.push_str(" AND a.is_starred = ?");
+    }
 
     // Add date range filters
     if date_from.is_some() {
@@ -295,6 +299,9 @@ pub async fn list_articles(
     }
     if let Some(read) = is_read {
         query = query.bind(read);
+    }
+    if let Some(starred) = is_starred {
+        query = query.bind(starred);
     }
     if let Some(from) = date_from {
         query = query.bind(from);
@@ -329,6 +336,23 @@ pub async fn update_article_read_status(
 
     sqlx::query("UPDATE articles SET is_read = ?, updated_at = ? WHERE id = ?")
         .bind(is_read)
+        .bind(now)
+        .bind(article_id)
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn update_article_starred_status(
+    pool: &SqlitePool,
+    article_id: i64,
+    is_starred: bool,
+) -> Result<(), SqlxError> {
+    let now = Utc::now();
+
+    sqlx::query("UPDATE articles SET is_starred = ?, updated_at = ? WHERE id = ?")
+        .bind(is_starred)
         .bind(now)
         .bind(article_id)
         .execute(pool)
@@ -773,10 +797,7 @@ mod tests {
             .await
             .unwrap();
 
-        let updated = get_article_by_id(&pool, article.id)
-            .await
-            .unwrap()
-            .unwrap();
+        let updated = get_article_by_id(&pool, article.id).await.unwrap().unwrap();
         assert!(updated.is_read);
     }
 
@@ -956,21 +977,21 @@ mod tests {
             .unwrap();
 
         // Test filter by unread
-        let unread = list_articles(&pool, None, Some(false), None, None, None, 10, 0)
+        let unread = list_articles(&pool, None, Some(false), None, None, None, None, 10, 0)
             .await
             .unwrap();
         assert_eq!(unread.len(), 1);
         assert_eq!(unread[0].id, article1.id);
 
         // Test filter by read
-        let read = list_articles(&pool, None, Some(true), None, None, None, 10, 0)
+        let read = list_articles(&pool, None, Some(true), None, None, None, None, 10, 0)
             .await
             .unwrap();
         assert_eq!(read.len(), 1);
         assert_eq!(read[0].id, article2.id);
 
         // Test no filter
-        let all = list_articles(&pool, None, None, None, None, None, 10, 0)
+        let all = list_articles(&pool, None, None, None, None, None, None, 10, 0)
             .await
             .unwrap();
         assert_eq!(all.len(), 2);

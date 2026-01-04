@@ -17,6 +17,7 @@ use serde::Deserialize;
 pub struct ArticleListParams {
     pub feed_id: Option<i64>,
     pub is_read: Option<bool>,
+    pub is_starred: Option<bool>,
     pub limit: Option<i64>,
     pub offset: Option<i64>,
     pub view: Option<String>,
@@ -56,6 +57,7 @@ pub async fn list_articles(
         &state.db_pool,
         params.feed_id,
         params.is_read,
+        params.is_starred,
         params.q.clone(),
         date_from,
         date_to,
@@ -126,6 +128,7 @@ pub async fn list_articles(
                 next_offset: offset + limit,
                 filter_feed: params.feed_id,
                 filter_read: params.is_read,
+                filter_starred: params.is_starred,
                 search_query: params.q.clone(),
                 date_from: params.date_from.clone(),
                 date_to: params.date_to.clone(),
@@ -157,6 +160,7 @@ pub async fn list_articles(
         has_more,
         filter_feed: params.feed_id,
         filter_read: params.is_read,
+        filter_starred: params.is_starred,
         unread_count,
         search_query: params.q.clone(),
         date_from: params.date_from.clone(),
@@ -205,6 +209,74 @@ pub async fn toggle_read_status_compact(
     Path(article_id): Path<i64>,
 ) -> Result<Html<String>, AppError> {
     let article = article_service::toggle_read_status(&state.db_pool, article_id).await?;
+
+    // Get feed title
+    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+        .await?
+        .unwrap_or_else(|| crate::domain::models::Feed {
+            id: article.feed_id,
+            url: String::new(),
+            title: "Unknown Feed".to_string(),
+            description: None,
+            site_url: None,
+            last_fetched_at: None,
+            last_modified: None,
+            etag: None,
+            fetch_interval_minutes: 30,
+            color: "#3B82F6".to_string(),
+            fetch_frequency: "smart".to_string(),
+            ttl_minutes: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        });
+
+    let template = ArticleCompactRowTemplate {
+        article,
+        feed_title: feed.title,
+    };
+
+    Ok(Html(template.render()?))
+}
+
+pub async fn toggle_starred_status(
+    State(state): State<AppState>,
+    Path(article_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    let article = article_service::toggle_starred_status(&state.db_pool, article_id).await?;
+
+    // Get feed title
+    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+        .await?
+        .unwrap_or_else(|| crate::domain::models::Feed {
+            id: article.feed_id,
+            url: String::new(),
+            title: "Unknown Feed".to_string(),
+            description: None,
+            site_url: None,
+            last_fetched_at: None,
+            last_modified: None,
+            etag: None,
+            fetch_interval_minutes: 30,
+            color: "#3B82F6".to_string(),
+            fetch_frequency: "smart".to_string(),
+            ttl_minutes: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        });
+
+    let template = ArticleRowTemplate {
+        article,
+        feed_title: feed.title,
+    };
+
+    Ok(Html(template.render()?))
+}
+
+pub async fn toggle_starred_status_compact(
+    State(state): State<AppState>,
+    Path(article_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    let article = article_service::toggle_starred_status(&state.db_pool, article_id).await?;
 
     // Get feed title
     let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
@@ -336,6 +408,7 @@ pub async fn search_articles(
                 &state.db_pool,
                 None, // No feed filter on search page
                 None, // No read filter on search page
+                None, // No starred filter on search page
                 params.q.clone(),
                 date_from,
                 date_to,

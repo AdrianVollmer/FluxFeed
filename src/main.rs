@@ -79,6 +79,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             post(api::articles::toggle_read_status_compact),
         )
         .route(
+            "/articles/:id/toggle-starred",
+            post(api::articles::toggle_starred_status),
+        )
+        .route(
+            "/articles/:id/toggle-starred-compact",
+            post(api::articles::toggle_starred_status_compact),
+        )
+        .route(
             "/articles/mark-all-read",
             post(api::articles::mark_all_read),
         )
