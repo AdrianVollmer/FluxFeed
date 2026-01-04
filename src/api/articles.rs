@@ -5,7 +5,7 @@ use crate::web::templates::{ArticleCompactRowTemplate, ArticleRowTemplate, Artic
 use askama::Template;
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::{Html, IntoResponse, Response},
 };
 use serde::Deserialize;
@@ -25,6 +25,7 @@ pub struct MarkAllReadParams {
 
 pub async fn list_articles(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Query(params): Query<ArticleListParams>,
 ) -> Result<Html<String>, AppError> {
     let limit = params.limit.unwrap_or(20);
@@ -71,6 +72,57 @@ pub async fn list_articles(
             article,
             feed_title: feed.title,
         });
+    }
+
+    // Check if this is an HTMX pagination request
+    let is_htmx = headers.get("HX-Request").is_some();
+
+    // If HTMX request with offset > 0, return just the article rows for pagination
+    if is_htmx && offset > 0 {
+        let mut html = String::new();
+
+        // Render each article row
+        for item in &articles_with_feed {
+            let row_template = ArticleRowTemplate {
+                article: item.article.clone(),
+                feed_title: item.feed_title.clone(),
+            };
+            html.push_str(&row_template.render()?);
+            html.push('\n');
+        }
+
+        // Update the Load More button using out-of-band swap
+        if has_more {
+            let next_offset = offset + limit;
+            let feed_param = if let Some(feed_id) = params.feed_id {
+                format!("&feed_id={}", feed_id)
+            } else {
+                String::new()
+            };
+            let read_param = if let Some(is_read) = params.is_read {
+                format!("&is_read={}", is_read)
+            } else {
+                String::new()
+            };
+
+            html.push_str(&format!(
+                "<div id=\"load-more-container\" hx-swap-oob=\"true\" class=\"mt-8 text-center\">\n\
+    <button\n\
+        hx-get=\"/articles?offset={}{}{}\"\n\
+        hx-target=\"#articles-list\"\n\
+        hx-swap=\"beforeend\"\n\
+        class=\"btn btn-primary\">\n\
+        Load More Articles\n\
+    </button>\n\
+</div>",
+                next_offset, feed_param, read_param
+            ));
+        } else {
+            // Remove the Load More button if no more articles
+            html.push_str(r#"<div id="load-more-container" hx-swap-oob="true"></div>"#);
+        }
+
+        return Ok(Html(html));
     }
 
     // Get all feeds for the filter
