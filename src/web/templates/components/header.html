@@ -33,38 +33,38 @@
         </div>
     </nav>
 
-    <!-- Mobile Navigation Menu -->
+    <!-- Mobile Navigation Overlay -->
     <div class="fixed inset-0 bg-black bg-opacity-50 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-300 z-40 md:hidden">
         <!-- Clickable overlay to close -->
         <label for="mobile-nav-toggle" class="absolute inset-0 cursor-pointer"></label>
+    </div>
 
-        <!-- Slide-in Panel -->
-        <div class="fixed top-0 right-0 h-full w-64 mobile-nav-panel transform translate-x-full peer-checked:translate-x-0 transition-transform duration-300 ease-out flex flex-col p-6 z-50">
-            <!-- Close button -->
-            <label for="mobile-nav-toggle" class="self-end cursor-pointer mb-8 p-2">
-                <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </label>
+    <!-- Mobile Navigation Slide-in Panel -->
+    <div class="fixed top-0 right-0 h-full w-64 mobile-nav-panel transform translate-x-full peer-checked:translate-x-0 transition-transform duration-300 ease-out flex flex-col p-6 z-50 md:hidden">
+        <!-- Close button -->
+        <label for="mobile-nav-toggle" class="self-end cursor-pointer mb-8 p-2">
+            <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </label>
 
-            <!-- Nav links -->
-            <nav class="flex flex-col space-y-6">
-                <a href="/articles"
-                   onclick="document.getElementById('mobile-nav-toggle').checked = false"
-                   class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                    Articles
-                </a>
-                <a href="/feeds"
-                   onclick="document.getElementById('mobile-nav-toggle').checked = false"
-                   class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                    Feeds
-                </a>
-                <a href="/logs"
-                   onclick="document.getElementById('mobile-nav-toggle').checked = false"
-                   class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                    Logs
-                </a>
-            </nav>
-        </div>
+        <!-- Nav links -->
+        <nav class="flex flex-col space-y-6">
+            <a href="/articles"
+               onclick="document.getElementById('mobile-nav-toggle').checked = false"
+               class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Articles
+            </a>
+            <a href="/feeds"
+               onclick="document.getElementById('mobile-nav-toggle').checked = false"
+               class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Feeds
+            </a>
+            <a href="/logs"
+               onclick="document.getElementById('mobile-nav-toggle').checked = false"
+               class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Logs
+            </a>
+        </nav>
     </div>
 </header>
