@@ -64,3 +64,21 @@ pub async fn mark_all_read(
 pub async fn get_unread_count(pool: &SqlitePool) -> Result<i64, ArticleServiceError> {
     Ok(repository::get_total_unread_count(pool).await?)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_article_service_error_display() {
+        let err = ArticleServiceError::NotFound;
+        assert_eq!(err.to_string(), "Article not found");
+    }
+
+    #[test]
+    fn test_article_service_error_from_sqlx() {
+        let sqlx_err = sqlx::Error::RowNotFound;
+        let article_err: ArticleServiceError = sqlx_err.into();
+        assert!(matches!(article_err, ArticleServiceError::DatabaseError(_)));
+    }
+}

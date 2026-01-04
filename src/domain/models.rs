@@ -77,3 +77,53 @@ pub struct LogWithFeed {
     pub feed_title: String,
     pub feed_url: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_feed_serialization() {
+        let feed = CreateFeed {
+            url: "https://example.com/feed".to_string(),
+            title: "Test Feed".to_string(),
+            description: Some("A test feed".to_string()),
+        };
+
+        let json = serde_json::to_string(&feed).unwrap();
+        let deserialized: CreateFeed = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(feed.url, deserialized.url);
+        assert_eq!(feed.title, deserialized.title);
+        assert_eq!(feed.description, deserialized.description);
+    }
+
+    #[test]
+    fn test_create_feed_without_description() {
+        let feed = CreateFeed {
+            url: "https://example.com/feed".to_string(),
+            title: "Test Feed".to_string(),
+            description: None,
+        };
+
+        assert_eq!(feed.url, "https://example.com/feed");
+        assert_eq!(feed.title, "Test Feed");
+        assert!(feed.description.is_none());
+    }
+
+    #[test]
+    fn test_tag_serialization() {
+        let now = Utc::now();
+        let tag = Tag {
+            id: 1,
+            name: "Tech".to_string(),
+            created_at: now,
+        };
+
+        let json = serde_json::to_string(&tag).unwrap();
+        let deserialized: Tag = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(tag.id, deserialized.id);
+        assert_eq!(tag.name, deserialized.name);
+    }
+}

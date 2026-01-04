@@ -117,3 +117,60 @@ pub fn parse_fetch_frequency(frequency: &str) -> Result<i64, FeedServiceError> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_fetch_frequency_adaptive() {
+        let result = parse_fetch_frequency("adaptive").unwrap();
+        assert_eq!(result, 60); // 1 hour in minutes
+    }
+
+    #[test]
+    fn test_parse_fetch_frequency_valid_hours() {
+        assert_eq!(parse_fetch_frequency("1").unwrap(), 60);
+        assert_eq!(parse_fetch_frequency("6").unwrap(), 360);
+        assert_eq!(parse_fetch_frequency("24").unwrap(), 1440);
+        assert_eq!(parse_fetch_frequency("168").unwrap(), 10080); // 1 week
+    }
+
+    #[test]
+    fn test_parse_fetch_frequency_invalid_hours() {
+        assert!(parse_fetch_frequency("0").is_err());
+        assert!(parse_fetch_frequency("169").is_err()); // Over 1 week
+        assert!(parse_fetch_frequency("-5").is_err());
+    }
+
+    #[test]
+    fn test_parse_fetch_frequency_invalid_format() {
+        assert!(parse_fetch_frequency("invalid").is_err());
+        assert!(parse_fetch_frequency("12.5").is_err());
+        assert!(parse_fetch_frequency("abc").is_err());
+    }
+
+    #[test]
+    fn test_parse_fetch_frequency_with_whitespace() {
+        assert_eq!(parse_fetch_frequency("  adaptive  ").unwrap(), 60);
+        assert_eq!(parse_fetch_frequency("  12  ").unwrap(), 720);
+    }
+
+    #[test]
+    fn test_feed_service_error_display() {
+        let err = FeedServiceError::InvalidUrl("bad url".to_string());
+        assert_eq!(err.to_string(), "Invalid feed URL: bad url");
+
+        let err = FeedServiceError::NotFound;
+        assert_eq!(err.to_string(), "Feed not found");
+
+        let err = FeedServiceError::DuplicateUrl;
+        assert_eq!(err.to_string(), "Duplicate feed URL");
+
+        let err = FeedServiceError::InvalidFrequency;
+        assert_eq!(
+            err.to_string(),
+            "Invalid fetch frequency: must be 'adaptive' or hours between 1-168"
+        );
+    }
+}

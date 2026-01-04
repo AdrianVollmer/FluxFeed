@@ -578,3 +578,401 @@ pub async fn update_feed_frequency(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::sqlite::SqlitePoolOptions;
+
+    async fn setup_test_db() -> SqlitePool {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .expect("Failed to create in-memory database");
+
+        // Run migrations
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .expect("Failed to run migrations");
+
+        pool
+    }
+
+    #[tokio::test]
+    async fn test_create_and_get_feed() {
+        let pool = setup_test_db().await;
+
+        let feed_data = CreateFeed {
+            url: "https://example.com/feed".to_string(),
+            title: "Test Feed".to_string(),
+            description: Some("Test description".to_string()),
+        };
+
+        let feed = super::create_feed(&pool, feed_data)
+            .await
+            .expect("Failed to create feed");
+
+        assert_eq!(feed.url, "https://example.com/feed");
+        assert_eq!(feed.title, "Test Feed");
+        assert_eq!(feed.description, Some("Test description".to_string()));
+
+        let retrieved = get_feed_by_id(&pool, feed.id)
+            .await
+            .expect("Failed to get feed")
+            .expect("Feed not found");
+
+        assert_eq!(retrieved.id, feed.id);
+        assert_eq!(retrieved.url, feed.url);
+    }
+
+    #[tokio::test]
+    async fn test_list_feeds() {
+        let pool = setup_test_db().await;
+
+        let feed1 = CreateFeed {
+            url: "https://example.com/feed1".to_string(),
+            title: "Feed 1".to_string(),
+            description: None,
+        };
+        let feed2 = CreateFeed {
+            url: "https://example.com/feed2".to_string(),
+            title: "Feed 2".to_string(),
+            description: None,
+        };
+
+        super::create_feed(&pool, feed1).await.unwrap();
+        super::create_feed(&pool, feed2).await.unwrap();
+
+        let feeds = list_feeds(&pool).await.expect("Failed to list feeds");
+        assert_eq!(feeds.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn test_delete_feed() {
+        let pool = setup_test_db().await;
+
+        let create_feed_data = CreateFeed {
+            url: "https://example.com/feed".to_string(),
+            title: "Test Feed".to_string(),
+            description: None,
+        };
+
+        let feed = super::create_feed(&pool, create_feed_data).await.unwrap();
+
+        let deleted = delete_feed(&pool, feed.id).await.unwrap();
+        assert!(deleted);
+
+        let retrieved = get_feed_by_id(&pool, feed.id).await.unwrap();
+        assert!(retrieved.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_delete_nonexistent_feed() {
+        let pool = setup_test_db().await;
+
+        let deleted = delete_feed(&pool, 9999).await.unwrap();
+        assert!(!deleted);
+    }
+
+    #[tokio::test]
+    async fn test_insert_article_if_new() {
+        let pool = setup_test_db().await;
+
+        let feed = super::create_feed(
+            &pool,
+            CreateFeed {
+                url: "https://example.com/feed".to_string(),
+                title: "Test Feed".to_string(),
+                description: None,
+            },
+        )
+        .await
+        .unwrap();
+
+        let article = insert_article_if_new(
+            &pool,
+            feed.id,
+            "guid-123".to_string(),
+            "Test Article".to_string(),
+            Some("https://example.com/article".to_string()),
+            Some("Article content".to_string()),
+            Some("Summary".to_string()),
+            Some("Author".to_string()),
+            Some(Utc::now()),
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+        assert!(article.is_some());
+        let article = article.unwrap();
+        assert_eq!(article.title, "Test Article");
+        assert_eq!(article.guid, "guid-123");
+
+        // Try to insert same article again (should be ignored due to conflict)
+        let duplicate = insert_article_if_new(
+            &pool,
+            feed.id,
+            "guid-123".to_string(),
+            "Test Article Updated".to_string(),
+            Some("https://example.com/article".to_string()),
+            Some("Updated content".to_string()),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+        assert!(duplicate.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_update_article_read_status() {
+        let pool = setup_test_db().await;
+
+        let feed = super::create_feed(
+            &pool,
+            CreateFeed {
+                url: "https://example.com/feed".to_string(),
+                title: "Test Feed".to_string(),
+                description: None,
+            },
+        )
+        .await
+        .unwrap();
+
+        let article = insert_article_if_new(
+            &pool,
+            feed.id,
+            "guid-123".to_string(),
+            "Test Article".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap()
+        .unwrap();
+
+        assert!(!article.is_read);
+
+        update_article_read_status(&pool, article.id, true)
+            .await
+            .unwrap();
+
+        let updated = get_article_by_id(&pool, article.id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert!(updated.is_read);
+    }
+
+    #[tokio::test]
+    async fn test_mark_all_articles_read() {
+        let pool = setup_test_db().await;
+
+        let feed = super::create_feed(
+            &pool,
+            CreateFeed {
+                url: "https://example.com/feed".to_string(),
+                title: "Test Feed".to_string(),
+                description: None,
+            },
+        )
+        .await
+        .unwrap();
+
+        // Insert multiple articles
+        for i in 1..=3 {
+            insert_article_if_new(
+                &pool,
+                feed.id,
+                format!("guid-{}", i),
+                format!("Article {}", i),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+            .unwrap();
+        }
+
+        let unread_count = get_total_unread_count(&pool).await.unwrap();
+        assert_eq!(unread_count, 3);
+
+        let affected = mark_all_articles_read(&pool, None).await.unwrap();
+        assert_eq!(affected, 3);
+
+        let unread_count = get_total_unread_count(&pool).await.unwrap();
+        assert_eq!(unread_count, 0);
+    }
+
+    #[tokio::test]
+    async fn test_get_feed_article_count() {
+        let pool = setup_test_db().await;
+
+        let feed = super::create_feed(
+            &pool,
+            CreateFeed {
+                url: "https://example.com/feed".to_string(),
+                title: "Test Feed".to_string(),
+                description: None,
+            },
+        )
+        .await
+        .unwrap();
+
+        let count = get_feed_article_count(&pool, feed.id).await.unwrap();
+        assert_eq!(count, 0);
+
+        insert_article_if_new(
+            &pool,
+            feed.id,
+            "guid-1".to_string(),
+            "Article 1".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+
+        let count = get_feed_article_count(&pool, feed.id).await.unwrap();
+        assert_eq!(count, 1);
+    }
+
+    #[tokio::test]
+    async fn test_update_feed_metadata() {
+        let pool = setup_test_db().await;
+
+        let feed = super::create_feed(
+            &pool,
+            CreateFeed {
+                url: "https://example.com/feed".to_string(),
+                title: "Test Feed".to_string(),
+                description: None,
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(feed.etag.is_none());
+        assert!(feed.last_modified.is_none());
+
+        update_feed_metadata(
+            &pool,
+            feed.id,
+            Some("etag-123".to_string()),
+            Some("Mon, 01 Jan 2024 00:00:00 GMT".to_string()),
+        )
+        .await
+        .unwrap();
+
+        let updated = get_feed_by_id(&pool, feed.id).await.unwrap().unwrap();
+        assert_eq!(updated.etag, Some("etag-123".to_string()));
+        assert_eq!(
+            updated.last_modified,
+            Some("Mon, 01 Jan 2024 00:00:00 GMT".to_string())
+        );
+    }
+
+    #[tokio::test]
+    async fn test_list_articles_with_filters() {
+        let pool = setup_test_db().await;
+
+        let feed = super::create_feed(
+            &pool,
+            CreateFeed {
+                url: "https://example.com/feed".to_string(),
+                title: "Test Feed".to_string(),
+                description: None,
+            },
+        )
+        .await
+        .unwrap();
+
+        // Insert articles with different read statuses
+        let article1 = insert_article_if_new(
+            &pool,
+            feed.id,
+            "guid-1".to_string(),
+            "Unread Article".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap()
+        .unwrap();
+
+        let article2 = insert_article_if_new(
+            &pool,
+            feed.id,
+            "guid-2".to_string(),
+            "Read Article".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .unwrap()
+        .unwrap();
+
+        update_article_read_status(&pool, article2.id, true)
+            .await
+            .unwrap();
+
+        // Test filter by unread
+        let unread = list_articles(&pool, None, Some(false), None, None, None, 10, 0)
+            .await
+            .unwrap();
+        assert_eq!(unread.len(), 1);
+        assert_eq!(unread[0].id, article1.id);
+
+        // Test filter by read
+        let read = list_articles(&pool, None, Some(true), None, None, None, 10, 0)
+            .await
+            .unwrap();
+        assert_eq!(read.len(), 1);
+        assert_eq!(read[0].id, article2.id);
+
+        // Test no filter
+        let all = list_articles(&pool, None, None, None, None, None, 10, 0)
+            .await
+            .unwrap();
+        assert_eq!(all.len(), 2);
+    }
+}
