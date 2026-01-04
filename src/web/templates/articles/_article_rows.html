@@ -74,12 +74,22 @@
             </div>
 
             {% if item.article.summary.is_some() %}
-            <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
-                {{ item.article.summary.as_ref().unwrap()|safe }}
+            <div class="article-content-wrapper">
+                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 article-content collapsed">
+                    {{ item.article.summary.as_ref().unwrap()|safe }}
+                </div>
+                <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 toggle-content">
+                    Show more
+                </button>
             </div>
             {% else if item.article.content.is_some() %}
-            <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 line-clamp-3">
-                {{ item.article.content.as_ref().unwrap()|truncate(300)|safe }}
+            <div class="article-content-wrapper">
+                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 article-content collapsed">
+                    {{ item.article.content.as_ref().unwrap()|safe }}
+                </div>
+                <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 toggle-content">
+                    Show more
+                </button>
             </div>
             {% endif %}
         </div>

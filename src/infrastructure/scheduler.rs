@@ -177,30 +177,18 @@ fn extract_url(entry: &feed_rs::model::Entry) -> Option<String> {
 fn extract_content(entry: &feed_rs::model::Entry) -> Option<String> {
     entry.content.as_ref().and_then(|c| {
         c.body.as_ref().map(|body| {
-            // Limit content size to avoid bloat (100KB max)
-            let content = if body.len() > 100_000 {
-                format!("{}...", &body[..100_000])
-            } else {
-                body.clone()
-            };
-
             // Sanitize HTML to prevent XSS attacks
-            ammonia::clean(&content)
+            // Don't truncate - let CSS handle visual limiting to avoid breaking HTML tags
+            ammonia::clean(body)
         })
     })
 }
 
 fn extract_summary(entry: &feed_rs::model::Entry) -> Option<String> {
     entry.summary.as_ref().map(|s| {
-        // Limit summary size
-        let summary = if s.content.len() > 1000 {
-            format!("{}...", &s.content[..1000])
-        } else {
-            s.content.clone()
-        };
-
         // Sanitize HTML to prevent XSS attacks
-        ammonia::clean(&summary)
+        // Don't truncate - let CSS handle visual limiting to avoid breaking HTML tags
+        ammonia::clean(&s.content)
     })
 }
 

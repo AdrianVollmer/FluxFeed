@@ -47,3 +47,38 @@
 .prose em {
   @apply italic;
 }
+
+/* Article content expand/collapse */
+.article-content.collapsed {
+  max-height: 6rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.article-content.collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3rem;
+  background: linear-gradient(to bottom, transparent, white);
+}
+
+@media (prefers-color-scheme: dark) {
+  .article-content.collapsed::after {
+    background: linear-gradient(to bottom, transparent, rgb(31, 41, 55));
+  }
+}
+
+.article-content.expanded {
+  max-height: none;
+}
+
+.article-content-wrapper .toggle-content {
+  display: none;
+}
+
+.article-content.collapsed ~ .toggle-content {
+  display: inline-block;
+}

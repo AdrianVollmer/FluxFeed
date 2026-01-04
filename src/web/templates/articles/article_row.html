@@ -83,12 +83,22 @@
 
             <!-- Article summary/content -->
             {% if article.summary.is_some() %}
-            <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
-                {{ article.summary.as_ref().unwrap()|safe }}
+            <div class="article-content-wrapper">
+                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 article-content collapsed">
+                    {{ article.summary.as_ref().unwrap()|safe }}
+                </div>
+                <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 toggle-content">
+                    Show more
+                </button>
             </div>
             {% else if article.content.is_some() %}
-            <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 line-clamp-3">
-                {{ article.content.as_ref().unwrap()|truncate(300)|safe }}
+            <div class="article-content-wrapper">
+                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 article-content collapsed">
+                    {{ article.content.as_ref().unwrap()|safe }}
+                </div>
+                <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 toggle-content">
+                    Show more
+                </button>
             </div>
             {% else if article.og_description.is_some() %}
             <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
