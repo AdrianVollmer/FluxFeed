@@ -20,42 +20,45 @@
     </div>
 
     <!-- Desktop Controls (visible >= md) -->
-    <div class="hidden md:flex md:flex-col md:gap-4 mb-8">
+    <div class="hidden md:block mb-8 space-y-6">
         <!-- Log type filter tabs -->
-        <div class="flex gap-2">
-            <a href="/logs" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                All
-            </a>
-            <a href="/logs?log_type=success" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "success" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                Success
-            </a>
-            <a href="/logs?log_type=not_modified" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "not_modified" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                Not Modified
-            </a>
-            <a href="/logs?log_type=error" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "error" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                Errors
-            </a>
-            <a href="/logs?log_type=rate_limited" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "rate_limited" %}bg-red-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                Rate Limited (429)
-            </a>
+        <div>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Status:</label>
+            <div class="flex flex-wrap gap-2">
+                <a href="/logs" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                    All
+                </a>
+                <a href="/logs?log_type=success" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "success" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                    Success
+                </a>
+                <a href="/logs?log_type=not_modified" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "not_modified" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                    Not Modified
+                </a>
+                <a href="/logs?log_type=error" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "error" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                    Errors
+                </a>
+                <a href="/logs?log_type=rate_limited" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "rate_limited" %}bg-red-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                    Rate Limited (429)
+                </a>
+            </div>
         </div>
 
         <!-- Feed filter (Desktop) -->
         {% if feeds.len() > 0 %}
         <div>
-        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Feed:</label>
-        <div class="flex flex-wrap gap-2">
-            <a href="/logs{% if filter_log_type.is_some() %}?log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
-               class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
-                All Feeds
-            </a>
-            {% for feed in feeds %}
-            <a href="/logs?feed_id={{ feed.id }}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
-               class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_some() && filter_feed.unwrap() == feed.id %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                {{ feed.title }}
-            </a>
-            {% endfor %}
-        </div>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Feed:</label>
+            <div class="flex flex-wrap gap-2">
+                <a href="/logs{% if filter_log_type.is_some() %}?log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
+                   class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+                    All Feeds
+                </a>
+                {% for feed in feeds %}
+                <a href="/logs?feed_id={{ feed.id }}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
+                   class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_some() && filter_feed.unwrap() == feed.id %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                    {{ feed.title }}
+                </a>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
     </div>
