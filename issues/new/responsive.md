@@ -3,3 +3,7 @@
 Make the design responsive. The navbar should collapse to a hamburger
 icon on mobile phones. When clicked, a menu should slide in from the
 menu, like we know it from many Android apps.
+
+Try to find a solution for our "submenu", like buttons in the headline
+of `/articles`. Ideally, this would get sorted into the hamburger menu
+with only CSS.
