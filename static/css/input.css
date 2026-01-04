@@ -99,20 +99,20 @@ footer {
 /* Mobile Navigation Menu */
 @layer components {
   .mobile-nav-panel {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-left: 1px solid var(--glass-border);
+    border-right: 1px solid var(--glass-border);
     box-shadow:
-      -4px 0 6px -1px rgba(0, 0, 0, 0.1),
-      -2px 0 4px -1px rgba(0, 0, 0, 0.06),
+      4px 0 6px -1px rgba(0, 0, 0, 0.1),
+      2px 0 4px -1px rgba(0, 0, 0, 0.06),
       0 0 30px -10px var(--shadow-glow);
   }
 
   @media (prefers-color-scheme: dark) {
     .mobile-nav-panel {
-      background: rgba(17, 24, 39, 0.95);
-      border-left-color: rgba(255, 255, 255, 0.1);
+      background: rgba(17, 24, 39, 0.98);
+      border-right-color: rgba(255, 255, 255, 0.1);
     }
   }
 
