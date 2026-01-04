@@ -49,6 +49,7 @@ pub async fn fetch_single_feed(
             feed: parsed_feed,
             etag,
             last_modified,
+            ttl,
         }) => {
             tracing::info!(
                 "Feed updated: {} ({} entries)",
@@ -58,6 +59,48 @@ pub async fn fetch_single_feed(
 
             // Log successful fetch
             repository::insert_log(pool, feed.id, "success", None, None, None).await?;
+
+            // Adaptive fetch frequency logic
+            if feed.fetch_frequency == "adaptive" {
+                let new_interval = if let Some(ttl_value) = ttl {
+                    // Clamp TTL to 1 hour - 1 week (60-10080 minutes)
+                    let clamped = ttl_value.clamp(60, 10080);
+                    if ttl_value != clamped {
+                        tracing::info!(
+                            "Feed {} TTL {} clamped to {} minutes",
+                            feed.id,
+                            ttl_value,
+                            clamped
+                        );
+                    }
+                    clamped
+                } else {
+                    // No TTL in feed, use default 60 minutes (1 hour)
+                    tracing::debug!("Feed {} has no TTL, using default 60 minutes", feed.id);
+                    60
+                };
+
+                // Update interval if changed
+                if new_interval != feed.fetch_interval_minutes {
+                    tracing::info!(
+                        "Updating feed {} interval: {}m -> {}m (TTL: {:?})",
+                        feed.id,
+                        feed.fetch_interval_minutes,
+                        new_interval,
+                        ttl
+                    );
+                    repository::update_feed_ttl(pool, feed.id, ttl, new_interval).await?;
+                } else if ttl.is_some() && feed.ttl_minutes != ttl {
+                    // Just update stored TTL value for display
+                    repository::update_feed_ttl(pool, feed.id, ttl, feed.fetch_interval_minutes)
+                        .await?;
+                }
+            } else {
+                // Custom frequency mode: just store TTL for user info, don't change interval
+                if ttl.is_some() && feed.ttl_minutes != ttl {
+                    repository::update_feed_ttl_only(pool, feed.id, ttl).await?;
+                }
+            }
 
             // Update feed metadata from RSS (including title, description, site_url)
             let rss_title = parsed_feed.title.as_ref().map(|t| t.content.clone());

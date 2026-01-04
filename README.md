@@ -42,7 +42,7 @@ npm run watch:css
 3.  **Build and run:**
 
 ``` bash
-cargo build
+DATABASE_URL=sqlite:///$(pwd)/fluxfeed_temp.db cargo build
 cargo run
 ```
 
@@ -79,7 +79,8 @@ The easiest way to run FluxFeed is with Docker.
 docker compose up -d
 ```
 
-The app will be available at http://localhost:3000 with persistent storage.
+The app will be available at http://localhost:3000 with persistent
+storage.
 
 ### Using Docker directly
 
@@ -104,7 +105,8 @@ docker run -d \
 
 ### Environment Variables for Docker
 
-- `DATABASE_URL`: Path to SQLite database (default: `sqlite:///app/data/fluxfeed.db`)
+- `DATABASE_URL`: Path to SQLite database (default:
+  `sqlite:///app/data/fluxfeed.db`)
 - `PORT`: Port to listen on (default: `3000`)
 - `HOST`: IP address to bind to (default: `0.0.0.0`)
 - `RUST_LOG`: Log level (default: `info`)

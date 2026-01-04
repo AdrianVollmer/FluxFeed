@@ -29,6 +29,12 @@ pub struct FeedDetailTemplate {
 }
 
 #[derive(Template)]
+#[template(path = "feeds/edit_form.html")]
+pub struct FeedEditFormTemplate {
+    pub feed: Feed,
+}
+
+#[derive(Template)]
 #[template(path = "articles/list.html")]
 pub struct ArticlesListTemplate {
     pub articles: Vec<ArticleWithFeed>,

@@ -55,10 +55,37 @@
                 <div>
                     <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Fetch Frequency</dt>
                     <dd class="mt-1 text-gray-900 dark:text-gray-100">
-                        {% if feed.fetch_frequency == "smart" %}
-                        Smart (adaptive)
+                        {% if feed.fetch_frequency == "adaptive" %}
+                        <div>
+                            <span class="font-medium">Adaptive</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">
+                                (currently every {{ feed.fetch_interval_minutes }} minutes)
+                            </span>
+                        </div>
+                        {% match feed.ttl_minutes %}
+                        {% when Some with (ttl) %}
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Feed suggests: {{ ttl }} minutes
+                        </p>
+                        {% when None %}
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Default: 60 minutes (no TTL in feed)
+                        </p>
+                        {% endmatch %}
                         {% else %}
-                        Every {{ feed.fetch_frequency }} hours
+                        <div>
+                            <span class="font-medium">Custom</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">
+                                (every {{ feed.fetch_frequency }} hours = {{ feed.fetch_interval_minutes }} minutes)
+                            </span>
+                        </div>
+                        {% match feed.ttl_minutes %}
+                        {% when Some with (ttl) %}
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Feed suggests: {{ ttl }} minutes (you chose to override)
+                        </p>
+                        {% when None %}
+                        {% endmatch %}
                         {% endif %}
                     </dd>
                 </div>
@@ -109,7 +136,13 @@
         <!-- Actions -->
         <div class="card">
             <h2 class="text-xl font-semibold mb-4">Actions</h2>
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
+                <a href="/feeds/{{ feed.id }}/edit" class="btn btn-secondary">
+                    <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Edit Frequency
+                </a>
                 <button
                     hx-post="/feeds/{{ feed.id }}/fetch"
                     hx-swap="none"

@@ -19,6 +19,9 @@ pub enum FeedServiceError {
 
     #[error("Feed fetch failed: {0}")]
     FetchError(String),
+
+    #[error("Invalid fetch frequency: must be 'adaptive' or hours between 1-168")]
+    InvalidFrequency,
 }
 
 pub async fn create_feed(
@@ -94,4 +97,23 @@ pub async fn get_feed_stats(
     let unread = repository::get_feed_unread_count(pool, feed_id).await?;
 
     Ok((total, unread))
+}
+
+/// Parse and validate fetch frequency
+/// Returns fetch_interval_minutes
+pub fn parse_fetch_frequency(frequency: &str) -> Result<i64, FeedServiceError> {
+    match frequency.trim() {
+        "adaptive" => Ok(60), // Default 1 hour for adaptive
+        hours_str => {
+            let hours = hours_str
+                .parse::<i64>()
+                .map_err(|_| FeedServiceError::InvalidFrequency)?;
+
+            if hours < 1 || hours > 168 {
+                return Err(FeedServiceError::InvalidFrequency);
+            }
+
+            Ok(hours * 60) // Convert hours to minutes
+        }
+    }
 }

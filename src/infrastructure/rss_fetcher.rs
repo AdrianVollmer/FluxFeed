@@ -1,4 +1,6 @@
 use feed_rs::parser;
+use quick_xml::events::Event;
+use quick_xml::Reader;
 use reqwest::{header, Client, StatusCode};
 use std::time::Duration;
 use thiserror::Error;
@@ -27,6 +29,7 @@ pub enum FetchResult {
         feed: feed_rs::model::Feed,
         etag: Option<String>,
         last_modified: Option<String>,
+        ttl: Option<i64>,
     },
     NotModified,
 }
@@ -117,6 +120,9 @@ impl RssFetcher {
 
         let body = response.text().await?;
 
+        // Extract TTL from raw XML before parsing
+        let ttl = extract_ttl_from_xml(&body);
+
         // Parse the feed
         let feed = parser::parse(body.as_bytes()).map_err(|e| {
             tracing::error!("Feed parsing error for {}: {}", url, e);
@@ -136,6 +142,7 @@ impl RssFetcher {
             feed,
             etag: new_etag,
             last_modified: new_last_modified,
+            ttl,
         })
     }
 }
@@ -144,4 +151,48 @@ impl Default for RssFetcher {
     fn default() -> Self {
         Self::new().expect("Failed to create RssFetcher")
     }
+}
+
+/// Extract TTL (Time To Live) from RSS 2.0 feed XML
+/// Returns TTL in minutes if found
+fn extract_ttl_from_xml(xml: &str) -> Option<i64> {
+    let mut reader = Reader::from_str(xml);
+    reader.config_mut().trim_text(true);
+
+    let mut buf = Vec::new();
+    let mut in_channel = false;
+
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Ok(Event::Start(ref e)) if e.name().as_ref() == b"channel" => {
+                in_channel = true;
+            }
+            Ok(Event::Start(ref e)) if e.name().as_ref() == b"ttl" && in_channel => {
+                // Next text event contains the TTL value
+                buf.clear();
+                if let Ok(Event::Text(t)) = reader.read_event_into(&mut buf) {
+                    if let Ok(ttl_str) = t.unescape() {
+                        if let Ok(ttl) = ttl_str.parse::<i64>() {
+                            if ttl > 0 {
+                                tracing::debug!("Extracted TTL: {} minutes", ttl);
+                                return Some(ttl);
+                            }
+                        }
+                    }
+                }
+            }
+            Ok(Event::End(ref e)) if e.name().as_ref() == b"channel" => {
+                in_channel = false;
+            }
+            Ok(Event::Eof) => break,
+            Err(e) => {
+                tracing::debug!("Error parsing XML for TTL: {}", e);
+                break;
+            }
+            _ => {}
+        }
+        buf.clear();
+    }
+
+    None
 }

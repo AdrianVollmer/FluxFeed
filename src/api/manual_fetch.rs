@@ -64,6 +64,7 @@ async fn perform_fetch(state: &AppState) -> Result<(usize, usize), Box<dyn std::
                 feed: parsed_feed,
                 etag,
                 last_modified,
+                ttl: _,
             }) => {
                 tracing::info!(
                     "Feed updated: {} ({} entries)",

@@ -67,6 +67,7 @@ pub async fn list_articles(
                     fetch_interval_minutes: 30,
                     color: "#3B82F6".to_string(),
                     fetch_frequency: "smart".to_string(),
+                    ttl_minutes: None,
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 }
@@ -161,6 +162,7 @@ pub async fn toggle_read_status(
             fetch_interval_minutes: 30,
             color: "#3B82F6".to_string(),
             fetch_frequency: "smart".to_string(),
+            ttl_minutes: None,
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
         });
@@ -194,6 +196,7 @@ pub async fn toggle_read_status_compact(
             fetch_interval_minutes: 30,
             color: "#3B82F6".to_string(),
             fetch_frequency: "smart".to_string(),
+            ttl_minutes: None,
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
         });

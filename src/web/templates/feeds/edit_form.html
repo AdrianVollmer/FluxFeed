@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 dark:text-white">Edit Fetch Frequency</h1>
+
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <form method="POST" action="/feeds/{{ feed.id }}/update" id="frequency-form">
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2 dark:text-gray-200">
+                    Fetch Frequency
+                </label>
+
+                <div class="space-y-3">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="fetch_frequency" value="adaptive"
+                               {% if feed.fetch_frequency == "adaptive" %}checked{% endif %}
+                               class="mr-2">
+                        <span class="dark:text-gray-200">Adaptive (uses feed's TTL, default 1 hour)</span>
+                    </label>
+
+                    {% match feed.ttl_minutes %}
+                    {% when Some with (ttl) %}
+                    <p class="text-sm text-gray-600 dark:text-gray-400 ml-6">
+                        Feed suggests: {{ ttl }} minutes
+                    </p>
+                    {% when None %}
+                    {% endmatch %}
+
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="fetch_frequency" value="custom" id="custom-radio"
+                               {% if feed.fetch_frequency != "adaptive" %}checked{% endif %}
+                               class="mr-2">
+                        <span class="dark:text-gray-200">Custom:</span>
+                        <input type="number" id="custom_hours" name="custom_hours"
+                               min="1" max="168"
+                               value="{% if feed.fetch_frequency != "adaptive" %}{{ feed.fetch_frequency }}{% else %}24{% endif %}"
+                               class="ml-2 w-20 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 dark:bg-gray-700 dark:text-white"
+                               onfocus="this.previousElementSibling.previousElementSibling.checked=true">
+                        <span class="ml-1 dark:text-gray-200">hours</span>
+                    </label>
+                </div>
+
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    Valid range: 1-168 hours (1 hour to 1 week)
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                    Save Changes
+                </button>
+                <a href="/feeds/{{ feed.id }}"
+                   class="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Handle form submission to combine radio + custom hours
+document.getElementById("frequency-form").addEventListener("submit", function(e) {
+    const radios = document.getElementsByName("fetch_frequency");
+    const customHours = document.getElementById("custom_hours");
+
+    for (let radio of radios) {
+        if (radio.checked) {
+            if (radio.value === "custom") {
+                // Replace with hours value
+                const hours = customHours.value;
+                const hidden = document.createElement("input");
+                hidden.type = "hidden";
+                hidden.name = "fetch_frequency";
+                hidden.value = hours;
+                this.appendChild(hidden);
+                radio.disabled = true;
+            }
+            break;
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -24,6 +24,11 @@ pub struct CreateFeedForm {
     title: Option<String>,
 }
 
+#[derive(Deserialize)]
+pub struct UpdateFeedForm {
+    pub fetch_frequency: String,
+}
+
 pub async fn list_feeds(State(state): State<AppState>) -> Result<Html<String>, AppError> {
     let feeds = feed_service::list_all_feeds(&state.db_pool).await?;
 
@@ -102,6 +107,39 @@ pub async fn fetch_feed(
     Ok(StatusCode::OK)
 }
 
+pub async fn show_edit_feed_form(
+    State(state): State<AppState>,
+    Path(feed_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    let feed = repository::get_feed_by_id(&state.db_pool, feed_id)
+        .await?
+        .ok_or(feed_service::FeedServiceError::NotFound)?;
+
+    let template = crate::web::templates::FeedEditFormTemplate { feed };
+    Ok(Html(template.render()?))
+}
+
+pub async fn update_feed(
+    State(state): State<AppState>,
+    Path(feed_id): Path<i64>,
+    Form(form): Form<UpdateFeedForm>,
+) -> Result<impl IntoResponse, AppError> {
+    // Validate and parse frequency
+    let fetch_interval_minutes = feed_service::parse_fetch_frequency(&form.fetch_frequency)?;
+
+    // Update in database
+    repository::update_feed_frequency(
+        &state.db_pool,
+        feed_id,
+        &form.fetch_frequency,
+        fetch_interval_minutes,
+    )
+    .await?;
+
+    // Redirect to feed detail page
+    Ok(axum::response::Redirect::to(&format!("/feeds/{}", feed_id)))
+}
+
 // Error handling
 pub enum AppError {
     TemplateError(askama::Error),
@@ -151,6 +189,11 @@ impl IntoResponse for AppError {
             AppError::ServiceError(feed_service::FeedServiceError::FetchError(msg)) => (
                 StatusCode::BAD_GATEWAY,
                 format!("Feed fetch failed: {}", msg),
+            )
+                .into_response(),
+            AppError::ServiceError(feed_service::FeedServiceError::InvalidFrequency) => (
+                StatusCode::BAD_REQUEST,
+                "Invalid fetch frequency: must be 'adaptive' or hours between 1-168",
             )
                 .into_response(),
             AppError::DatabaseError(err) => {

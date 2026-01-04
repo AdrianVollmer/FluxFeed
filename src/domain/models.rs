@@ -15,6 +15,7 @@ pub struct Feed {
     pub fetch_interval_minutes: i64,
     pub color: String,
     pub fetch_frequency: String,
+    pub ttl_minutes: Option<i64>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

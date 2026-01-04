@@ -471,3 +471,75 @@ pub async fn list_logs_with_feeds(
 
     Ok(logs)
 }
+
+/// Update feed's TTL and fetch interval (for adaptive mode)
+pub async fn update_feed_ttl(
+    pool: &SqlitePool,
+    feed_id: i64,
+    ttl_minutes: Option<i64>,
+    fetch_interval_minutes: i64,
+) -> Result<(), SqlxError> {
+    sqlx::query!(
+        r#"
+        UPDATE feeds
+        SET ttl_minutes = ?,
+            fetch_interval_minutes = ?,
+            updated_at = datetime('now')
+        WHERE id = ?
+        "#,
+        ttl_minutes,
+        fetch_interval_minutes,
+        feed_id
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+/// Update only TTL (for custom frequency mode - store but don't use)
+pub async fn update_feed_ttl_only(
+    pool: &SqlitePool,
+    feed_id: i64,
+    ttl_minutes: Option<i64>,
+) -> Result<(), SqlxError> {
+    sqlx::query!(
+        r#"
+        UPDATE feeds
+        SET ttl_minutes = ?,
+            updated_at = datetime('now')
+        WHERE id = ?
+        "#,
+        ttl_minutes,
+        feed_id
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+/// Update feed's fetch frequency preference
+pub async fn update_feed_frequency(
+    pool: &SqlitePool,
+    feed_id: i64,
+    fetch_frequency: &str,
+    fetch_interval_minutes: i64,
+) -> Result<(), SqlxError> {
+    sqlx::query!(
+        r#"
+        UPDATE feeds
+        SET fetch_frequency = ?,
+            fetch_interval_minutes = ?,
+            updated_at = datetime('now')
+        WHERE id = ?
+        "#,
+        fetch_frequency,
+        fetch_interval_minutes,
+        feed_id
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
