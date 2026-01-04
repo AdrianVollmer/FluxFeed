@@ -1,7 +1,7 @@
 use crate::api::feeds::AppState;
 use crate::domain::{article_service, feed_service};
 use crate::infrastructure::repository;
-use crate::web::templates::{ArticleCompactRowTemplate, ArticleRowTemplate, ArticlesListTemplate, ArticleWithFeed};
+use crate::web::templates::{ArticleCompactRowTemplate, ArticleRowTemplate, ArticleRowsTemplate, ArticlesListTemplate, ArticleWithFeed, LoadMoreButtonTemplate};
 use askama::Template;
 use axum::{
     extract::{Path, Query, State},
@@ -70,7 +70,8 @@ pub async fn list_articles(
 
         articles_with_feed.push(ArticleWithFeed {
             article,
-            feed_title: feed.title,
+            feed_title: feed.title.clone(),
+            feed_color: feed.color,
         });
     }
 
@@ -81,42 +82,22 @@ pub async fn list_articles(
     if is_htmx && offset > 0 {
         let mut html = String::new();
 
-        // Render each article row
-        for item in &articles_with_feed {
-            let row_template = ArticleRowTemplate {
-                article: item.article.clone(),
-                feed_title: item.feed_title.clone(),
-            };
-            html.push_str(&row_template.render()?);
-            html.push('\n');
-        }
+        // Render article rows using template
+        let rows_template = ArticleRowsTemplate {
+            articles: articles_with_feed,
+        };
+        html.push_str(&rows_template.render()?);
 
         // Update the Load More button using out-of-band swap
         if has_more {
-            let next_offset = offset + limit;
-            let feed_param = if let Some(feed_id) = params.feed_id {
-                format!("&feed_id={}", feed_id)
-            } else {
-                String::new()
+            let button_template = LoadMoreButtonTemplate {
+                next_offset: offset + limit,
+                filter_feed: params.feed_id,
+                filter_read: params.is_read,
             };
-            let read_param = if let Some(is_read) = params.is_read {
-                format!("&is_read={}", is_read)
-            } else {
-                String::new()
-            };
-
-            html.push_str(&format!(
-                "<div id=\"load-more-container\" hx-swap-oob=\"true\" class=\"mt-8 text-center\">\n\
-    <button\n\
-        hx-get=\"/articles?offset={}{}{}\"\n\
-        hx-target=\"#articles-list\"\n\
-        hx-swap=\"beforeend\"\n\
-        class=\"btn btn-primary\">\n\
-        Load More Articles\n\
-    </button>\n\
-</div>",
-                next_offset, feed_param, read_param
-            ));
+            html.push_str(r#"<div id="load-more-container" hx-swap-oob="true" class="mt-8 text-center">"#);
+            html.push_str(&button_template.render()?);
+            html.push_str("</div>");
         } else {
             // Remove the Load More button if no more articles
             html.push_str(r#"<div id="load-more-container" hx-swap-oob="true"></div>"#);

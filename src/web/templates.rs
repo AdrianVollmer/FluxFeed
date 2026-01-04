@@ -59,4 +59,19 @@ pub struct ArticleCompactRowTemplate {
 pub struct ArticleWithFeed {
     pub article: Article,
     pub feed_title: String,
+    pub feed_color: String,
+}
+
+#[derive(Template)]
+#[template(path = "articles/_article_rows.html")]
+pub struct ArticleRowsTemplate {
+    pub articles: Vec<ArticleWithFeed>,
+}
+
+#[derive(Template)]
+#[template(path = "articles/_load_more_button.html")]
+pub struct LoadMoreButtonTemplate {
+    pub next_offset: i64,
+    pub filter_feed: Option<i64>,
+    pub filter_read: Option<bool>,
 }

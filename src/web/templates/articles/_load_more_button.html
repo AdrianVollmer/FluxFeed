@@ -1,0 +1,7 @@
+<button
+    hx-get="/articles?offset={{ next_offset }}{% if filter_feed.is_some() %}&feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}"
+    hx-target="#articles-cards"
+    hx-swap="beforeend"
+    class="btn btn-primary">
+    Load More Articles
+</button>
