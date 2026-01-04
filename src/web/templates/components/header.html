@@ -1,4 +1,7 @@
 <header class="bg-white dark:bg-gray-800 shadow-sm">
+    <!-- Checkbox for mobile menu state -->
+    <input type="checkbox" id="mobile-nav-toggle" class="hidden peer" autocomplete="off" />
+
     <nav class="container mx-auto px-4 py-4 max-w-7xl">
         <div class="flex items-center justify-between">
             <!-- Left: Logo + Desktop Nav -->
@@ -22,19 +25,15 @@
             </div>
 
             <!-- Right: Mobile Hamburger Button -->
-            <div class="md:hidden">
-                <input type="checkbox" id="mobile-nav-toggle" class="sr-only peer" autocomplete="off" />
-                <label for="mobile-nav-toggle" class="cursor-pointer p-2 block">
-                    <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </label>
-            </div>
+            <label for="mobile-nav-toggle" class="md:hidden cursor-pointer p-2 block">
+                <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </label>
         </div>
     </nav>
 
     <!-- Mobile Navigation Menu -->
-    <input type="checkbox" id="mobile-nav-toggle" class="hidden peer" autocomplete="off" />
     <div class="fixed inset-0 bg-black bg-opacity-50 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-300 z-40 md:hidden">
         <!-- Clickable overlay to close -->
         <label for="mobile-nav-toggle" class="absolute inset-0 cursor-pointer"></label>

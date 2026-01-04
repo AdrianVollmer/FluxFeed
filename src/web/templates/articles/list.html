@@ -4,19 +4,19 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto">
+    <!-- Checkbox for article controls state -->
+    <input type="checkbox" id="article-controls-toggle" class="hidden peer" autocomplete="off" />
+
     <div class="flex justify-between items-center mb-4 md:mb-8">
         <h1 class="text-3xl font-bold">Articles</h1>
 
         <!-- Mobile Controls Toggle -->
-        <div class="md:hidden">
-            <input type="checkbox" id="article-controls-toggle" class="sr-only peer" autocomplete="off" />
-            <label for="article-controls-toggle" class="btn btn-secondary cursor-pointer flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                Filters
-            </label>
-        </div>
+        <label for="article-controls-toggle" class="md:hidden btn btn-secondary cursor-pointer flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Filters
+        </label>
     </div>
 
     <!-- Desktop Controls (visible >= md) -->
@@ -64,7 +64,6 @@
     </div>
 
     <!-- Mobile Controls Accordion -->
-    <input type="checkbox" id="article-controls-toggle" class="hidden peer" autocomplete="off" />
     <div class="max-h-0 opacity-0 overflow-hidden peer-checked:max-h-[1000px] peer-checked:opacity-100 transition-all duration-300 ease-in-out md:hidden mb-6">
         <div class="bg-white dark:bg-gray-800 rounded-lg p-4 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-lg space-y-4">
 
