@@ -65,8 +65,49 @@ Copy `.env.example` to `.env` and customize:
 ``` bash
 DATABASE_URL=sqlite://fluxfeed.db
 PORT=3000
+HOST=0.0.0.0
 RUST_LOG=info
 ```
+
+## Docker Deployment
+
+The easiest way to run FluxFeed is with Docker.
+
+### Using Docker Compose (Recommended)
+
+``` bash
+docker compose up -d
+```
+
+The app will be available at http://localhost:3000 with persistent storage.
+
+### Using Docker directly
+
+Build the image:
+
+``` bash
+docker build -t fluxfeed .
+```
+
+Run the container:
+
+``` bash
+docker run -d \
+  -p 3000:3000 \
+  -v fluxfeed-data:/app/data \
+  -e DATABASE_URL=sqlite:///app/data/fluxfeed.db \
+  -e PORT=3000 \
+  -e HOST=0.0.0.0 \
+  --name fluxfeed \
+  fluxfeed
+```
+
+### Environment Variables for Docker
+
+- `DATABASE_URL`: Path to SQLite database (default: `sqlite:///app/data/fluxfeed.db`)
+- `PORT`: Port to listen on (default: `3000`)
+- `HOST`: IP address to bind to (default: `0.0.0.0`)
+- `RUST_LOG`: Log level (default: `info`)
 
 ## License
 

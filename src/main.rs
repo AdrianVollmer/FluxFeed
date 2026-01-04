@@ -13,7 +13,6 @@ use axum::{
 };
 use config::Config;
 use infrastructure::database::setup_database;
-use std::net::SocketAddr;
 use tower_http::{compression::CompressionLayer, services::ServeDir, trace::TraceLayer};
 use web::templates::IndexTemplate;
 
@@ -88,10 +87,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(state);
 
     // Start server
-    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
-    tracing::info!("FluxFeed server listening on http://{}", addr);
+    let bind_addr = format!("{}:{}", config.host, config.port);
+    tracing::info!("FluxFeed server listening on http://{}", bind_addr);
 
-    let listener = tokio::net::TcpListener::bind(addr).await?;
+    let listener = tokio::net::TcpListener::bind(&bind_addr).await?;
     axum::serve(listener, app).await?;
 
     Ok(())

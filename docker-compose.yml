@@ -1,0 +1,17 @@
+services:
+  fluxfeed:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=sqlite:///app/data/fluxfeed.db
+      - PORT=3000
+      - HOST=0.0.0.0
+      - RUST_LOG=info
+    volumes:
+      # Persist the database
+      - fluxfeed-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  fluxfeed-data:
