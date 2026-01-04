@@ -69,6 +69,12 @@ pub struct ArticleRowsTemplate {
 }
 
 #[derive(Template)]
+#[template(path = "articles/_article_compact_rows.html")]
+pub struct ArticleCompactRowsTemplate {
+    pub articles: Vec<ArticleWithFeed>,
+}
+
+#[derive(Template)]
 #[template(path = "articles/_load_more_button.html")]
 pub struct LoadMoreButtonTemplate {
     pub next_offset: i64,

@@ -2,8 +2,8 @@ use crate::api::feeds::AppState;
 use crate::domain::{article_service, feed_service};
 use crate::infrastructure::repository;
 use crate::web::templates::{
-    ArticleCompactRowTemplate, ArticleRowTemplate, ArticleRowsTemplate, ArticleWithFeed,
-    ArticlesListTemplate, LoadMoreButtonTemplate,
+    ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleRowTemplate, ArticleRowsTemplate,
+    ArticleWithFeed, ArticlesListTemplate, LoadMoreButtonTemplate,
 };
 use askama::Template;
 use axum::{
@@ -19,6 +19,7 @@ pub struct ArticleListParams {
     pub is_read: Option<bool>,
     pub limit: Option<i64>,
     pub offset: Option<i64>,
+    pub view: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -85,11 +86,19 @@ pub async fn list_articles(
     if is_htmx && offset > 0 {
         let mut html = String::new();
 
-        // Render article rows using template
-        let rows_template = ArticleRowsTemplate {
-            articles: articles_with_feed,
-        };
-        html.push_str(&rows_template.render()?);
+        // Render article rows using the appropriate template based on view mode
+        let view_mode = params.view.as_deref().unwrap_or("cards");
+        if view_mode == "compact" {
+            let rows_template = ArticleCompactRowsTemplate {
+                articles: articles_with_feed,
+            };
+            html.push_str(&rows_template.render()?);
+        } else {
+            let rows_template = ArticleRowsTemplate {
+                articles: articles_with_feed,
+            };
+            html.push_str(&rows_template.render()?);
+        }
 
         // Update the Load More button using out-of-band swap
         if has_more {

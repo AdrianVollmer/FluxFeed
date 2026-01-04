@@ -254,8 +254,8 @@
     {% if has_more %}
     <div id="load-more-container" class="mt-8 text-center">
         <button
+            id="load-more-btn"
             hx-get="/articles?offset={{ offset + limit }}{% if filter_feed.is_some() %}&feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}"
-            hx-target="#articles-cards"
             hx-swap="beforeend"
             class="btn btn-primary">
             Load More Articles
@@ -265,6 +265,32 @@
 </div>
 
 <script>
+// Update load more button target and view parameter
+function updateLoadMoreButton() {
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (!loadMoreBtn) return;
+
+    const savedView = localStorage.getItem('articleView') || 'cards';
+    const currentUrl = loadMoreBtn.getAttribute('hx-get');
+
+    // Update or add view parameter to URL
+    const url = new URL(currentUrl, window.location.origin);
+    url.searchParams.set('view', savedView);
+    loadMoreBtn.setAttribute('hx-get', url.pathname + url.search);
+
+    // Update target based on view
+    if (savedView === 'compact') {
+        loadMoreBtn.setAttribute('hx-target', '#articles-compact tbody');
+    } else {
+        loadMoreBtn.setAttribute('hx-target', '#articles-cards');
+    }
+
+    // Reinitialize HTMX for this element
+    if (window.htmx) {
+        htmx.process(loadMoreBtn);
+    }
+}
+
 // View toggle with localStorage persistence
 function setView(view) {
     // Save preference
@@ -291,12 +317,23 @@ function setView(view) {
         compactBtn.classList.remove('bg-blue-600', 'text-white');
         compactBtn.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
     }
+
+    // Update load more button for new view
+    updateLoadMoreButton();
 }
 
 // Initialize view on page load
 document.addEventListener('DOMContentLoaded', function() {
     const savedView = localStorage.getItem('articleView') || 'cards';
     setView(savedView);
+    updateLoadMoreButton();
+});
+
+// Re-apply load more button settings after OOB swap
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+    if (evt.detail.target.id === 'load-more-container') {
+        updateLoadMoreButton();
+    }
 });
 
 // Content expand/collapse toggle (event delegation for dynamic content)
