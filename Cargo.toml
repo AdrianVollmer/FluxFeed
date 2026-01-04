@@ -26,6 +26,9 @@ quick-xml = "0.37"
 # HTML sanitization
 ammonia = "4.0"
 
+# Reader mode content extraction
+dom_smoothie = "0.3"
+
 # OpenGraph metadata extraction
 webpage = "2.0"
 

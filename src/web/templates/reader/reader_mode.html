@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - FluxFeed Reader{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Back navigation -->
+    <div class="mb-6">
+        <a href="/articles" class="text-blue-600 dark:text-blue-400 hover:underline flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Articles
+        </a>
+    </div>
+
+    <!-- Article header -->
+    <article class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-6">
+        <h1 class="text-4xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+            {{ title }}
+        </h1>
+
+        {% if byline.is_some() %}
+        <div class="text-lg text-gray-600 dark:text-gray-400 mb-4">
+            By {{ byline.as_ref().unwrap() }}
+        </div>
+        {% endif %}
+
+        {% if excerpt.is_some() %}
+        <div class="text-lg text-gray-600 dark:text-gray-400 italic mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+            {{ excerpt.as_ref().unwrap() }}
+        </div>
+        {% endif %}
+
+        <!-- Original article link -->
+        <div class="mb-6 flex items-center gap-4">
+            <a href="{{ article_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
+                View Original Article
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Article content -->
+        <div class="prose dark:prose-invert prose-lg max-w-none text-gray-900 dark:text-gray-100">
+            {{ content|safe }}
+        </div>
+    </article>
+
+    <!-- Footer actions -->
+    <div class="flex justify-between items-center py-4">
+        <a href="/articles" class="text-blue-600 dark:text-blue-400 hover:underline">
+            &larr; Back to Articles
+        </a>
+        <a href="{{ article_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">
+            View Original &rarr;
+        </a>
+    </div>
+</div>
+{% endblock %}

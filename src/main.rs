@@ -82,6 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/articles/mark-all-read",
             post(api::articles::mark_all_read),
         )
+        .route("/articles/:id/reader", get(api::reader::show_reader_mode))
         .route("/logs", get(api::logs::list_logs))
         .route("/api/fetch", post(api::manual_fetch::trigger_fetch))
         .nest_service("/static", ServeDir::new("static"))

@@ -131,3 +131,13 @@ pub struct LoadMoreButtonLogsTemplate {
     pub filter_feed: Option<i64>,
     pub filter_log_type: Option<String>,
 }
+
+#[derive(Template)]
+#[template(path = "reader/reader_mode.html")]
+pub struct ReaderModeTemplate {
+    pub article_url: String,
+    pub title: String,
+    pub content: String,
+    pub byline: Option<String>,
+    pub excerpt: Option<String>,
+}

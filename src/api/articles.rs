@@ -330,29 +330,29 @@ pub async fn search_articles(
         .map(|d| d.and_hms_opt(23, 59, 59).unwrap().and_utc());
 
     // Only search if we have a query or date filter
-    let (articles_with_feed, has_more) = if params.q.is_some() || date_from.is_some() || date_to.is_some() {
-        let articles = article_service::list_articles(
-            &state.db_pool,
-            None,  // No feed filter on search page
-            None,  // No read filter on search page
-            params.q.clone(),
-            date_from,
-            date_to,
-            limit + 1,
-            offset,
-        )
-        .await?;
+    let (articles_with_feed, has_more) =
+        if params.q.is_some() || date_from.is_some() || date_to.is_some() {
+            let articles = article_service::list_articles(
+                &state.db_pool,
+                None, // No feed filter on search page
+                None, // No read filter on search page
+                params.q.clone(),
+                date_from,
+                date_to,
+                limit + 1,
+                offset,
+            )
+            .await?;
 
-        let has_more_results = articles.len() > limit as usize;
-        let articles_to_show: Vec<_> = articles.into_iter().take(limit as usize).collect();
+            let has_more_results = articles.len() > limit as usize;
+            let articles_to_show: Vec<_> = articles.into_iter().take(limit as usize).collect();
 
-        // Get feed info for each article
-        let mut articles_with_feed = Vec::new();
-        for article in articles_to_show {
-            let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
-                .await?
-                .unwrap_or_else(|| {
-                    crate::domain::models::Feed {
+            // Get feed info for each article
+            let mut articles_with_feed = Vec::new();
+            for article in articles_to_show {
+                let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+                    .await?
+                    .unwrap_or_else(|| crate::domain::models::Feed {
                         id: article.feed_id,
                         url: String::new(),
                         title: "Unknown Feed".to_string(),
@@ -367,31 +367,30 @@ pub async fn search_articles(
                         ttl_minutes: None,
                         created_at: chrono::Utc::now(),
                         updated_at: chrono::Utc::now(),
-                    }
+                    });
+
+                articles_with_feed.push(ArticleWithFeed {
+                    article,
+                    feed_title: feed.title.clone(),
+                    feed_color: feed.color,
                 });
+            }
 
-            articles_with_feed.push(ArticleWithFeed {
-                article,
-                feed_title: feed.title.clone(),
-                feed_color: feed.color,
-            });
-        }
+            // Check if this is an HTMX pagination request
+            let is_htmx = headers.get("HX-Request").is_some();
 
-        // Check if this is an HTMX pagination request
-        let is_htmx = headers.get("HX-Request").is_some();
+            if is_htmx && offset > 0 {
+                // Return just the article rows for pagination
+                let rows_template = ArticleRowsTemplate {
+                    articles: articles_with_feed,
+                };
+                return Ok(Html(rows_template.render()?));
+            }
 
-        if is_htmx && offset > 0 {
-            // Return just the article rows for pagination
-            let rows_template = ArticleRowsTemplate {
-                articles: articles_with_feed,
-            };
-            return Ok(Html(rows_template.render()?));
-        }
-
-        (articles_with_feed, has_more_results)
-    } else {
-        (Vec::new(), false)
-    };
+            (articles_with_feed, has_more_results)
+        } else {
+            (Vec::new(), false)
+        };
 
     let template = ArticleSearchTemplate {
         articles: articles_with_feed,

@@ -48,14 +48,21 @@
         {% endif %}
     </td>
     <td class="px-3 py-4 whitespace-nowrap text-right text-sm">
-        <button
-            hx-post="/articles/{{ article.id }}/toggle-read-compact"
-            hx-target="#article-compact-{{ article.id }}"
-            hx-swap="outerHTML"
-            onclick="event.stopPropagation()"
-            class="text-blue-600 dark:text-blue-400 hover:underline">
-            {% if article.is_read %}Unread{% else %}Read{% endif %}
-        </button>
+        <div class="flex gap-3 justify-end">
+            <a href="/articles/{{ article.id }}/reader"
+                onclick="event.stopPropagation()"
+                class="text-blue-600 dark:text-blue-400 hover:underline">
+                Reader
+            </a>
+            <button
+                hx-post="/articles/{{ article.id }}/toggle-read-compact"
+                hx-target="#article-compact-{{ article.id }}"
+                hx-swap="outerHTML"
+                onclick="event.stopPropagation()"
+                class="text-blue-600 dark:text-blue-400 hover:underline">
+                {% if article.is_read %}Unread{% else %}Read{% endif %}
+            </button>
+        </div>
     </td>
 </tr>
 <tr id="article-compact-{{ article.id }}-expanded" class="compact-article-expanded hidden" data-article-id="{{ article.id }}">
