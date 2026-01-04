@@ -176,7 +176,7 @@ pub async fn toggle_read_status(
 ) -> Result<Html<String>, AppError> {
     let article = article_service::toggle_read_status(&state.db_pool, article_id).await?;
 
-    // Get feed title
+    // Get feed info
     let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
         .await?
         .unwrap_or_else(|| crate::domain::models::Feed {
@@ -197,8 +197,11 @@ pub async fn toggle_read_status(
         });
 
     let template = ArticleRowTemplate {
-        article,
-        feed_title: feed.title,
+        item: ArticleWithFeed {
+            article,
+            feed_title: feed.title,
+            feed_color: feed.color,
+        },
     };
 
     Ok(Html(template.render()?))
@@ -210,7 +213,7 @@ pub async fn toggle_read_status_compact(
 ) -> Result<Html<String>, AppError> {
     let article = article_service::toggle_read_status(&state.db_pool, article_id).await?;
 
-    // Get feed title
+    // Get feed info
     let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
         .await?
         .unwrap_or_else(|| crate::domain::models::Feed {
@@ -231,8 +234,11 @@ pub async fn toggle_read_status_compact(
         });
 
     let template = ArticleCompactRowTemplate {
-        article,
-        feed_title: feed.title,
+        item: ArticleWithFeed {
+            article,
+            feed_title: feed.title,
+            feed_color: feed.color,
+        },
     };
 
     Ok(Html(template.render()?))
@@ -244,7 +250,7 @@ pub async fn toggle_starred_status(
 ) -> Result<Html<String>, AppError> {
     let article = article_service::toggle_starred_status(&state.db_pool, article_id).await?;
 
-    // Get feed title
+    // Get feed info
     let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
         .await?
         .unwrap_or_else(|| crate::domain::models::Feed {
@@ -265,8 +271,11 @@ pub async fn toggle_starred_status(
         });
 
     let template = ArticleRowTemplate {
-        article,
-        feed_title: feed.title,
+        item: ArticleWithFeed {
+            article,
+            feed_title: feed.title,
+            feed_color: feed.color,
+        },
     };
 
     Ok(Html(template.render()?))
@@ -278,7 +287,7 @@ pub async fn toggle_starred_status_compact(
 ) -> Result<Html<String>, AppError> {
     let article = article_service::toggle_starred_status(&state.db_pool, article_id).await?;
 
-    // Get feed title
+    // Get feed info
     let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
         .await?
         .unwrap_or_else(|| crate::domain::models::Feed {
@@ -299,8 +308,11 @@ pub async fn toggle_starred_status_compact(
         });
 
     let template = ArticleCompactRowTemplate {
-        article,
-        feed_title: feed.title,
+        item: ArticleWithFeed {
+            article,
+            feed_title: feed.title,
+            feed_color: feed.color,
+        },
     };
 
     Ok(Html(template.render()?))

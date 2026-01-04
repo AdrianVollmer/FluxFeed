@@ -54,15 +54,13 @@ pub struct ArticlesListTemplate {
 #[derive(Template)]
 #[template(path = "articles/article_row.html")]
 pub struct ArticleRowTemplate {
-    pub article: Article,
-    pub feed_title: String,
+    pub item: ArticleWithFeed,
 }
 
 #[derive(Template)]
 #[template(path = "articles/article_compact_row.html")]
 pub struct ArticleCompactRowTemplate {
-    pub article: Article,
-    pub feed_title: String,
+    pub item: ArticleWithFeed,
 }
 
 // Combined article + feed data for display
