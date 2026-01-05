@@ -1,0 +1,38 @@
+<div class="space-y-2">
+    {% if results.is_empty() %}
+    <div class="p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 rounded-lg">
+        No feeds were provided.
+    </div>
+    {% else %}
+    <div class="text-sm font-medium mb-2">Import Results:</div>
+    {% for result in results %}
+    <div class="flex items-start space-x-2 text-sm p-2 rounded {% if result.success %}bg-green-50 dark:bg-green-900/20{% else %}bg-red-50 dark:bg-red-900/20{% endif %}">
+        {% if result.success %}
+        <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <div class="{% if result.success %}text-green-800 dark:text-green-200{% else %}text-red-800 dark:text-red-200{% endif %}">
+            <div class="font-medium">{{ result.url }}</div>
+            {% if result.title.is_some() %}
+            <div class="text-xs mt-0.5">{{ result.title.as_ref().unwrap() }}</div>
+            {% endif %}
+        </div>
+        {% else %}
+        <svg class="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+        <div class="text-red-800 dark:text-red-200">
+            <div class="font-medium">{{ result.url }}</div>
+            <div class="text-xs mt-0.5">{{ result.error.as_ref().unwrap() }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if success_count > 0 %}
+    <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 rounded-lg text-sm">
+        Successfully imported {{ success_count }} feed(s). <a href="/feeds" class="underline hover:no-underline">View feeds</a> or close this dialog to refresh.
+    </div>
+    {% endif %}
+    {% endif %}
+</div>

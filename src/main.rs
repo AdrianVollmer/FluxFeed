@@ -61,6 +61,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(api::feeds::list_feeds).post(api::feeds::create_feed),
         )
         .route("/feeds/new", get(api::feeds::show_feed_form))
+        .route("/feeds/import/form", get(api::feeds::show_import_form))
+        .route("/feeds/import", post(api::feeds::import_feeds))
         .route(
             "/feeds/:id",
             get(api::feeds::show_feed).delete(api::feeds::delete_feed),

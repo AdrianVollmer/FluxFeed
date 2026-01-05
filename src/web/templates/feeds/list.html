@@ -6,17 +6,27 @@
 <div class="max-w-4xl mx-auto">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold">RSS Feeds</h1>
-        <button
-            hx-get="/feeds/new"
-            hx-target="#feed-form-modal"
-            hx-swap="innerHTML"
-            class="btn btn-primary">
-            + Add Feed
-        </button>
+        <div class="flex space-x-3">
+            <button
+                hx-get="/feeds/import/form"
+                hx-target="#feed-import-modal"
+                hx-swap="innerHTML"
+                class="btn btn-secondary">
+                Import Feeds
+            </button>
+            <button
+                hx-get="/feeds/new"
+                hx-target="#feed-form-modal"
+                hx-swap="innerHTML"
+                class="btn btn-primary">
+                + Add Feed
+            </button>
+        </div>
     </div>
 
-    <!-- Modal container for add feed form -->
+    <!-- Modal containers -->
     <div id="feed-form-modal"></div>
+    <div id="feed-import-modal"></div>
 
     <!-- Feed list -->
     <div id="feed-list" class="space-y-4">

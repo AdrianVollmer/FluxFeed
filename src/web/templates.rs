@@ -35,6 +35,24 @@ pub struct FeedEditFormTemplate {
 }
 
 #[derive(Template)]
+#[template(path = "feeds/import_form.html")]
+pub struct FeedImportFormTemplate;
+
+pub struct ImportResult {
+    pub url: String,
+    pub title: Option<String>,
+    pub success: bool,
+    pub error: Option<String>,
+}
+
+#[derive(Template)]
+#[template(path = "feeds/import_results.html")]
+pub struct FeedImportResultsTemplate {
+    pub results: Vec<ImportResult>,
+    pub success_count: usize,
+}
+
+#[derive(Template)]
 #[template(path = "articles/list.html")]
 pub struct ArticlesListTemplate {
     pub articles: Vec<ArticleWithFeed>,

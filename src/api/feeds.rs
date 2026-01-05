@@ -1,7 +1,8 @@
 use crate::domain::feed_service;
 use crate::infrastructure::{repository, scheduler};
 use crate::web::templates::{
-    FeedDetailTemplate, FeedFormTemplate, FeedRowTemplate, FeedsListTemplate,
+    FeedDetailTemplate, FeedFormTemplate, FeedImportFormTemplate, FeedImportResultsTemplate,
+    FeedRowTemplate, FeedsListTemplate, ImportResult,
 };
 use askama::Template;
 use axum::{
@@ -138,6 +139,83 @@ pub async fn update_feed(
 
     // Redirect to feed detail page
     Ok(axum::response::Redirect::to(&format!("/feeds/{}", feed_id)))
+}
+
+pub async fn show_import_form() -> Result<Html<String>, AppError> {
+    let template = FeedImportFormTemplate;
+    Ok(Html(template.render()?))
+}
+
+#[derive(Deserialize)]
+pub struct ImportFeedsForm {
+    feeds: String,
+}
+
+pub async fn import_feeds(
+    State(state): State<AppState>,
+    Form(form): Form<ImportFeedsForm>,
+) -> Result<Html<String>, AppError> {
+    let mut results = Vec::new();
+    let mut success_count = 0;
+
+    // Parse each line
+    for line in form.feeds.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+
+        // Split by whitespace - first part is URL, rest is optional title
+        let parts: Vec<&str> = line.splitn(2, ' ').collect();
+        let url = parts[0].to_string();
+        let title = parts.get(1).map(|s| s.trim().to_string());
+
+        // Try to create the feed
+        match feed_service::create_feed(
+            &state.db_pool,
+            url.clone(),
+            title.clone().filter(|s| !s.is_empty()),
+        )
+        .await
+        {
+            Ok(feed) => {
+                success_count += 1;
+                results.push(ImportResult {
+                    url: feed.url.clone(),
+                    title: Some(feed.title.clone()),
+                    success: true,
+                    error: None,
+                });
+            }
+            Err(e) => {
+                let error_msg = match e {
+                    feed_service::FeedServiceError::DuplicateUrl => {
+                        "Feed URL already exists".to_string()
+                    }
+                    feed_service::FeedServiceError::InvalidUrl(msg) => msg,
+                    feed_service::FeedServiceError::FetchError(msg) => {
+                        format!("Failed to fetch feed: {}", msg)
+                    }
+                    feed_service::FeedServiceError::DatabaseError(err) => {
+                        format!("Database error: {}", err)
+                    }
+                    _ => "Unknown error".to_string(),
+                };
+                results.push(ImportResult {
+                    url: url.clone(),
+                    title,
+                    success: false,
+                    error: Some(error_msg),
+                });
+            }
+        }
+    }
+
+    let template = FeedImportResultsTemplate {
+        results,
+        success_count,
+    };
+    Ok(Html(template.render()?))
 }
 
 // Error handling
