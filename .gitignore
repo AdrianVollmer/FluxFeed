@@ -18,7 +18,6 @@
 
 # Node/NPM (for Tailwind)
 node_modules/
-package-lock.json
 
 # OS
 .DS_Store
