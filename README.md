@@ -19,11 +19,11 @@ instance accessed locally or via VPN.
 
 ### Prerequisites
 
-- Rust (1.70+)
+- Rust (1.92+)
 - Node.js (for Tailwind CSS)
 - pkg-config and libssl-dev (for OpenSSL)
 
-### Setup
+### Building
 
 1.  **Install dependencies:**
 
