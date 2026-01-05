@@ -2,10 +2,27 @@
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6 dark:text-white">Edit Fetch Frequency</h1>
+    <h1 class="text-3xl font-bold mb-6 dark:text-white">Edit Feed</h1>
 
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <form method="POST" action="/feeds/{{ feed.id }}/update" id="frequency-form">
+            <div class="mb-6">
+                <label for="color" class="block text-sm font-medium mb-2 dark:text-gray-200">
+                    Feed Color
+                </label>
+                <div class="flex items-center gap-3">
+                    <input type="color" id="color" name="color" value="{{ feed.color }}"
+                           class="h-10 w-20 border border-gray-300 dark:border-gray-600 rounded cursor-pointer">
+                    <input type="text" id="color-text" value="{{ feed.color }}"
+                           class="w-28 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white font-mono text-sm"
+                           pattern="^#[0-9A-Fa-f]{6}$"
+                           maxlength="7">
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    This color will be used as an accent in article listings
+                </p>
+            </div>
+
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2 dark:text-gray-200">
                     Fetch Frequency
@@ -61,6 +78,20 @@
 </div>
 
 <script>
+// Sync color picker with text input
+const colorPicker = document.getElementById("color");
+const colorText = document.getElementById("color-text");
+
+colorPicker.addEventListener("input", function() {
+    colorText.value = this.value.toUpperCase();
+});
+
+colorText.addEventListener("input", function() {
+    if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+        colorPicker.value = this.value;
+    }
+});
+
 // Handle form submission to combine radio + custom hours
 document.getElementById("frequency-form").addEventListener("submit", function(e) {
     const radios = document.getElementsByName("fetch_frequency");

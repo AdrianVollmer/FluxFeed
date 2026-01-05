@@ -28,6 +28,7 @@ pub struct CreateFeedForm {
 #[derive(Deserialize)]
 pub struct UpdateFeedForm {
     pub fetch_frequency: String,
+    pub color: String,
 }
 
 pub async fn list_feeds(State(state): State<AppState>) -> Result<Html<String>, AppError> {
@@ -125,15 +126,25 @@ pub async fn update_feed(
     Path(feed_id): Path<i64>,
     Form(form): Form<UpdateFeedForm>,
 ) -> Result<impl IntoResponse, AppError> {
+    // Validate color format
+    if !form.color.starts_with('#') || form.color.len() != 7 {
+        return Err(AppError::ServiceError(
+            feed_service::FeedServiceError::InvalidUrl(
+                "Color must be in hex format (#RRGGBB)".to_string(),
+            ),
+        ));
+    }
+
     // Validate and parse frequency
     let fetch_interval_minutes = feed_service::parse_fetch_frequency(&form.fetch_frequency)?;
 
     // Update in database
-    repository::update_feed_frequency(
+    repository::update_feed_properties(
         &state.db_pool,
         feed_id,
         &form.fetch_frequency,
         fetch_interval_minutes,
+        &form.color,
     )
     .await?;
 

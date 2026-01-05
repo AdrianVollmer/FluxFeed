@@ -1,4 +1,4 @@
-<tr id="article-compact-{{ item.article.id }}" class="compact-article-row {% if item.article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity cursor-pointer" data-article-id="{{ item.article.id }}">
+<tr id="article-compact-{{ item.article.id }}" class="compact-article-row {% if item.article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity cursor-pointer border-l-4" data-article-id="{{ item.article.id }}" style="border-left-color: {{ item.feed_color }}">
     <td class="px-3 py-4 whitespace-nowrap">
         <button
             hx-post="/articles/{{ item.article.id }}/toggle-read-compact"
@@ -29,7 +29,7 @@
         </div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
-        <span class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+        <span class="text-xs px-2 py-1 rounded" style="background-color: {{ item.feed_color }}20; color: {{ item.feed_color }};">
             {{ item.feed_title }}
         </span>
     </td>

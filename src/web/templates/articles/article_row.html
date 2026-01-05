@@ -1,4 +1,4 @@
-<article class="card {% if item.article.is_read %}opacity-60{% endif %} transition-opacity" id="article-{{ item.article.id }}">
+<article class="card {% if item.article.is_read %}opacity-60{% endif %} transition-opacity border-l-4" id="article-{{ item.article.id }}" style="border-left-color: {{ item.feed_color }}">
     <div class="flex gap-4">
         <!-- Read/Unread indicator -->
         <div class="flex-shrink-0 pt-1">
