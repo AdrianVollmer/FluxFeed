@@ -10,7 +10,7 @@ COPY tailwind.config.js ./
 RUN npm run build:css
 
 # Stage 2: Build Rust application
-FROM rust:1.92-slim AS builder
+FROM rust:1.92-bookworm AS builder
 WORKDIR /build
 
 # Install build dependencies
