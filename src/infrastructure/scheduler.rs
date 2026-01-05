@@ -4,6 +4,39 @@ use chrono::Utc;
 use std::time::Duration;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
+/// Check if a reqwest error is a connection, DNS, or SSL error (feed-side problems)
+fn is_connection_dns_or_ssl_error(err: &reqwest::Error) -> bool {
+    // Check for connection errors (connection refused, network unreachable, etc.)
+    if err.is_connect() {
+        return true;
+    }
+
+    // Check for timeout errors (could be feed-side or network issue)
+    if err.is_timeout() {
+        return true;
+    }
+
+    // Check the error message for DNS and SSL-specific errors
+    let err_msg = err.to_string().to_lowercase();
+
+    // DNS resolution failures
+    if err_msg.contains("dns") || err_msg.contains("name resolution") {
+        return true;
+    }
+
+    // SSL/TLS errors
+    if err_msg.contains("ssl") || err_msg.contains("tls") || err_msg.contains("certificate") {
+        return true;
+    }
+
+    // Hostname/domain errors
+    if err_msg.contains("hostname") || err_msg.contains("domain") {
+        return true;
+    }
+
+    false
+}
+
 pub async fn start_scheduler(state: AppState) -> Result<JobScheduler, Box<dyn std::error::Error>> {
     let scheduler = JobScheduler::new().await?;
 
@@ -233,8 +266,32 @@ pub async fn fetch_single_feed(
             )
             .await?;
 
-            // Still update last_fetched_at to avoid hammering broken feeds
-            repository::touch_feed(pool, feed.id).await?;
+            // Determine if this is a "feed-side" or "our-side" problem
+            // Feed-side problems: connection refused, DNS errors, SSL errors
+            // → Update last_fetched_at to respect normal interval (avoid hammering broken feeds)
+            // Our-side problems: HTTP errors, parse errors, other issues
+            // → Don't update last_fetched_at so we retry in 5 minutes (next scheduler cycle)
+            let is_feed_side_problem = match &e {
+                rss_fetcher::FetchError::NetworkError(req_err) => {
+                    // Check for connection/DNS/SSL errors
+                    is_connection_dns_or_ssl_error(req_err)
+                }
+                _ => false, // HTTP errors, parse errors = our-side problem
+            };
+
+            if is_feed_side_problem {
+                tracing::info!(
+                    "Feed-side problem for {}, will retry based on normal interval",
+                    feed.url
+                );
+                repository::touch_feed(pool, feed.id).await?;
+            } else {
+                tracing::info!(
+                    "Transient/our-side problem for {}, will retry in 5 minutes",
+                    feed.url
+                );
+                // Don't update last_fetched_at - will be retried on next scheduler cycle
+            }
 
             Err(e.into())
         }
