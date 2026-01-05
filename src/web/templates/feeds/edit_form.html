@@ -7,6 +7,41 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <form method="POST" action="/feeds/{{ feed.id }}/update" id="frequency-form">
             <div class="mb-6">
+                <label for="title" class="block text-sm font-medium mb-2 dark:text-gray-200">
+                    Title
+                </label>
+                <input type="text" id="title" name="title" value="{{ feed.title }}"
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                       required>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    The display name for this feed
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <label for="url" class="block text-sm font-medium mb-2 dark:text-gray-200">
+                    URL
+                </label>
+                <input type="url" id="url" name="url" value="{{ feed.url }}"
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white font-mono text-sm"
+                       required>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    The RSS/Atom feed URL
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <label for="description" class="block text-sm font-medium mb-2 dark:text-gray-200">
+                    Description
+                </label>
+                <textarea id="description" name="description" rows="3"
+                          class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white">{% match feed.description %}{% when Some with (desc) %}{{ desc }}{% when None %}{% endmatch %}</textarea>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    A brief description of this feed (optional)
+                </p>
+            </div>
+
+            <div class="mb-6">
                 <label for="color" class="block text-sm font-medium mb-2 dark:text-gray-200">
                     Feed Color
                 </label>

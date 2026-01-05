@@ -27,6 +27,9 @@ pub struct CreateFeedForm {
 
 #[derive(Deserialize)]
 pub struct UpdateFeedForm {
+    pub title: String,
+    pub url: String,
+    pub description: Option<String>,
     pub fetch_frequency: String,
     pub color: String,
 }
@@ -126,6 +129,15 @@ pub async fn update_feed(
     Path(feed_id): Path<i64>,
     Form(form): Form<UpdateFeedForm>,
 ) -> Result<impl IntoResponse, AppError> {
+    // Validate URL format
+    if !form.url.starts_with("http://") && !form.url.starts_with("https://") {
+        return Err(AppError::ServiceError(
+            feed_service::FeedServiceError::InvalidUrl(
+                "URL must start with http:// or https://".to_string(),
+            ),
+        ));
+    }
+
     // Validate color format
     if !form.color.starts_with('#') || form.color.len() != 7 {
         return Err(AppError::ServiceError(
@@ -138,10 +150,16 @@ pub async fn update_feed(
     // Validate and parse frequency
     let fetch_interval_minutes = feed_service::parse_fetch_frequency(&form.fetch_frequency)?;
 
+    // Convert empty description to None
+    let description = form.description.filter(|s| !s.trim().is_empty());
+
     // Update in database
     repository::update_feed_properties(
         &state.db_pool,
         feed_id,
+        &form.title,
+        &form.url,
+        description.as_deref(),
         &form.fetch_frequency,
         fetch_interval_minutes,
         &form.color,

@@ -596,10 +596,14 @@ pub async fn update_feed_frequency(
     Ok(())
 }
 
-/// Update feed's editable properties (frequency and color)
+/// Update feed's editable properties (title, URL, description, frequency and color)
+#[allow(clippy::too_many_arguments)]
 pub async fn update_feed_properties(
     pool: &SqlitePool,
     feed_id: i64,
+    title: &str,
+    url: &str,
+    description: Option<&str>,
     fetch_frequency: &str,
     fetch_interval_minutes: i64,
     color: &str,
@@ -607,12 +611,18 @@ pub async fn update_feed_properties(
     sqlx::query!(
         r#"
         UPDATE feeds
-        SET fetch_frequency = ?,
+        SET title = ?,
+            url = ?,
+            description = ?,
+            fetch_frequency = ?,
             fetch_interval_minutes = ?,
             color = ?,
             updated_at = datetime('now')
         WHERE id = ?
         "#,
+        title,
+        url,
+        description,
         fetch_frequency,
         fetch_interval_minutes,
         color,
