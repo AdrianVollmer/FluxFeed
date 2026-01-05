@@ -42,8 +42,8 @@ npm run watch:css
 3.  **Build and run:**
 
 ``` bash
-DATABASE_URL=sqlite:///$(pwd)/fluxfeed_temp.db cargo build
-cargo run
+SQLX_OFFLINE=true cargo build --release
+./target/release/fluxfeed
 ```
 
 The server will start on http://localhost:3000
