@@ -45,6 +45,7 @@ WORKDIR /app
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    libcurl4 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
