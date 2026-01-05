@@ -20,13 +20,14 @@ RUN apt-get update && apt-get install -y \
     make \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy manifests
+# Copy manifests and SQLx metadata
 COPY Cargo.toml Cargo.lock ./
+COPY .sqlx ./.sqlx
 
 # Create a dummy main.rs to build dependencies (for caching)
 RUN mkdir src && \
     echo "fn main() {}" > src/main.rs && \
-    cargo build --release && \
+    SQLX_OFFLINE=true cargo build --release && \
     rm -rf src
 
 # Copy source code and templates
@@ -35,7 +36,7 @@ COPY migrations ./migrations
 COPY askama.toml ./
 
 # Build the application
-RUN cargo build --release
+RUN SQLX_OFFLINE=true cargo build --release
 
 # Stage 3: Runtime image
 FROM debian:bookworm-slim

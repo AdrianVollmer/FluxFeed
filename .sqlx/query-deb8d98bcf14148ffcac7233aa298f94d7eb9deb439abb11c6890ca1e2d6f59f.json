@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE feeds\n        SET ttl_minutes = ?,\n            updated_at = datetime('now')\n        WHERE id = ?\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "deb8d98bcf14148ffcac7233aa298f94d7eb9deb439abb11c6890ca1e2d6f59f"
+}
