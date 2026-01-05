@@ -81,7 +81,7 @@
             <!-- Article summary/content -->
             {% if item.article.summary.is_some() %}
             <div class="article-content-wrapper">
-                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 article-content collapsed">
+                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 article-content">
                     {{ item.article.summary.as_ref().unwrap()|safe }}
                 </div>
                 <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 toggle-content">
@@ -90,7 +90,7 @@
             </div>
             {% else if item.article.content.is_some() %}
             <div class="article-content-wrapper">
-                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 article-content collapsed">
+                <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 article-content">
                     {{ item.article.content.as_ref().unwrap()|safe }}
                 </div>
                 <button class="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 toggle-content">

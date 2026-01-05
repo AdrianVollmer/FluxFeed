@@ -123,6 +123,31 @@
 </div>
 
 <script>
+// Check if article content should be collapsed based on height
+function checkCollapsibleContent() {
+    const contentElements = document.querySelectorAll('.article-content');
+    const maxHeight = 96; // 6rem = 96px
+
+    contentElements.forEach(content => {
+        // Skip if already expanded by user
+        if (content.classList.contains('expanded')) {
+            return;
+        }
+
+        // Check if content overflows the max height
+        if (content.scrollHeight > maxHeight) {
+            content.classList.add('collapsed');
+        } else {
+            content.classList.remove('collapsed');
+        }
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    checkCollapsibleContent();
+});
+
 // Content expand/collapse toggle (event delegation for dynamic content)
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('toggle-content')) {

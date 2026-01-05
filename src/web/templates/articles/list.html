@@ -311,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const savedView = localStorage.getItem('articleView') || 'cards';
     setView(savedView);
     updateLoadMoreButton();
+    checkCollapsibleContent();
 });
 
 // Re-apply load more button settings after OOB swap
@@ -318,7 +319,29 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
     if (evt.detail.target.id === 'load-more-container') {
         updateLoadMoreButton();
     }
+    // Also check for collapsible content after HTMX swaps
+    checkCollapsibleContent();
 });
+
+// Check if article content should be collapsed based on height
+function checkCollapsibleContent() {
+    const contentElements = document.querySelectorAll('.article-content');
+    const maxHeight = 96; // 6rem = 96px
+
+    contentElements.forEach(content => {
+        // Skip if already expanded by user
+        if (content.classList.contains('expanded')) {
+            return;
+        }
+
+        // Check if content overflows the max height
+        if (content.scrollHeight > maxHeight) {
+            content.classList.add('collapsed');
+        } else {
+            content.classList.remove('collapsed');
+        }
+    });
+}
 
 // Content expand/collapse toggle (event delegation for dynamic content)
 document.addEventListener('click', function(e) {
