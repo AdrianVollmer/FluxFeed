@@ -336,6 +336,7 @@ pub async fn mark_all_read(
 }
 
 // Error handling
+#[allow(clippy::enum_variant_names, dead_code)]
 pub enum AppError {
     TemplateError(askama::Error),
     ServiceError(article_service::ArticleServiceError),

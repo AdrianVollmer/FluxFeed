@@ -230,6 +230,7 @@ pub async fn import_feeds(
 }
 
 // Error handling
+#[allow(clippy::enum_variant_names, dead_code)]
 pub enum AppError {
     TemplateError(askama::Error),
     ServiceError(feed_service::FeedServiceError),

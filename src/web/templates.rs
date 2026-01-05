@@ -54,6 +54,7 @@ pub struct FeedImportResultsTemplate {
 
 #[derive(Template)]
 #[template(path = "articles/list.html")]
+#[allow(dead_code)]
 pub struct ArticlesListTemplate {
     pub articles: Vec<ArticleWithFeed>,
     pub feeds: Vec<Feed>,

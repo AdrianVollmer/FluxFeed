@@ -1,5 +1,5 @@
-use crate::domain::models::{Article, CreateFeed, Feed, Log, LogWithFeed, Tag};
-use chrono::{DateTime, Utc};
+use crate::domain::models::{Article, CreateFeed, Feed, Log, LogWithFeed, NewArticle, Tag};
+use chrono::Utc;
 use sqlx::{Error as SqlxError, Row, SqlitePool};
 
 pub async fn create_feed(pool: &SqlitePool, create_feed: CreateFeed) -> Result<Feed, SqlxError> {
@@ -64,6 +64,7 @@ pub async fn delete_feed(pool: &SqlitePool, feed_id: i64) -> Result<bool, SqlxEr
     Ok(result.rows_affected() > 0)
 }
 
+#[allow(dead_code)]
 pub async fn get_feed_article_count(pool: &SqlitePool, feed_id: i64) -> Result<i64, SqlxError> {
     let count: (i64,) = sqlx::query_as(
         r#"
@@ -78,6 +79,7 @@ pub async fn get_feed_article_count(pool: &SqlitePool, feed_id: i64) -> Result<i
     Ok(count.0)
 }
 
+#[allow(dead_code)]
 pub async fn get_feed_unread_count(pool: &SqlitePool, feed_id: i64) -> Result<i64, SqlxError> {
     let count: (i64,) = sqlx::query_as(
         r#"
@@ -96,17 +98,7 @@ pub async fn get_feed_unread_count(pool: &SqlitePool, feed_id: i64) -> Result<i6
 
 pub async fn insert_article_if_new(
     pool: &SqlitePool,
-    feed_id: i64,
-    guid: String,
-    title: String,
-    url: Option<String>,
-    content: Option<String>,
-    summary: Option<String>,
-    author: Option<String>,
-    published_at: Option<DateTime<Utc>>,
-    og_image: Option<String>,
-    og_description: Option<String>,
-    og_site_name: Option<String>,
+    article: NewArticle,
 ) -> Result<Option<Article>, SqlxError> {
     let now = Utc::now();
 
@@ -118,17 +110,17 @@ pub async fn insert_article_if_new(
         RETURNING *
         "#,
     )
-    .bind(feed_id)
-    .bind(&guid)
-    .bind(&title)
-    .bind(&url)
-    .bind(&content)
-    .bind(&summary)
-    .bind(&author)
-    .bind(published_at)
-    .bind(&og_image)
-    .bind(&og_description)
-    .bind(&og_site_name)
+    .bind(article.feed_id)
+    .bind(&article.guid)
+    .bind(&article.title)
+    .bind(&article.url)
+    .bind(&article.content)
+    .bind(&article.summary)
+    .bind(&article.author)
+    .bind(article.published_at)
+    .bind(&article.og_image)
+    .bind(&article.og_description)
+    .bind(&article.og_site_name)
     .bind(now)
     .bind(now)
     .fetch_optional(pool)
@@ -486,14 +478,14 @@ pub async fn list_logs_with_feeds(
 
     let mut bindings: Vec<String> = Vec::new();
 
-    if feed_id.is_some() {
+    if let Some(id) = feed_id {
         query.push_str(" AND l.feed_id = ?");
-        bindings.push(feed_id.unwrap().to_string());
+        bindings.push(id.to_string());
     }
 
-    if log_type.is_some() {
+    if let Some(lt) = log_type {
         query.push_str(" AND l.log_type = ?");
-        bindings.push(log_type.unwrap().to_string());
+        bindings.push(lt.to_string());
     }
 
     query.push_str(" ORDER BY l.fetched_at DESC LIMIT ? OFFSET ?");
@@ -579,6 +571,7 @@ pub async fn update_feed_ttl_only(
 }
 
 /// Update feed's fetch frequency preference
+#[allow(dead_code)]
 pub async fn update_feed_frequency(
     pool: &SqlitePool,
     feed_id: i64,
@@ -745,17 +738,19 @@ mod tests {
 
         let article = insert_article_if_new(
             &pool,
-            feed.id,
-            "guid-123".to_string(),
-            "Test Article".to_string(),
-            Some("https://example.com/article".to_string()),
-            Some("Article content".to_string()),
-            Some("Summary".to_string()),
-            Some("Author".to_string()),
-            Some(Utc::now()),
-            None,
-            None,
-            None,
+            NewArticle {
+                feed_id: feed.id,
+                guid: "guid-123".to_string(),
+                title: "Test Article".to_string(),
+                url: Some("https://example.com/article".to_string()),
+                content: Some("Article content".to_string()),
+                summary: Some("Summary".to_string()),
+                author: Some("Author".to_string()),
+                published_at: Some(Utc::now()),
+                og_image: None,
+                og_description: None,
+                og_site_name: None,
+            },
         )
         .await
         .unwrap();
@@ -768,17 +763,19 @@ mod tests {
         // Try to insert same article again (should be ignored due to conflict)
         let duplicate = insert_article_if_new(
             &pool,
-            feed.id,
-            "guid-123".to_string(),
-            "Test Article Updated".to_string(),
-            Some("https://example.com/article".to_string()),
-            Some("Updated content".to_string()),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
+            NewArticle {
+                feed_id: feed.id,
+                guid: "guid-123".to_string(),
+                title: "Test Article Updated".to_string(),
+                url: Some("https://example.com/article".to_string()),
+                content: Some("Updated content".to_string()),
+                summary: None,
+                author: None,
+                published_at: None,
+                og_image: None,
+                og_description: None,
+                og_site_name: None,
+            },
         )
         .await
         .unwrap();
@@ -803,17 +800,19 @@ mod tests {
 
         let article = insert_article_if_new(
             &pool,
-            feed.id,
-            "guid-123".to_string(),
-            "Test Article".to_string(),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
+            NewArticle {
+                feed_id: feed.id,
+                guid: "guid-123".to_string(),
+                title: "Test Article".to_string(),
+                url: None,
+                content: None,
+                summary: None,
+                author: None,
+                published_at: None,
+                og_image: None,
+                og_description: None,
+                og_site_name: None,
+            },
         )
         .await
         .unwrap()
@@ -848,17 +847,19 @@ mod tests {
         for i in 1..=3 {
             insert_article_if_new(
                 &pool,
-                feed.id,
-                format!("guid-{}", i),
-                format!("Article {}", i),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
+                NewArticle {
+                    feed_id: feed.id,
+                    guid: format!("guid-{}", i),
+                    title: format!("Article {}", i),
+                    url: None,
+                    content: None,
+                    summary: None,
+                    author: None,
+                    published_at: None,
+                    og_image: None,
+                    og_description: None,
+                    og_site_name: None,
+                },
             )
             .await
             .unwrap();
@@ -894,17 +895,19 @@ mod tests {
 
         insert_article_if_new(
             &pool,
-            feed.id,
-            "guid-1".to_string(),
-            "Article 1".to_string(),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
+            NewArticle {
+                feed_id: feed.id,
+                guid: "guid-1".to_string(),
+                title: "Article 1".to_string(),
+                url: None,
+                content: None,
+                summary: None,
+                author: None,
+                published_at: None,
+                og_image: None,
+                og_description: None,
+                og_site_name: None,
+            },
         )
         .await
         .unwrap();
@@ -966,17 +969,19 @@ mod tests {
         // Insert articles with different read statuses
         let article1 = insert_article_if_new(
             &pool,
-            feed.id,
-            "guid-1".to_string(),
-            "Unread Article".to_string(),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
+            NewArticle {
+                feed_id: feed.id,
+                guid: "guid-1".to_string(),
+                title: "Unread Article".to_string(),
+                url: None,
+                content: None,
+                summary: None,
+                author: None,
+                published_at: None,
+                og_image: None,
+                og_description: None,
+                og_site_name: None,
+            },
         )
         .await
         .unwrap()
@@ -984,17 +989,19 @@ mod tests {
 
         let article2 = insert_article_if_new(
             &pool,
-            feed.id,
-            "guid-2".to_string(),
-            "Read Article".to_string(),
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
+            NewArticle {
+                feed_id: feed.id,
+                guid: "guid-2".to_string(),
+                title: "Read Article".to_string(),
+                url: None,
+                content: None,
+                summary: None,
+                author: None,
+                published_at: None,
+                og_image: None,
+                og_description: None,
+                og_site_name: None,
+            },
         )
         .await
         .unwrap()

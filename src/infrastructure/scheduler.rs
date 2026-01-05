@@ -1,4 +1,5 @@
 use crate::api::feeds::AppState;
+use crate::domain::models::NewArticle;
 use crate::infrastructure::{repository, rss_fetcher};
 use chrono::Utc;
 use std::time::Duration;
@@ -178,25 +179,27 @@ pub async fn fetch_single_feed(
                 // Insert article without OpenGraph data
                 match repository::insert_article_if_new(
                     pool,
-                    feed.id,
-                    guid,
-                    title,
-                    url.clone(),
-                    content,
-                    summary,
-                    author,
-                    published_at,
-                    None, // og_image - will be fetched in background
-                    None, // og_description - will be fetched in background
-                    None, // og_site_name - will be fetched in background
+                    NewArticle {
+                        feed_id: feed.id,
+                        guid,
+                        title,
+                        url: url.clone(),
+                        content,
+                        summary,
+                        author,
+                        published_at,
+                        og_image: None,
+                        og_description: None,
+                        og_site_name: None,
+                    },
                 )
                 .await
                 {
                     Ok(Some(article)) => {
                         new_articles_count += 1;
                         // Queue this article for OpenGraph fetching if it has a URL
-                        if url.is_some() {
-                            article_ids_to_fetch.push((article.id, url.unwrap()));
+                        if let Some(article_url) = url {
+                            article_ids_to_fetch.push((article.id, article_url));
                         }
                     }
                     Ok(None) => {

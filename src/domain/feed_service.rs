@@ -4,6 +4,7 @@ use sqlx::SqlitePool;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+#[allow(dead_code)]
 pub enum FeedServiceError {
     #[error("Database error: {0}")]
     DatabaseError(#[from] sqlx::Error),
@@ -89,6 +90,7 @@ pub async fn delete_feed(pool: &SqlitePool, feed_id: i64) -> Result<(), FeedServ
     }
 }
 
+#[allow(dead_code)]
 pub async fn get_feed_stats(
     pool: &SqlitePool,
     feed_id: i64,
@@ -109,7 +111,7 @@ pub fn parse_fetch_frequency(frequency: &str) -> Result<i64, FeedServiceError> {
                 .parse::<i64>()
                 .map_err(|_| FeedServiceError::InvalidFrequency)?;
 
-            if hours < 1 || hours > 168 {
+            if !(1..=168).contains(&hours) {
                 return Err(FeedServiceError::InvalidFrequency);
             }
 

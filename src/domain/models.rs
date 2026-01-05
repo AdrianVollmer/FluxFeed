@@ -27,6 +27,21 @@ pub struct CreateFeed {
     pub description: Option<String>,
 }
 
+#[derive(Debug, Clone)]
+pub struct NewArticle {
+    pub feed_id: i64,
+    pub guid: String,
+    pub title: String,
+    pub url: Option<String>,
+    pub content: Option<String>,
+    pub summary: Option<String>,
+    pub author: Option<String>,
+    pub published_at: Option<DateTime<Utc>>,
+    pub og_image: Option<String>,
+    pub og_description: Option<String>,
+    pub og_site_name: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Article {
     pub id: i64,
@@ -55,6 +70,7 @@ pub struct Tag {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[allow(dead_code)]
 pub struct FeedTag {
     pub feed_id: i64,
     pub tag_id: i64,

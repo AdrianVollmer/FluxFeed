@@ -1,4 +1,5 @@
 use crate::api::feeds::AppState;
+use crate::domain::models::NewArticle;
 use crate::infrastructure::{repository, rss_fetcher};
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::Serialize;
@@ -86,17 +87,19 @@ async fn perform_fetch(state: &AppState) -> Result<(usize, usize), Box<dyn std::
 
                     match repository::insert_article_if_new(
                         &state.db_pool,
-                        feed.id,
-                        guid,
-                        title,
-                        url,
-                        content,
-                        summary,
-                        author,
-                        published_at,
-                        None, // og_image - not extracted in manual fetch
-                        None, // og_description
-                        None, // og_site_name
+                        NewArticle {
+                            feed_id: feed.id,
+                            guid,
+                            title,
+                            url,
+                            content,
+                            summary,
+                            author,
+                            published_at,
+                            og_image: None,
+                            og_description: None,
+                            og_site_name: None,
+                        },
                     )
                     .await
                     {

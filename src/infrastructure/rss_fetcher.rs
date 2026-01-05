@@ -6,6 +6,7 @@ use std::time::Duration;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+#[allow(dead_code)]
 pub enum FetchError {
     #[error("HTTP request failed with status {status}: {message}")]
     RequestFailed {
@@ -26,7 +27,7 @@ pub enum FetchError {
 
 pub enum FetchResult {
     Updated {
-        feed: feed_rs::model::Feed,
+        feed: Box<feed_rs::model::Feed>,
         etag: Option<String>,
         last_modified: Option<String>,
         ttl: Option<i64>,
@@ -41,7 +42,7 @@ pub struct RssFetcher {
 impl RssFetcher {
     pub fn new() -> Result<Self, FetchError> {
         let client = Client::builder()
-            .user_agent("FluxFeed/0.1.0 (+https://github.com/fluxfeed/fluxfeed)")
+            .user_agent("FluxFeed/0.1.0")
             .gzip(true)
             .brotli(true)
             .timeout(Duration::from_secs(30))
@@ -139,7 +140,7 @@ impl RssFetcher {
         );
 
         Ok(FetchResult::Updated {
-            feed,
+            feed: Box::new(feed),
             etag: new_etag,
             last_modified: new_last_modified,
             ttl,
