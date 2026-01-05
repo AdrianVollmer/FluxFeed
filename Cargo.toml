@@ -33,7 +33,7 @@ dom_smoothie = "0.3"
 webpage = "2.0"
 
 # HTTP client
-reqwest = { version = "0.12", features = ["gzip", "brotli"] }
+reqwest = { version = "0.12", features = ["gzip", "brotli", "native-tls-vendored"] }
 
 # Scheduling
 tokio-cron-scheduler = "0.13"
