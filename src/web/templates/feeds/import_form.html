@@ -1,55 +1,41 @@
-<!-- Modal overlay -->
-<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" id="modal-overlay">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">Import Feeds</h2>
-            <button
-                onclick="document.getElementById('feed-import-modal').innerHTML = ''"
-                class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
+<modal-dialog title="Import Feeds" close-target="feed-import-modal" max-width="max-w-2xl">
+    <form
+        hx-post="/feeds/import"
+        hx-target="#import-results"
+        hx-swap="innerHTML">
 
-        <form
-            hx-post="/feeds/import"
-            hx-target="#import-results"
-            hx-swap="innerHTML">
-
-            <div class="mb-4">
-                <label for="feeds" class="block text-sm font-medium mb-2">
-                    Feed List <span class="text-red-500">*</span>
-                </label>
-                <textarea
-                    id="feeds"
-                    name="feeds"
-                    required
-                    rows="10"
-                    placeholder="https://example.com/feed.xml Optional Feed Title
+        <div class="mb-4">
+            <label for="feeds" class="block text-sm font-medium mb-2">
+                Feed List <span class="text-red-500">*</span>
+            </label>
+            <textarea
+                id="feeds"
+                name="feeds"
+                required
+                rows="10"
+                placeholder="https://example.com/feed.xml Optional Feed Title
 https://another-site.com/rss
 https://third-site.com/atom.xml Another Feed"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 font-mono text-sm"
-                    autofocus></textarea>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Enter one feed per line. Format: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">URL optional description</code>
-                </p>
-            </div>
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 font-mono text-sm"
+                autofocus></textarea>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Enter one feed per line. Format: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">URL optional description</code>
+            </p>
+        </div>
 
-            <!-- Results container -->
-            <div id="import-results" class="mb-4"></div>
+        <!-- Results container -->
+        <div id="import-results" class="mb-4"></div>
 
-            <div class="flex justify-end space-x-3">
-                <button
-                    type="button"
-                    onclick="document.getElementById('feed-import-modal').innerHTML = ''"
-                    class="btn btn-secondary">
-                    Cancel
-                </button>
-                <button type="submit" class="btn btn-primary">
-                    Import Feeds
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+        <div class="flex justify-end space-x-3">
+            <button
+                type="button"
+                onclick="document.getElementById('feed-import-modal').innerHTML = ''"
+                class="btn btn-secondary">
+                Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">
+                Import Feeds
+            </button>
+        </div>
+    </form>
+</modal-dialog>
