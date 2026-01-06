@@ -55,6 +55,7 @@ To bump the version:
 2. This script will:
    - Update `Cargo.toml`
    - Update `package.json`
+   - Update `package-lock.json`
    - Update `Cargo.lock`
    - Create a git commit
    - Create a git tag `vX.Y.Z`

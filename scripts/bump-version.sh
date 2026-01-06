@@ -9,9 +9,10 @@ set -euo pipefail
 # This script:
 # 1. Updates version in Cargo.toml
 # 2. Updates version in package.json
-# 3. Updates Cargo.lock
-# 4. Creates a git commit
-# 5. Creates a git tag (v<version>)
+# 3. Updates version in package-lock.json
+# 4. Updates Cargo.lock
+# 5. Creates a git commit
+# 6. Creates a git tag (v<version>)
 
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <new-version>"
@@ -42,20 +43,26 @@ echo "Updating package.json..."
 sed -i.bak "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" package.json
 rm package.json.bak
 
+# Update package-lock.json (appears in multiple places)
+echo "Updating package-lock.json..."
+sed -i.bak "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/g" package-lock.json
+rm package-lock.json.bak
+
 # Update Cargo.lock
 echo "Updating Cargo.lock..."
 cargo check --quiet
 
 # Check if there are changes
-if ! git diff --quiet Cargo.toml package.json Cargo.lock; then
+if ! git diff --quiet Cargo.toml package.json package-lock.json Cargo.lock; then
     echo "Creating git commit and tag..."
-    git add Cargo.toml package.json Cargo.lock
+    git add Cargo.toml package.json package-lock.json Cargo.lock
     git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" commit -m "$(cat <<EOF
 Bump version to $NEW_VERSION
 
 Updated version number across:
 - Cargo.toml
 - package.json
+- package-lock.json
 - Cargo.lock
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
