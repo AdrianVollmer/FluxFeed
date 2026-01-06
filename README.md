@@ -17,7 +17,7 @@ multiple users.
 Try it out with Docker (or Podman):
 
 ``` bash
-docker run --rm --init -p 3000 \
+docker run --rm --init -p 3000:3000 \
     ghcr.io/adrianvollmer/fluxfeed:latest
 ```
 
