@@ -16,9 +16,10 @@
 # Environment
 .env
 
-# Node/NPM (for Tailwind)
+# Node/NPM (for Tailwind and TypeScript)
 node_modules/
 static/css/tailwind.css
+static/js/dist/
 
 # OS
 .DS_Store

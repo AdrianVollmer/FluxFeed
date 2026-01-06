@@ -7,8 +7,8 @@ const path = require('path');
 
 const isWatch = process.argv.includes('--watch');
 const srcDir = 'static/ts';
-const outDir = 'static/js';
-const manifestPath = 'static/js/manifest.json';
+const outDir = 'static/js/dist';
+const manifestPath = 'static/js/dist/manifest.json';
 
 // Get all TypeScript entry points
 function getEntryPoints() {
