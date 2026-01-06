@@ -12,32 +12,6 @@ pub enum ArticleServiceError {
     NotFound,
 }
 
-#[allow(clippy::too_many_arguments)]
-pub async fn list_articles(
-    pool: &SqlitePool,
-    feed_id: Option<i64>,
-    is_read: Option<bool>,
-    is_starred: Option<bool>,
-    search_query: Option<String>,
-    date_from: Option<chrono::DateTime<chrono::Utc>>,
-    date_to: Option<chrono::DateTime<chrono::Utc>>,
-    limit: i64,
-    offset: i64,
-) -> Result<Vec<Article>, ArticleServiceError> {
-    Ok(repository::list_articles(
-        pool,
-        feed_id,
-        is_read,
-        is_starred,
-        search_query,
-        date_from,
-        date_to,
-        limit,
-        offset,
-    )
-    .await?)
-}
-
 pub async fn toggle_read_status(
     pool: &SqlitePool,
     article_id: i64,

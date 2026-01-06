@@ -234,80 +234,6 @@ pub async fn get_feeds_to_update(pool: &SqlitePool) -> Result<Vec<Feed>, SqlxErr
 
 // Article query methods
 
-#[allow(clippy::too_many_arguments)]
-pub async fn list_articles(
-    pool: &SqlitePool,
-    feed_id: Option<i64>,
-    is_read: Option<bool>,
-    is_starred: Option<bool>,
-    search_query: Option<String>,
-    date_from: Option<chrono::DateTime<chrono::Utc>>,
-    date_to: Option<chrono::DateTime<chrono::Utc>>,
-    limit: i64,
-    offset: i64,
-) -> Result<Vec<Article>, SqlxError> {
-    let mut query_str = String::from("SELECT a.* FROM articles a");
-
-    // Add FTS join when search is active
-    if search_query.is_some() {
-        query_str.push_str(" INNER JOIN articles_fts ON a.id = articles_fts.rowid");
-    }
-
-    query_str.push_str(" WHERE 1=1");
-
-    // Add search filter
-    if search_query.is_some() {
-        query_str.push_str(" AND articles_fts MATCH ?");
-    }
-
-    // Add existing filters
-    if feed_id.is_some() {
-        query_str.push_str(" AND a.feed_id = ?");
-    }
-    if is_read.is_some() {
-        query_str.push_str(" AND a.is_read = ?");
-    }
-    if is_starred.is_some() {
-        query_str.push_str(" AND a.is_starred = ?");
-    }
-
-    // Add date range filters
-    if date_from.is_some() {
-        query_str.push_str(" AND a.published_at >= ?");
-    }
-    if date_to.is_some() {
-        query_str.push_str(" AND a.published_at <= ?");
-    }
-
-    query_str.push_str(" ORDER BY a.published_at DESC, a.created_at DESC LIMIT ? OFFSET ?");
-
-    let mut query = sqlx::query_as::<_, Article>(&query_str);
-
-    // Bind parameters in correct order
-    if let Some(search) = search_query {
-        query = query.bind(search);
-    }
-    if let Some(fid) = feed_id {
-        query = query.bind(fid);
-    }
-    if let Some(read) = is_read {
-        query = query.bind(read);
-    }
-    if let Some(starred) = is_starred {
-        query = query.bind(starred);
-    }
-    if let Some(from) = date_from {
-        query = query.bind(from);
-    }
-    if let Some(to) = date_to {
-        query = query.bind(to);
-    }
-
-    let articles = query.bind(limit).bind(offset).fetch_all(pool).await?;
-
-    Ok(articles)
-}
-
 /// Fetch articles with feed data in a single JOIN query (solves N+1 problem)
 #[allow(clippy::too_many_arguments)]
 pub async fn list_articles_with_feeds(
@@ -1192,21 +1118,21 @@ mod tests {
             .unwrap();
 
         // Test filter by unread
-        let unread = list_articles(&pool, None, Some(false), None, None, None, None, 10, 0)
+        let unread = list_articles_with_feeds(&pool, None, Some(false), None, None, None, None, 10, 0)
             .await
             .unwrap();
         assert_eq!(unread.len(), 1);
-        assert_eq!(unread[0].id, article1.id);
+        assert_eq!(unread[0].article.id, article1.id);
 
         // Test filter by read
-        let read = list_articles(&pool, None, Some(true), None, None, None, None, 10, 0)
+        let read = list_articles_with_feeds(&pool, None, Some(true), None, None, None, None, 10, 0)
             .await
             .unwrap();
         assert_eq!(read.len(), 1);
-        assert_eq!(read[0].id, article2.id);
+        assert_eq!(read[0].article.id, article2.id);
 
         // Test no filter
-        let all = list_articles(&pool, None, None, None, None, None, None, 10, 0)
+        let all = list_articles_with_feeds(&pool, None, None, None, None, None, None, 10, 0)
             .await
             .unwrap();
         assert_eq!(all.len(), 2);
