@@ -43,6 +43,31 @@ so never worry about backwards compatibility.
 - When fixing bugs, add test cases.
 - When adding features, update the docs and/or README.
 
+## Version Management
+
+To bump the version:
+
+1. Run the version bump script with the new version number:
+   ```bash
+   ./scripts/bump-version.sh X.Y.Z
+   ```
+
+2. This script will:
+   - Update `Cargo.toml`
+   - Update `package.json`
+   - Update `Cargo.lock`
+   - Create a git commit
+   - Create a git tag `vX.Y.Z`
+
+3. Push the changes and tag to trigger the Docker build:
+   ```bash
+   git push origin main
+   git push origin vX.Y.Z
+   ```
+
+The version in `Cargo.toml` is the single source of truth. The health
+endpoint automatically reads from it via `env!("CARGO_PKG_VERSION")`.
+
 ## Agents
 
 If you are an LLM:

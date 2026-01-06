@@ -46,6 +46,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libcurl4 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
@@ -76,7 +77,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD ["/app/fluxfeed", "--version"] || exit 1
+    CMD curl -f http://localhost:${PORT:-3000}/health || exit 1
 
 # Run the application
 CMD ["/app/fluxfeed"]
