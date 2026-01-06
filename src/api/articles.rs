@@ -335,6 +335,80 @@ pub async fn mark_all_read(
         .into_response())
 }
 
+pub async fn mark_read_status(
+    State(state): State<AppState>,
+    Path(article_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    let article = article_service::mark_as_read(&state.db_pool, article_id).await?;
+
+    // Get feed info
+    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+        .await?
+        .unwrap_or_else(|| crate::domain::models::Feed {
+            id: article.feed_id,
+            url: String::new(),
+            title: "Unknown Feed".to_string(),
+            description: None,
+            site_url: None,
+            last_fetched_at: None,
+            last_modified: None,
+            etag: None,
+            fetch_interval_minutes: 30,
+            color: "#3B82F6".to_string(),
+            fetch_frequency: "smart".to_string(),
+            ttl_minutes: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        });
+
+    let template = ArticleRowTemplate {
+        item: ArticleWithFeed {
+            article,
+            feed_title: feed.title,
+            feed_color: feed.color,
+        },
+    };
+
+    Ok(Html(template.render()?))
+}
+
+pub async fn mark_read_status_compact(
+    State(state): State<AppState>,
+    Path(article_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    let article = article_service::mark_as_read(&state.db_pool, article_id).await?;
+
+    // Get feed info
+    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+        .await?
+        .unwrap_or_else(|| crate::domain::models::Feed {
+            id: article.feed_id,
+            url: String::new(),
+            title: "Unknown Feed".to_string(),
+            description: None,
+            site_url: None,
+            last_fetched_at: None,
+            last_modified: None,
+            etag: None,
+            fetch_interval_minutes: 30,
+            color: "#3B82F6".to_string(),
+            fetch_frequency: "smart".to_string(),
+            ttl_minutes: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        });
+
+    let template = ArticleCompactRowTemplate {
+        item: ArticleWithFeed {
+            article,
+            feed_title: feed.title,
+            feed_color: feed.color,
+        },
+    };
+
+    Ok(Html(template.render()?))
+}
+
 // Error handling
 #[allow(clippy::enum_variant_names, dead_code)]
 pub enum AppError {

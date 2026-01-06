@@ -16,7 +16,11 @@
             </svg>
             <div class="text-sm font-medium {% if item.article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %}">
                 {% if item.article.url.is_some() %}
-                <a href="{{ item.article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="hover:text-blue-600 dark:hover:text-blue-400">
+                <a href="{{ item.article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="hover:text-blue-600 dark:hover:text-blue-400"
+                   hx-post="/articles/{{ item.article.id }}/mark-read-compact"
+                   hx-target="#article-compact-{{ item.article.id }}"
+                   hx-swap="outerHTML"
+                   hx-trigger="click once">
                     {{ item.article.title }}
                     <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>

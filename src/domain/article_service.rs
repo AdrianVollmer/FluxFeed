@@ -85,6 +85,26 @@ pub async fn get_unread_count(pool: &SqlitePool) -> Result<i64, ArticleServiceEr
     Ok(repository::get_total_unread_count(pool).await?)
 }
 
+pub async fn mark_as_read(
+    pool: &SqlitePool,
+    article_id: i64,
+) -> Result<Article, ArticleServiceError> {
+    let article = repository::get_article_by_id(pool, article_id)
+        .await?
+        .ok_or(ArticleServiceError::NotFound)?;
+
+    // Only update if not already read
+    if !article.is_read {
+        repository::update_article_read_status(pool, article_id, true).await?;
+    }
+
+    let updated = repository::get_article_by_id(pool, article_id)
+        .await?
+        .ok_or(ArticleServiceError::NotFound)?;
+
+    Ok(updated)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
