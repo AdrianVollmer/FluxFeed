@@ -43,11 +43,12 @@ RUN SQLX_OFFLINE=true cargo build --release
 FROM debian:bookworm-slim
 WORKDIR /app
 
-# Install runtime dependencies
+# Install runtime dependencies (including tzdata for timezone support)
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libcurl4 \
     curl \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
@@ -71,7 +72,8 @@ USER fluxfeed
 ENV DATABASE_URL=sqlite:///app/data/fluxfeed.db \
     PORT=3000 \
     HOST=0.0.0.0 \
-    RUST_LOG=info
+    RUST_LOG=info \
+    TZ=UTC
 
 # Expose port
 EXPOSE 3000

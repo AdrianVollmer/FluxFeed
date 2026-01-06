@@ -11,6 +11,8 @@ services:
       - PORT=3000
       - HOST=0.0.0.0
       - RUST_LOG=info
+      # Set your timezone (e.g., America/New_York, Europe/London, Asia/Tokyo)
+      - TZ=UTC
     volumes:
       # Persist the database
       - fluxfeed-data:/app/data
