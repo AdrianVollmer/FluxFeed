@@ -373,6 +373,32 @@ table tbody tr:hover {
   box-shadow: inset 0 0 20px -10px var(--shadow-glow);
 }
 
+/* Fetch Now button loading state */
+.fetch-now-btn.htmx-request .fetch-icon,
+.fetch-now-btn.htmx-request .fetch-text {
+  display: none;
+}
+
+.fetch-now-btn.htmx-request .fetch-spinner,
+.fetch-now-btn.htmx-request .fetching-text {
+  display: inline;
+}
+
+/* Add Feed loading indicator */
+.feed-initializing {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.4; }
+}
+
+.feed-initializing {
+  animation: pulse-opacity 1.5s ease-in-out infinite;
+}
+
 /* Enhanced read/unread indicators */
 button.rounded-full.border-2 {
   transition: all 0.3s ease;

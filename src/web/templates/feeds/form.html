@@ -16,7 +16,9 @@
             hx-post="/feeds"
             hx-target="#feed-list"
             hx-swap="afterbegin"
-            hx-on::after-request="if(event.detail.successful) document.getElementById('feed-form-modal').innerHTML = ''">
+            hx-indicator="#feed-initializing-indicator"
+            hx-on::before-request="document.getElementById('feed-initializing-indicator').classList.remove('hidden')"
+            hx-on::after-request="document.getElementById('feed-initializing-indicator').classList.add('hidden'); if(event.detail.successful) document.getElementById('feed-form-modal').innerHTML = ''">
 
             <div class="mb-4">
                 <label for="url" class="block text-sm font-medium mb-2">

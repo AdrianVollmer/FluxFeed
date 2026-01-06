@@ -28,6 +28,28 @@
     <div id="feed-form-modal"></div>
     <div id="feed-import-modal"></div>
 
+    <!-- Initializing indicator (shown while adding feed) -->
+    <div id="feed-initializing-indicator" class="hidden">
+        <div class="card feed-initializing mb-4">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold mb-2 text-gray-500 dark:text-gray-400">
+                        Initializing...
+                    </h3>
+                    <p class="text-sm text-gray-400 dark:text-gray-500">
+                        Fetching feed metadata and articles
+                    </p>
+                </div>
+                <div class="ml-4">
+                    <svg class="w-5 h-5 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Feed list -->
     <div id="feed-list" class="space-y-4">
         {% if feeds.is_empty() %}
