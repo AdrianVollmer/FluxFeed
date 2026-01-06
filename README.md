@@ -6,6 +6,10 @@ The primary use case is running this program as a self-hosted Docker
 instance accessed locally or via VPN. There is currently no support for
 multiple users.
 
+**Disclaimer**: This was entirely vibe-coded as part of some
+experimentation with this new technology. I know neither Rust nor more
+than some basic CSS. If that is a deal-breaker for you, I understand.
+
 ## Tech Stack
 
 - **Web Framework:** Axum 0.7
