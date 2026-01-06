@@ -247,7 +247,18 @@ pub async fn list_articles_with_feeds(
     limit: i64,
     offset: i64,
 ) -> Result<Vec<ArticleWithFeed>, SqlxError> {
-    let mut query_str = String::from(
+    // Build base query with JOIN
+    let base_query = if search_query.is_some() {
+        r#"SELECT
+            a.id, a.feed_id, a.guid, a.title, a.url, a.content, a.summary,
+            a.author, a.published_at, a.is_read, a.is_starred,
+            a.og_image, a.og_description, a.og_site_name,
+            a.created_at, a.updated_at,
+            f.title as feed_title, f.color as feed_color
+        FROM articles a
+        INNER JOIN feeds f ON f.id = a.feed_id
+        INNER JOIN articles_fts ON a.id = articles_fts.rowid"#
+    } else {
         r#"SELECT
             a.id, a.feed_id, a.guid, a.title, a.url, a.content, a.summary,
             a.author, a.published_at, a.is_read, a.is_starred,
@@ -256,44 +267,46 @@ pub async fn list_articles_with_feeds(
             f.title as feed_title, f.color as feed_color
         FROM articles a
         INNER JOIN feeds f ON f.id = a.feed_id"#
-    );
+    };
 
-    // Add FTS join when search is active
+    // Build WHERE conditions - collect both clause and value together
+    let mut conditions = Vec::new();
+
     if search_query.is_some() {
-        query_str.push_str(" INNER JOIN articles_fts ON a.id = articles_fts.rowid");
+        conditions.push("articles_fts MATCH ?");
     }
-
-    query_str.push_str(" WHERE 1=1");
-
-    // Add search filter
-    if search_query.is_some() {
-        query_str.push_str(" AND articles_fts MATCH ?");
-    }
-
-    // Add existing filters
     if feed_id.is_some() {
-        query_str.push_str(" AND a.feed_id = ?");
+        conditions.push("a.feed_id = ?");
     }
     if is_read.is_some() {
-        query_str.push_str(" AND a.is_read = ?");
+        conditions.push("a.is_read = ?");
     }
     if is_starred.is_some() {
-        query_str.push_str(" AND a.is_starred = ?");
+        conditions.push("a.is_starred = ?");
     }
-
-    // Add date range filters
     if date_from.is_some() {
-        query_str.push_str(" AND a.published_at >= ?");
+        conditions.push("a.published_at >= ?");
     }
     if date_to.is_some() {
-        query_str.push_str(" AND a.published_at <= ?");
+        conditions.push("a.published_at <= ?");
     }
 
-    query_str.push_str(" ORDER BY a.published_at DESC, a.created_at DESC LIMIT ? OFFSET ?");
+    // Construct WHERE clause
+    let where_clause = if conditions.is_empty() {
+        String::new()
+    } else {
+        format!(" WHERE {}", conditions.join(" AND "))
+    };
 
+    // Build complete query
+    let query_str = format!(
+        "{}{} ORDER BY a.published_at DESC, a.created_at DESC LIMIT ? OFFSET ?",
+        base_query, where_clause
+    );
+
+    // Bind parameters in the same order as conditions were added
     let mut query = sqlx::query(&query_str);
 
-    // Bind parameters in correct order
     if let Some(search) = search_query {
         query = query.bind(search);
     }
@@ -561,39 +574,47 @@ pub async fn list_logs_with_feeds(
     limit: i64,
     offset: i64,
 ) -> Result<Vec<LogWithFeed>, SqlxError> {
-    let mut query = String::from(
-        r#"
-        SELECT
+    // Base query with JOIN
+    let base_query = r#"SELECT
             l.id, l.feed_id, l.log_type, l.status_code, l.error_message, l.retry_after, l.fetched_at,
             f.title as feed_title, f.url as feed_url
         FROM logs l
-        INNER JOIN feeds f ON f.id = l.feed_id
-        WHERE 1=1
-        "#,
+        INNER JOIN feeds f ON f.id = l.feed_id"#;
+
+    // Build WHERE conditions
+    let mut conditions = Vec::new();
+
+    if feed_id.is_some() {
+        conditions.push("l.feed_id = ?");
+    }
+    if log_type.is_some() {
+        conditions.push("l.log_type = ?");
+    }
+
+    // Construct WHERE clause
+    let where_clause = if conditions.is_empty() {
+        String::new()
+    } else {
+        format!(" WHERE {}", conditions.join(" AND "))
+    };
+
+    // Build complete query
+    let query_str = format!(
+        "{}{} ORDER BY l.fetched_at DESC LIMIT ? OFFSET ?",
+        base_query, where_clause
     );
 
-    let mut bindings: Vec<String> = Vec::new();
+    // Bind parameters in the same order as conditions were added
+    let mut query = sqlx::query(&query_str);
 
     if let Some(id) = feed_id {
-        query.push_str(" AND l.feed_id = ?");
-        bindings.push(id.to_string());
+        query = query.bind(id);
     }
-
     if let Some(lt) = log_type {
-        query.push_str(" AND l.log_type = ?");
-        bindings.push(lt.to_string());
+        query = query.bind(lt);
     }
 
-    query.push_str(" ORDER BY l.fetched_at DESC LIMIT ? OFFSET ?");
-    bindings.push(limit.to_string());
-    bindings.push(offset.to_string());
-
-    let mut sqlx_query = sqlx::query(&query);
-    for binding in &bindings {
-        sqlx_query = sqlx_query.bind(binding);
-    }
-
-    let rows = sqlx_query.fetch_all(pool).await?;
+    let rows = query.bind(limit).bind(offset).fetch_all(pool).await?;
 
     let mut logs = Vec::new();
     for row in rows {
