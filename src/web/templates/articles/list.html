@@ -40,7 +40,7 @@
 
             <!-- Filter buttons -->
             <div class="flex gap-3">
-                <a href="/articles" class="btn {% if filter_read.is_none() && filter_starred.is_none() %}btn-primary{% else %}btn-secondary{% endif %}">
+                <a href="/articles" class="btn {% if filter_read.is_none() && filter_starred.is_none() && filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}btn-primary{% else %}btn-secondary{% endif %}">
                     All
                 </a>
                 <a href="/articles?is_read=false" class="btn {% if filter_read.is_some() && !filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
@@ -55,6 +55,32 @@
                     </svg>
                     Starred
                 </a>
+                {% if feeds.len() > 0 %}
+                <div class="flex items-center gap-1">
+                    <button
+                        hx-get="/articles/filter-modal?feed_ids={{ filter_feed_ids|join(",") }}&group_ids={{ filter_group_ids|join(",") }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
+                        hx-target="#feed-filter-modal"
+                        hx-swap="innerHTML"
+                        class="btn {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}btn-primary{% else %}btn-secondary{% endif %} inline-flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                        {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
+                            Feeds
+                        {% else %}
+                            {{ filter_feed_ids.len() + filter_group_ids.len() }} Feed{% if filter_feed_ids.len() + filter_group_ids.len() != 1 %}s{% endif %}
+                        {% endif %}
+                    </button>
+                    {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}
+                    <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}{% if filter_read.is_some() %}&{% else %}?{% endif %}is_starred={{ filter_starred.unwrap() }}{% endif %}"
+                       class="btn btn-primary px-2" title="Clear feed filter">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
 
             <!-- Mark all as read button -->
@@ -134,62 +160,37 @@
             </div>
             {% endif %}
 
-            <!-- Feed Filter Section -->
+            <!-- Feed Filter -->
             {% if feeds.len() > 0 %}
-            <div>
-                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter by Feed</h3>
+            <div class="flex items-center gap-1">
                 <button
                     hx-get="/articles/filter-modal?feed_ids={{ filter_feed_ids|join(",") }}&group_ids={{ filter_group_ids|join(",") }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
                     hx-target="#feed-filter-modal"
                     hx-swap="innerHTML"
                     onclick="document.getElementById('article-controls-toggle').checked = false"
-                    class="btn btn-secondary w-full inline-flex items-center justify-center gap-2">
+                    class="btn {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}btn-primary{% else %}btn-secondary{% endif %} flex-1 inline-flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                     </svg>
                     {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
-                        All Feeds
+                        Feeds
                     {% else %}
-                        {{ filter_feed_ids.len() + filter_group_ids.len() }} selected
+                        {{ filter_feed_ids.len() + filter_group_ids.len() }} Feed{% if filter_feed_ids.len() + filter_group_ids.len() != 1 %}s{% endif %}
                     {% endif %}
                 </button>
                 {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}
                 <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}{% if filter_read.is_some() %}&{% else %}?{% endif %}is_starred={{ filter_starred.unwrap() }}{% endif %}"
-                   class="block text-sm text-blue-600 hover:underline mt-2 text-center">
-                    Clear filter
+                   onclick="document.getElementById('article-controls-toggle').checked = false"
+                   class="btn btn-primary px-3" title="Clear feed filter">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
                 </a>
                 {% endif %}
             </div>
             {% endif %}
         </div>
     </div>
-
-    <!-- Feed filter (Desktop only) -->
-    {% if feeds.len() > 0 %}
-    <div class="hidden md:flex md:items-center md:gap-4 mb-6">
-        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Feed:</label>
-        <button
-            hx-get="/articles/filter-modal?feed_ids={{ filter_feed_ids|join(",") }}&group_ids={{ filter_group_ids|join(",") }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
-            hx-target="#feed-filter-modal"
-            hx-swap="innerHTML"
-            class="btn btn-secondary inline-flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
-                All Feeds
-            {% else %}
-                {{ filter_feed_ids.len() + filter_group_ids.len() }} selected
-            {% endif %}
-        </button>
-        {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}
-        <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}{% if filter_read.is_some() %}&{% else %}?{% endif %}is_starred={{ filter_starred.unwrap() }}{% endif %}"
-           class="text-sm text-blue-600 hover:underline">
-            Clear filter
-        </a>
-        {% endif %}
-    </div>
-    {% endif %}
 
     <!-- Modal container for feed filter -->
     <div id="feed-filter-modal"></div>
