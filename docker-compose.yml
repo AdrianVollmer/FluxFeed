@@ -3,6 +3,7 @@ services:
     image: ghcr.io/adrianvollmer/fluxfeed:latest
     ## Use this instead of `image` for development:
     #  build: .
+    init: true
     ports:
       - "3000:3000"
     environment:

@@ -18,6 +18,7 @@
 
 # Node/NPM (for Tailwind)
 node_modules/
+static/css/tailwind.css
 
 # OS
 .DS_Store
