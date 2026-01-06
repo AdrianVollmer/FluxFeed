@@ -475,24 +475,42 @@ async fn extract_opengraph_from_url(
     // Try to fetch and parse OpenGraph metadata
     match webpage::Webpage::from_url(url_str, webpage::WebpageOptions::default()) {
         Ok(webpage) => {
+            // Sanitize and validate og_image URL (prevent XSS via malicious URLs)
             let og_image = webpage
                 .html
                 .opengraph
                 .images
                 .first()
-                .map(|img| img.url.clone());
+                .map(|img| img.url.as_str())
+                .and_then(|url| {
+                    // Only allow http:// and https:// URLs to prevent javascript: or data: URIs
+                    if url.starts_with("http://") || url.starts_with("https://") {
+                        Some(url.to_string())
+                    } else {
+                        tracing::warn!(
+                            "Rejected unsafe og:image URL from {}: {}",
+                            url_str,
+                            url
+                        );
+                        None
+                    }
+                });
+
+            // Sanitize og_description to prevent stored XSS
             let og_description = webpage
                 .html
                 .opengraph
                 .properties
                 .get("og:description")
-                .cloned();
+                .map(|s| ammonia::clean(s));
+
+            // Sanitize og_site_name to prevent stored XSS
             let og_site_name = webpage
                 .html
                 .opengraph
                 .properties
                 .get("og:site_name")
-                .cloned();
+                .map(|s| ammonia::clean(s));
 
             tracing::debug!(
                 "Extracted OpenGraph from {}: image={:?}, desc={:?}, site={:?}",
