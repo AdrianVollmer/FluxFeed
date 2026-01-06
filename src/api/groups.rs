@@ -118,10 +118,10 @@ pub async fn create_group(
     State(state): State<AppState>,
     Form(form): Form<CreateGroupForm>,
 ) -> Result<Html<String>, AppError> {
-    let parent_id = form
-        .parent_id
-        .as_ref()
-        .and_then(|s| if s.is_empty() { None } else { s.parse().ok() });
+    let parent_id =
+        form.parent_id
+            .as_ref()
+            .and_then(|s| if s.is_empty() { None } else { s.parse().ok() });
 
     repository::create_group(&state.db_pool, &form.name, parent_id).await?;
 
@@ -160,10 +160,10 @@ pub async fn update_group(
     Path(id): Path<i64>,
     Form(form): Form<UpdateGroupForm>,
 ) -> Result<Html<String>, AppError> {
-    let parent_id = form
-        .parent_id
-        .as_ref()
-        .and_then(|s| if s.is_empty() { None } else { s.parse().ok() });
+    let parent_id =
+        form.parent_id
+            .as_ref()
+            .and_then(|s| if s.is_empty() { None } else { s.parse().ok() });
 
     repository::update_group(&state.db_pool, id, &form.name, parent_id).await?;
 
@@ -209,10 +209,10 @@ pub async fn assign_feed_to_group(
     Path(feed_id): Path<i64>,
     Form(form): Form<AssignFeedForm>,
 ) -> Result<Html<String>, AppError> {
-    let group_id = form
-        .group_id
-        .as_ref()
-        .and_then(|s| if s.is_empty() { None } else { s.parse().ok() });
+    let group_id =
+        form.group_id
+            .as_ref()
+            .and_then(|s| if s.is_empty() { None } else { s.parse().ok() });
 
     repository::update_feed_group(&state.db_pool, feed_id, group_id).await?;
 
@@ -231,20 +231,24 @@ pub async fn move_group(
     Path(id): Path<i64>,
     Form(form): Form<MoveGroupForm>,
 ) -> Result<Html<String>, AppError> {
-    let parent_id = form
-        .parent_id
-        .as_ref()
-        .and_then(|s| if s.is_empty() { None } else { s.parse().ok() });
+    let parent_id =
+        form.parent_id
+            .as_ref()
+            .and_then(|s| if s.is_empty() { None } else { s.parse().ok() });
 
     // Prevent moving a group into itself or its descendants
     if let Some(new_parent_id) = parent_id {
         if new_parent_id == id {
-            return Err(AppError::NotFound("Cannot move a group into itself".to_string()));
+            return Err(AppError::NotFound(
+                "Cannot move a group into itself".to_string(),
+            ));
         }
         // Check if new_parent_id is a descendant of id
         let descendants = repository::get_descendant_group_ids(&state.db_pool, id).await?;
         if descendants.contains(&new_parent_id) {
-            return Err(AppError::NotFound("Cannot move a group into its own descendant".to_string()));
+            return Err(AppError::NotFound(
+                "Cannot move a group into its own descendant".to_string(),
+            ));
         }
     }
 

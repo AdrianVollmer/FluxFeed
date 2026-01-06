@@ -433,11 +433,7 @@ impl IntoResponse for AppError {
                     "A database error occurred. Please try again later.".to_string(),
                 )
             }
-            AppError::NotFound(msg) => (
-                StatusCode::NOT_FOUND,
-                "Not Found".to_string(),
-                msg,
-            ),
+            AppError::NotFound(msg) => (StatusCode::NOT_FOUND, "Not Found".to_string(), msg),
         };
 
         let template = ErrorTemplate {

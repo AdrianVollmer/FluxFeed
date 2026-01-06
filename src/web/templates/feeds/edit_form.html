@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block scripts %}
+<script src="{{ "feed-edit.js"|js_path }}" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <h1 class="text-3xl font-bold mb-6 dark:text-white">Edit Feed</h1>
@@ -111,42 +115,4 @@
         </form>
     </div>
 </div>
-
-<script>
-// Sync color picker with text input
-const colorPicker = document.getElementById("color");
-const colorText = document.getElementById("color-text");
-
-colorPicker.addEventListener("input", function() {
-    colorText.value = this.value.toUpperCase();
-});
-
-colorText.addEventListener("input", function() {
-    if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
-        colorPicker.value = this.value;
-    }
-});
-
-// Handle form submission to combine radio + custom hours
-document.getElementById("frequency-form").addEventListener("submit", function(e) {
-    const radios = document.getElementsByName("fetch_frequency");
-    const customHours = document.getElementById("custom_hours");
-
-    for (let radio of radios) {
-        if (radio.checked) {
-            if (radio.value === "custom") {
-                // Replace with hours value
-                const hours = customHours.value;
-                const hidden = document.createElement("input");
-                hidden.type = "hidden";
-                hidden.name = "fetch_frequency";
-                hidden.value = hours;
-                this.appendChild(hidden);
-                radio.disabled = true;
-            }
-            break;
-        }
-    }
-});
-</script>
 {% endblock %}

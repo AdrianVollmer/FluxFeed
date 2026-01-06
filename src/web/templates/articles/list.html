@@ -2,6 +2,11 @@
 
 {% block title %}Articles - FluxFeed{% endblock %}
 
+{% block scripts %}
+<script src="{{ "articles.js"|js_path }}" defer></script>
+<script src="{{ "feed-filter.js"|js_path }}" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-5xl mx-auto">
     <!-- Checkbox for article controls state -->
@@ -12,9 +17,7 @@
 
         <!-- Mobile Controls Toggle -->
         <label for="article-controls-toggle" class="md:hidden btn btn-secondary cursor-pointer flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
+            {% include "icons/filter.html" %}
             Filters
         </label>
     </div>
@@ -25,15 +28,11 @@
             <!-- View toggle -->
             <div class="flex gap-2 border border-gray-300 dark:border-gray-600 rounded p-1">
                 <button id="view-cards" onclick="setView('cards')" class="px-3 py-1 rounded text-sm transition">
-                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                    </svg>
+                    {% include "icons/grid.html" %}
                     Cards
                 </button>
                 <button id="view-compact" onclick="setView('compact')" class="px-3 py-1 rounded text-sm transition">
-                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                    </svg>
+                    {% include "icons/list.html" %}
                     Compact
                 </button>
             </div>
@@ -50,9 +49,7 @@
                     Read
                 </a>
                 <a href="/articles?is_starred=true" class="btn {% if filter_starred.is_some() && filter_starred.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                    <svg class="w-4 h-4 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                    </svg>
+                    {% include "icons/star-inline.html" %}
                     Starred
                 </a>
                 {% if feeds.len() > 0 %}
@@ -62,9 +59,7 @@
                         hx-target="#feed-filter-modal"
                         hx-swap="innerHTML"
                         class="btn {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}btn-primary{% else %}btn-secondary{% endif %} inline-flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                        </svg>
+                        {% include "icons/folder.html" %}
                         {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
                             Feeds
                         {% else %}
@@ -74,9 +69,7 @@
                     {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}
                     <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}{% if filter_read.is_some() %}&{% else %}?{% endif %}is_starred={{ filter_starred.unwrap() }}{% endif %}"
                        class="btn btn-primary px-2" title="Clear feed filter">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
+                        {% include "icons/close-sm.html" %}
                     </a>
                     {% endif %}
                 </div>
@@ -104,15 +97,11 @@
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">View Mode</h3>
                 <div class="flex gap-2 border border-gray-300 dark:border-gray-600 rounded p-1">
                     <button id="view-cards-mobile" onclick="setView('cards')" class="px-3 py-1 rounded text-sm transition">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                        </svg>
+                        {% include "icons/grid.html" %}
                         Cards
                     </button>
                     <button id="view-compact-mobile" onclick="setView('compact')" class="px-3 py-1 rounded text-sm transition">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                        </svg>
+                        {% include "icons/list.html" %}
                         Compact
                     </button>
                 </div>
@@ -140,9 +129,7 @@
                     <a href="/articles?is_starred=true"
                        onclick="document.getElementById('article-controls-toggle').checked = false"
                        class="btn {% if filter_starred.is_some() && filter_starred.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                        <svg class="w-4 h-4 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                        </svg>
+                        {% include "icons/star-inline.html" %}
                         Starred
                     </a>
                 </div>
@@ -169,9 +156,7 @@
                     hx-swap="innerHTML"
                     onclick="document.getElementById('article-controls-toggle').checked = false"
                     class="btn {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}btn-primary{% else %}btn-secondary{% endif %} flex-1 inline-flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
+                    {% include "icons/folder.html" %}
                     {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
                         Feeds
                     {% else %}
@@ -182,9 +167,7 @@
                 <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}{% if filter_read.is_some() %}&{% else %}?{% endif %}is_starred={{ filter_starred.unwrap() }}{% endif %}"
                    onclick="document.getElementById('article-controls-toggle').checked = false"
                    class="btn btn-primary px-3" title="Clear feed filter">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                    {% include "icons/close-sm.html" %}
                 </a>
                 {% endif %}
             </div>
@@ -199,9 +182,7 @@
     <div id="articles-cards" class="space-y-4">
         {% if articles.len() == 0 %}
         <div class="card text-center py-16">
-            <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-            </svg>
+            {% include "icons/newspaper.html" %}
             <p class="text-xl text-gray-600 dark:text-gray-400 mb-2">No articles yet</p>
             <p class="text-sm text-gray-500 dark:text-gray-500">
                 {% if feeds.len() == 0 %}
@@ -220,9 +201,7 @@
     <div id="articles-compact" class="hidden">
         {% if articles.len() == 0 %}
         <div class="card text-center py-16">
-            <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-            </svg>
+            {% include "icons/newspaper.html" %}
             <p class="text-xl text-gray-600 dark:text-gray-400 mb-2">No articles yet</p>
             <p class="text-sm text-gray-500 dark:text-gray-500">
                 {% if feeds.len() == 0 %}
@@ -263,133 +242,4 @@
     {% endif %}
 </div>
 
-<script>
-// Update load more button target and view parameter
-function updateLoadMoreButton() {
-    const loadMoreBtn = document.getElementById('load-more-btn');
-    if (!loadMoreBtn) return;
-
-    const savedView = localStorage.getItem('articleView') || 'cards';
-    const currentUrl = loadMoreBtn.getAttribute('hx-get');
-
-    // Update or add view parameter to URL
-    const url = new URL(currentUrl, window.location.origin);
-    url.searchParams.set('view', savedView);
-    loadMoreBtn.setAttribute('hx-get', url.pathname + url.search);
-
-    // Update target based on view
-    if (savedView === 'compact') {
-        loadMoreBtn.setAttribute('hx-target', '#articles-compact > div:last-child');
-    } else {
-        loadMoreBtn.setAttribute('hx-target', '#articles-cards');
-    }
-
-    // Reinitialize HTMX for this element
-    if (window.htmx) {
-        htmx.process(loadMoreBtn);
-    }
-}
-
-// View toggle with localStorage persistence
-function setView(view) {
-    // Save preference
-    localStorage.setItem('articleView', view);
-
-    // Update UI
-    const cardsView = document.getElementById('articles-cards');
-    const compactView = document.getElementById('articles-compact');
-    const cardsBtn = document.getElementById('view-cards');
-    const compactBtn = document.getElementById('view-compact');
-
-    if (view === 'compact') {
-        cardsView.classList.add('hidden');
-        compactView.classList.remove('hidden');
-        cardsBtn.classList.remove('bg-blue-600', 'text-white');
-        cardsBtn.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-        compactBtn.classList.add('bg-blue-600', 'text-white');
-        compactBtn.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-    } else {
-        cardsView.classList.remove('hidden');
-        compactView.classList.add('hidden');
-        cardsBtn.classList.add('bg-blue-600', 'text-white');
-        cardsBtn.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-        compactBtn.classList.remove('bg-blue-600', 'text-white');
-        compactBtn.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-    }
-
-    // Update load more button for new view
-    updateLoadMoreButton();
-}
-
-// Initialize view on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const savedView = localStorage.getItem('articleView') || 'cards';
-    setView(savedView);
-    updateLoadMoreButton();
-    checkCollapsibleContent();
-});
-
-// Re-apply load more button settings after OOB swap
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-    if (evt.detail.target.id === 'load-more-container') {
-        updateLoadMoreButton();
-    }
-    // Also check for collapsible content after HTMX swaps
-    checkCollapsibleContent();
-});
-
-// Check if article content should be collapsed based on height
-function checkCollapsibleContent() {
-    const contentElements = document.querySelectorAll('.article-content');
-    const maxHeight = 96; // 6rem = 96px
-
-    contentElements.forEach(content => {
-        // Skip if already expanded by user
-        if (content.classList.contains('expanded')) {
-            return;
-        }
-
-        // Check if content overflows the max height
-        if (content.scrollHeight > maxHeight) {
-            content.classList.add('collapsed');
-        } else {
-            content.classList.remove('collapsed');
-        }
-    });
-}
-
-// Content expand/collapse toggle (event delegation for dynamic content)
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('toggle-content')) {
-        const wrapper = e.target.closest('.article-content-wrapper');
-        const content = wrapper.querySelector('.article-content');
-
-        if (content.classList.contains('collapsed')) {
-            content.classList.remove('collapsed');
-            content.classList.add('expanded');
-            e.target.textContent = 'Show less';
-        } else {
-            content.classList.remove('expanded');
-            content.classList.add('collapsed');
-            e.target.textContent = 'Show more';
-        }
-    }
-});
-
-// Compact article row expansion (event delegation for dynamic content)
-document.addEventListener('click', function(e) {
-    const row = e.target.closest('.compact-article-row');
-    if (row) {
-        const articleId = row.dataset.articleId;
-        const expandedRow = document.getElementById(`article-compact-${articleId}-expanded`);
-
-        if (expandedRow) {
-            // Toggle visibility
-            expandedRow.classList.toggle('hidden');
-            // Toggle expanded class on main row for icon rotation
-            row.classList.toggle('expanded');
-        }
-    }
-});
-</script>
 {% endblock %}

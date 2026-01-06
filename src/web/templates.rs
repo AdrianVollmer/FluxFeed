@@ -204,7 +204,6 @@ pub struct GroupListContentTemplate {
     pub ungrouped_feeds: Vec<Feed>,
 }
 
-
 #[derive(Template)]
 #[template(path = "groups/form.html")]
 pub struct GroupFormTemplate {

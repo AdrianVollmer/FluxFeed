@@ -674,9 +674,7 @@ pub async fn create_group(
     let id = result.last_insert_rowid();
 
     // Fetch and return the created group
-    get_group(pool, id)
-        .await?
-        .ok_or(SqlxError::RowNotFound)
+    get_group(pool, id).await?.ok_or(SqlxError::RowNotFound)
 }
 
 pub async fn update_group(
@@ -698,9 +696,7 @@ pub async fn update_group(
     .execute(pool)
     .await?;
 
-    get_group(pool, id)
-        .await?
-        .ok_or(SqlxError::RowNotFound)
+    get_group(pool, id).await?.ok_or(SqlxError::RowNotFound)
 }
 
 pub async fn delete_group(pool: &SqlitePool, id: i64) -> Result<(), SqlxError> {

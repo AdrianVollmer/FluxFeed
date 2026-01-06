@@ -2,6 +2,10 @@
 
 {% block title %}Search Articles - FluxFeed{% endblock %}
 
+{% block scripts %}
+<script src="{{ "articles.js"|js_path }}" defer></script>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-5xl mx-auto">
     <h1 class="text-3xl font-bold mb-6">Search Articles</h1>
@@ -62,9 +66,7 @@
                 <!-- Action Buttons -->
                 <div class="flex gap-3">
                     <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
-                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
+                        {% include "icons/search.html" %}
                         Search
                     </button>
 
@@ -104,66 +106,17 @@
             {% endif %}
         {% else %}
             <div class="text-center py-12">
-                <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
+                {% include "icons/search-lg.html" %}
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No articles found</h3>
                 <p class="text-gray-600 dark:text-gray-400">Try adjusting your search terms or date range</p>
             </div>
         {% endif %}
     {% else %}
         <div class="text-center py-12">
-            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
+            {% include "icons/search-lg.html" %}
             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Start Searching</h3>
             <p class="text-gray-600 dark:text-gray-400">Enter a search term or date range above to find articles</p>
         </div>
     {% endif %}
 </div>
-
-<script>
-// Check if article content should be collapsed based on height
-function checkCollapsibleContent() {
-    const contentElements = document.querySelectorAll('.article-content');
-    const maxHeight = 96; // 6rem = 96px
-
-    contentElements.forEach(content => {
-        // Skip if already expanded by user
-        if (content.classList.contains('expanded')) {
-            return;
-        }
-
-        // Check if content overflows the max height
-        if (content.scrollHeight > maxHeight) {
-            content.classList.add('collapsed');
-        } else {
-            content.classList.remove('collapsed');
-        }
-    });
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    checkCollapsibleContent();
-});
-
-// Content expand/collapse toggle (event delegation for dynamic content)
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('toggle-content')) {
-        const wrapper = e.target.closest('.article-content-wrapper');
-        const content = wrapper.querySelector('.article-content');
-
-        if (content.classList.contains('collapsed')) {
-            content.classList.remove('collapsed');
-            content.classList.add('expanded');
-            e.target.textContent = 'Show less';
-        } else {
-            content.classList.remove('expanded');
-            content.classList.add('collapsed');
-            e.target.textContent = 'Show more';
-        }
-    }
-});
-</script>
 {% endblock %}
