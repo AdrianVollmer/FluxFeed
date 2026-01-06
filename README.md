@@ -7,10 +7,19 @@ instance accessed locally or via VPN. There is currently no support for
 multiple users.
 
 > [!IMPORTANT]
-> **Disclaimer**: This was entirely vibe-coded as part of some
-> personal experimentation with this new technology. I know neither Rust nor
-> more than the most basic part of CSS. If that is a deal breaker for you, I
+> **Disclaimer**: This was entirely vibe-coded as part of some personal
+> experimentation with this new technology. I know neither Rust nor more
+> than the most basic part of CSS. If that is a deal breaker for you, I
 > understand.
+
+## Demo
+
+Try it out with Docker (or Podman):
+
+``` bash
+docker run --rm --init -p 3000 \
+    ghcr.io/adrianvollmer/fluxfeed:latest
+```
 
 ## Tech Stack
 
