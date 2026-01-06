@@ -69,7 +69,6 @@ pub async fn fetch_single_feed(
     tracing::debug!("Processing feed: {} ({})", feed.title, feed.url);
 
     let fetcher = rss_fetcher::RssFetcher::new()?;
-    let mut new_articles_count = 0;
 
     match fetcher
         .fetch_feed(
@@ -84,221 +83,280 @@ pub async fn fetch_single_feed(
             etag,
             last_modified,
             ttl,
-        }) => {
-            tracing::info!(
-                "Feed updated: {} ({} entries)",
-                feed.title,
-                parsed_feed.entries.len()
-            );
+        }) => handle_feed_update(pool, feed, *parsed_feed, etag, last_modified, ttl).await,
+        Ok(rss_fetcher::FetchResult::NotModified) => handle_feed_not_modified(pool, feed).await,
+        Err(e) => handle_feed_fetch_error(pool, feed, e).await,
+    }
+}
 
-            // Log successful fetch
-            repository::insert_log(pool, feed.id, "success", None, None, None).await?;
+/// Handle successful feed update: log, update TTL, update metadata, insert articles
+async fn handle_feed_update(
+    pool: &sqlx::SqlitePool,
+    feed: &crate::domain::models::Feed,
+    parsed_feed: feed_rs::model::Feed,
+    etag: Option<String>,
+    last_modified: Option<String>,
+    ttl: Option<i64>,
+) -> Result<FetchSingleFeedResult, Box<dyn std::error::Error>> {
+    tracing::info!(
+        "Feed updated: {} ({} entries)",
+        feed.title,
+        parsed_feed.entries.len()
+    );
 
-            // Adaptive fetch frequency logic
-            if feed.fetch_frequency == "adaptive" {
-                let new_interval = if let Some(ttl_value) = ttl {
-                    // Clamp TTL to 1 hour - 1 week (60-10080 minutes)
-                    let clamped = ttl_value.clamp(60, 10080);
-                    if ttl_value != clamped {
-                        tracing::info!(
-                            "Feed {} TTL {} clamped to {} minutes",
-                            feed.id,
-                            ttl_value,
-                            clamped
-                        );
-                    }
+    // Log successful fetch
+    repository::insert_log(pool, feed.id, "success", None, None, None).await?;
+
+    // Update fetch interval based on TTL if in adaptive mode
+    update_feed_ttl_if_needed(pool, feed, ttl).await?;
+
+    // Update feed metadata from RSS
+    update_feed_metadata_from_rss(pool, feed, &parsed_feed, etag, last_modified).await?;
+
+    // Insert articles and spawn OpenGraph fetching
+    let new_articles_count =
+        insert_articles_from_entries(pool, feed.id, parsed_feed.entries).await?;
+
+    Ok(FetchSingleFeedResult::Updated { new_articles_count })
+}
+
+/// Update feed TTL and fetch interval if needed (adaptive mode)
+async fn update_feed_ttl_if_needed(
+    pool: &sqlx::SqlitePool,
+    feed: &crate::domain::models::Feed,
+    ttl: Option<i64>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if feed.fetch_frequency == "adaptive" {
+        let new_interval = if let Some(ttl_value) = ttl {
+            // Clamp TTL to 1 hour - 1 week (60-10080 minutes)
+            let clamped = ttl_value.clamp(60, 10080);
+            if ttl_value != clamped {
+                tracing::info!(
+                    "Feed {} TTL {} clamped to {} minutes",
+                    feed.id,
+                    ttl_value,
                     clamped
-                } else {
-                    // No TTL in feed, use default 60 minutes (1 hour)
-                    tracing::debug!("Feed {} has no TTL, using default 60 minutes", feed.id);
-                    60
-                };
-
-                // Update interval if changed
-                if new_interval != feed.fetch_interval_minutes {
-                    tracing::info!(
-                        "Updating feed {} interval: {}m -> {}m (TTL: {:?})",
-                        feed.id,
-                        feed.fetch_interval_minutes,
-                        new_interval,
-                        ttl
-                    );
-                    repository::update_feed_ttl(pool, feed.id, ttl, new_interval).await?;
-                } else if ttl.is_some() && feed.ttl_minutes != ttl {
-                    // Just update stored TTL value for display
-                    repository::update_feed_ttl(pool, feed.id, ttl, feed.fetch_interval_minutes)
-                        .await?;
-                }
-            } else {
-                // Custom frequency mode: just store TTL for user info, don't change interval
-                if ttl.is_some() && feed.ttl_minutes != ttl {
-                    repository::update_feed_ttl_only(pool, feed.id, ttl).await?;
-                }
-            }
-
-            // Update feed metadata from RSS (including title, description, site_url)
-            let rss_title = parsed_feed.title.as_ref().map(|t| t.content.clone());
-            let rss_description = parsed_feed.description.as_ref().map(|d| d.content.clone());
-            let feed_site_url = parsed_feed.links.first().map(|link| link.href.clone());
-
-            // Implement description fallback logic:
-            // If no description exists in DB, use RSS feed's title
-            // If RSS feed has no title, use URL as description
-            let feed_description = if feed.description.is_none() {
-                rss_description
-                    .or_else(|| rss_title.clone())
-                    .or_else(|| Some(feed.url.clone()))
-            } else {
-                // Keep existing description
-                None
-            };
-
-            repository::update_feed_details(
-                pool,
-                feed.id,
-                rss_title,
-                feed_description,
-                feed_site_url,
-                etag,
-                last_modified,
-            )
-            .await?;
-
-            // Insert new articles without OpenGraph data first (for speed)
-            let mut article_ids_to_fetch = Vec::new();
-
-            for entry in parsed_feed.entries {
-                let guid = generate_guid(&entry);
-                let title = extract_title(&entry);
-                let url = extract_url(&entry);
-                let content = extract_content(&entry);
-                let summary = extract_summary(&entry);
-                let author = extract_author(&entry);
-                let published_at = extract_published_date(&entry);
-
-                // Insert article without OpenGraph data
-                match repository::insert_article_if_new(
-                    pool,
-                    NewArticle {
-                        feed_id: feed.id,
-                        guid,
-                        title,
-                        url: url.clone(),
-                        content,
-                        summary,
-                        author,
-                        published_at,
-                        og_image: None,
-                        og_description: None,
-                        og_site_name: None,
-                    },
-                )
-                .await
-                {
-                    Ok(Some(article)) => {
-                        new_articles_count += 1;
-                        // Queue this article for OpenGraph fetching if it has a URL
-                        if let Some(article_url) = url {
-                            article_ids_to_fetch.push((article.id, article_url));
-                        }
-                    }
-                    Ok(None) => {
-                        // Article already exists (duplicate)
-                    }
-                    Err(e) => {
-                        tracing::warn!("Failed to insert article: {}", e);
-                    }
-                }
-            }
-
-            // Spawn background task to fetch OpenGraph metadata
-            if !article_ids_to_fetch.is_empty() {
-                let pool_clone = pool.clone();
-                tokio::spawn(async move {
-                    fetch_opengraph_for_articles(pool_clone, article_ids_to_fetch).await;
-                });
-            }
-
-            Ok(FetchSingleFeedResult::Updated { new_articles_count })
-        }
-        Ok(rss_fetcher::FetchResult::NotModified) => {
-            tracing::debug!("Feed not modified: {}", feed.title);
-
-            // Log not modified fetch
-            repository::insert_log(pool, feed.id, "not_modified", None, None, None).await?;
-
-            // Just update last_fetched_at
-            repository::touch_feed(pool, feed.id).await?;
-
-            Ok(FetchSingleFeedResult::NotModified)
-        }
-        Err(e) => {
-            tracing::warn!("Failed to fetch feed {}: {}", feed.url, e);
-
-            // Extract error details for logging
-            let (log_type, status_code, retry_after) = match &e {
-                rss_fetcher::FetchError::RequestFailed {
-                    status,
-                    retry_after,
-                    ..
-                } => {
-                    let log_type = if status.as_u16() == 429 {
-                        "rate_limited"
-                    } else {
-                        "error"
-                    };
-                    (
-                        log_type,
-                        Some(status.as_u16() as i32),
-                        retry_after.as_deref(),
-                    )
-                }
-                _ => ("error", None, None),
-            };
-
-            let error_message = e.to_string();
-
-            // Log the fetch failure
-            repository::insert_log(
-                pool,
-                feed.id,
-                log_type,
-                status_code,
-                Some(&error_message),
-                retry_after,
-            )
-            .await?;
-
-            // Determine if this is a "feed-side" or "our-side" problem
-            // Feed-side problems: connection refused, DNS errors, SSL errors
-            // → Update last_fetched_at to respect normal interval (avoid hammering broken feeds)
-            // Our-side problems: HTTP errors, parse errors, other issues
-            // → Don't update last_fetched_at so we retry in 5 minutes (next scheduler cycle)
-            let is_feed_side_problem = match &e {
-                rss_fetcher::FetchError::NetworkError(req_err) => {
-                    // Check for connection/DNS/SSL errors
-                    is_connection_dns_or_ssl_error(req_err)
-                }
-                _ => false, // HTTP errors, parse errors = our-side problem
-            };
-
-            if is_feed_side_problem {
-                tracing::info!(
-                    "Feed-side problem for {}, will retry based on normal interval",
-                    feed.url
                 );
-                repository::touch_feed(pool, feed.id).await?;
-            } else {
-                tracing::info!(
-                    "Transient/our-side problem for {}, will retry in 5 minutes",
-                    feed.url
-                );
-                // Don't update last_fetched_at - will be retried on next scheduler cycle
             }
+            clamped
+        } else {
+            // No TTL in feed, use default 60 minutes (1 hour)
+            tracing::debug!("Feed {} has no TTL, using default 60 minutes", feed.id);
+            60
+        };
 
-            Err(e.into())
+        // Update interval if changed
+        if new_interval != feed.fetch_interval_minutes {
+            tracing::info!(
+                "Updating feed {} interval: {}m -> {}m (TTL: {:?})",
+                feed.id,
+                feed.fetch_interval_minutes,
+                new_interval,
+                ttl
+            );
+            repository::update_feed_ttl(pool, feed.id, ttl, new_interval).await?;
+        } else if ttl.is_some() && feed.ttl_minutes != ttl {
+            // Just update stored TTL value for display
+            repository::update_feed_ttl(pool, feed.id, ttl, feed.fetch_interval_minutes).await?;
+        }
+    } else {
+        // Custom frequency mode: just store TTL for user info, don't change interval
+        if ttl.is_some() && feed.ttl_minutes != ttl {
+            repository::update_feed_ttl_only(pool, feed.id, ttl).await?;
         }
     }
+
+    Ok(())
+}
+
+/// Extract and update feed metadata from RSS feed
+async fn update_feed_metadata_from_rss(
+    pool: &sqlx::SqlitePool,
+    feed: &crate::domain::models::Feed,
+    parsed_feed: &feed_rs::model::Feed,
+    etag: Option<String>,
+    last_modified: Option<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let rss_title = parsed_feed.title.as_ref().map(|t| t.content.clone());
+    let rss_description = parsed_feed.description.as_ref().map(|d| d.content.clone());
+    let feed_site_url = parsed_feed.links.first().map(|link| link.href.clone());
+
+    // Implement description fallback logic:
+    // If no description exists in DB, use RSS feed's title
+    // If RSS feed has no title, use URL as description
+    let feed_description = if feed.description.is_none() {
+        rss_description
+            .or_else(|| rss_title.clone())
+            .or_else(|| Some(feed.url.clone()))
+    } else {
+        // Keep existing description
+        None
+    };
+
+    repository::update_feed_details(
+        pool,
+        feed.id,
+        rss_title,
+        feed_description,
+        feed_site_url,
+        etag,
+        last_modified,
+    )
+    .await?;
+
+    Ok(())
+}
+
+/// Insert articles from feed entries and spawn OpenGraph fetching
+async fn insert_articles_from_entries(
+    pool: &sqlx::SqlitePool,
+    feed_id: i64,
+    entries: Vec<feed_rs::model::Entry>,
+) -> Result<usize, Box<dyn std::error::Error>> {
+    let mut new_articles_count = 0;
+    let mut article_ids_to_fetch = Vec::new();
+
+    for entry in entries {
+        let guid = generate_guid(&entry);
+        let title = extract_title(&entry);
+        let url = extract_url(&entry);
+        let content = extract_content(&entry);
+        let summary = extract_summary(&entry);
+        let author = extract_author(&entry);
+        let published_at = extract_published_date(&entry);
+
+        // Insert article without OpenGraph data
+        match repository::insert_article_if_new(
+            pool,
+            NewArticle {
+                feed_id,
+                guid,
+                title,
+                url: url.clone(),
+                content,
+                summary,
+                author,
+                published_at,
+                og_image: None,
+                og_description: None,
+                og_site_name: None,
+            },
+        )
+        .await
+        {
+            Ok(Some(article)) => {
+                new_articles_count += 1;
+                // Queue this article for OpenGraph fetching if it has a URL
+                if let Some(article_url) = url {
+                    article_ids_to_fetch.push((article.id, article_url));
+                }
+            }
+            Ok(None) => {
+                // Article already exists (duplicate)
+            }
+            Err(e) => {
+                tracing::warn!("Failed to insert article: {}", e);
+            }
+        }
+    }
+
+    // Spawn background task to fetch OpenGraph metadata
+    if !article_ids_to_fetch.is_empty() {
+        let pool_clone = pool.clone();
+        tokio::spawn(async move {
+            fetch_opengraph_for_articles(pool_clone, article_ids_to_fetch).await;
+        });
+    }
+
+    Ok(new_articles_count)
+}
+
+/// Handle feed not modified: log and update last_fetched_at
+async fn handle_feed_not_modified(
+    pool: &sqlx::SqlitePool,
+    feed: &crate::domain::models::Feed,
+) -> Result<FetchSingleFeedResult, Box<dyn std::error::Error>> {
+    tracing::debug!("Feed not modified: {}", feed.title);
+
+    // Log not modified fetch
+    repository::insert_log(pool, feed.id, "not_modified", None, None, None).await?;
+
+    // Just update last_fetched_at
+    repository::touch_feed(pool, feed.id).await?;
+
+    Ok(FetchSingleFeedResult::NotModified)
+}
+
+/// Handle feed fetch error: log error, determine retry strategy
+async fn handle_feed_fetch_error(
+    pool: &sqlx::SqlitePool,
+    feed: &crate::domain::models::Feed,
+    error: rss_fetcher::FetchError,
+) -> Result<FetchSingleFeedResult, Box<dyn std::error::Error>> {
+    tracing::warn!("Failed to fetch feed {}: {}", feed.url, error);
+
+    // Extract error details for logging
+    let (log_type, status_code, retry_after) = match &error {
+        rss_fetcher::FetchError::RequestFailed {
+            status,
+            retry_after,
+            ..
+        } => {
+            let log_type = if status.as_u16() == 429 {
+                "rate_limited"
+            } else {
+                "error"
+            };
+            (
+                log_type,
+                Some(status.as_u16() as i32),
+                retry_after.as_deref(),
+            )
+        }
+        _ => ("error", None, None),
+    };
+
+    let error_message = error.to_string();
+
+    // Log the fetch failure
+    repository::insert_log(
+        pool,
+        feed.id,
+        log_type,
+        status_code,
+        Some(&error_message),
+        retry_after,
+    )
+    .await?;
+
+    // Determine if this is a "feed-side" or "our-side" problem
+    // Feed-side problems: connection refused, DNS errors, SSL errors
+    // → Update last_fetched_at to respect normal interval (avoid hammering broken feeds)
+    // Our-side problems: HTTP errors, parse errors, other issues
+    // → Don't update last_fetched_at so we retry in 5 minutes (next scheduler cycle)
+    let is_feed_side_problem = match &error {
+        rss_fetcher::FetchError::NetworkError(req_err) => {
+            // Check for connection/DNS/SSL errors
+            is_connection_dns_or_ssl_error(req_err)
+        }
+        _ => false, // HTTP errors, parse errors = our-side problem
+    };
+
+    if is_feed_side_problem {
+        tracing::info!(
+            "Feed-side problem for {}, will retry based on normal interval",
+            feed.url
+        );
+        repository::touch_feed(pool, feed.id).await?;
+    } else {
+        tracing::info!(
+            "Transient/our-side problem for {}, will retry in 5 minutes",
+            feed.url
+        );
+        // Don't update last_fetched_at - will be retried on next scheduler cycle
+    }
+
+    Err(error.into())
 }
 
 pub enum FetchSingleFeedResult {

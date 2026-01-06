@@ -3,7 +3,8 @@ use crate::domain::{article_service, feed_service};
 use crate::infrastructure::repository;
 use crate::web::templates::{
     ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleRowTemplate, ArticleRowsTemplate,
-    ArticleSearchTemplate, ArticlesListTemplate, ErrorTemplate, LoadMoreButtonTemplate,
+    ArticleSearchTemplate, ArticlesListTemplate, ArticleWithFeed, ErrorTemplate,
+    LoadMoreButtonTemplate,
 };
 use askama::Template;
 use axum::{
@@ -40,17 +41,8 @@ pub async fn list_articles(
     let offset = params.offset.unwrap_or(0);
 
     // Parse date parameters
-    let date_from = params
-        .date_from
-        .as_ref()
-        .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
-        .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc());
-
-    let date_to = params
-        .date_to
-        .as_ref()
-        .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
-        .map(|d| d.and_hms_opt(23, 59, 59).unwrap().and_utc());
+    let date_from = parse_date_param(params.date_from.as_deref(), true);
+    let date_to = parse_date_param(params.date_to.as_deref(), false);
 
     // Get articles with feed data in a single JOIN query (no N+1 problem)
     let articles_with_feed = repository::list_articles_with_feeds(
@@ -74,46 +66,84 @@ pub async fn list_articles(
 
     // If HTMX request with offset > 0, return just the article rows for pagination
     if is_htmx && offset > 0 {
-        let mut html = String::new();
-
-        // Render article rows using the appropriate template based on view mode
-        let view_mode = params.view.as_deref().unwrap_or("cards");
-        if view_mode == "compact" {
-            let rows_template = ArticleCompactRowsTemplate {
-                articles: articles_to_show.clone(),
-            };
-            html.push_str(&rows_template.render()?);
-        } else {
-            let rows_template = ArticleRowsTemplate {
-                articles: articles_to_show.clone(),
-            };
-            html.push_str(&rows_template.render()?);
-        }
-
-        // Update the Load More button using out-of-band swap
-        if has_more {
-            let button_template = LoadMoreButtonTemplate {
-                next_offset: offset + limit,
-                filter_feed: params.feed_id,
-                filter_read: params.is_read,
-                filter_starred: params.is_starred,
-                search_query: params.q.clone(),
-                date_from: params.date_from.clone(),
-                date_to: params.date_to.clone(),
-            };
-            html.push_str(
-                r#"<div id="load-more-container" hx-swap-oob="true" class="mt-8 text-center">"#,
-            );
-            html.push_str(&button_template.render()?);
-            html.push_str("</div>");
-        } else {
-            // Remove the Load More button if no more articles
-            html.push_str(r#"<div id="load-more-container" hx-swap-oob="true"></div>"#);
-        }
-
-        return Ok(Html(html));
+        return render_htmx_pagination(articles_to_show, has_more, offset, limit, &params);
     }
 
+    // Render full page
+    render_full_articles_page(&state, articles_to_show, has_more, offset, limit, &params).await
+}
+
+/// Parse date parameter to DateTime (start of day or end of day)
+fn parse_date_param(date_str: Option<&str>, start_of_day: bool) -> Option<chrono::DateTime<chrono::Utc>> {
+    date_str
+        .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .and_then(|d| {
+            if start_of_day {
+                d.and_hms_opt(0, 0, 0)
+            } else {
+                d.and_hms_opt(23, 59, 59)
+            }
+        })
+        .map(|dt| dt.and_utc())
+}
+
+/// Render HTMX pagination response (article rows + load more button)
+fn render_htmx_pagination(
+    articles: Vec<ArticleWithFeed>,
+    has_more: bool,
+    offset: i64,
+    limit: i64,
+    params: &ArticleListParams,
+) -> Result<Html<String>, AppError> {
+    let mut html = String::new();
+
+    // Render article rows using the appropriate template based on view mode
+    let view_mode = params.view.as_deref().unwrap_or("cards");
+    if view_mode == "compact" {
+        let rows_template = ArticleCompactRowsTemplate {
+            articles: articles.clone(),
+        };
+        html.push_str(&rows_template.render()?);
+    } else {
+        let rows_template = ArticleRowsTemplate {
+            articles: articles.clone(),
+        };
+        html.push_str(&rows_template.render()?);
+    }
+
+    // Update the Load More button using out-of-band swap
+    if has_more {
+        let button_template = LoadMoreButtonTemplate {
+            next_offset: offset + limit,
+            filter_feed: params.feed_id,
+            filter_read: params.is_read,
+            filter_starred: params.is_starred,
+            search_query: params.q.clone(),
+            date_from: params.date_from.clone(),
+            date_to: params.date_to.clone(),
+        };
+        html.push_str(
+            r#"<div id="load-more-container" hx-swap-oob="true" class="mt-8 text-center">"#,
+        );
+        html.push_str(&button_template.render()?);
+        html.push_str("</div>");
+    } else {
+        // Remove the Load More button if no more articles
+        html.push_str(r#"<div id="load-more-container" hx-swap-oob="true"></div>"#);
+    }
+
+    Ok(Html(html))
+}
+
+/// Render full articles page with filters and feed list
+async fn render_full_articles_page(
+    state: &AppState,
+    articles: Vec<ArticleWithFeed>,
+    has_more: bool,
+    offset: i64,
+    limit: i64,
+    params: &ArticleListParams,
+) -> Result<Html<String>, AppError> {
     // Get all feeds for the filter
     let feeds = feed_service::list_all_feeds(&state.db_pool).await?;
 
@@ -121,7 +151,7 @@ pub async fn list_articles(
     let unread_count = article_service::get_unread_count(&state.db_pool).await?;
 
     let template = ArticlesListTemplate {
-        articles: articles_to_show,
+        articles,
         feeds,
         offset,
         limit,
