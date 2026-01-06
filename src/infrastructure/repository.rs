@@ -1,4 +1,4 @@
-use crate::domain::models::{Article, CreateFeed, Feed, Log, LogWithFeed, NewArticle, Tag};
+use crate::domain::models::{Article, CreateFeed, Feed, Group, Log, LogWithFeed, NewArticle, Tag};
 use crate::web::templates::ArticleWithFeed;
 use chrono::Utc;
 use sqlx::{Error as SqlxError, Row, SqlitePool};
@@ -238,7 +238,7 @@ pub async fn get_feeds_to_update(pool: &SqlitePool) -> Result<Vec<Feed>, SqlxErr
 #[allow(clippy::too_many_arguments)]
 pub async fn list_articles_with_feeds(
     pool: &SqlitePool,
-    feed_id: Option<i64>,
+    feed_ids: Option<Vec<i64>>,
     is_read: Option<bool>,
     is_starred: Option<bool>,
     search_query: Option<String>,
@@ -273,22 +273,25 @@ pub async fn list_articles_with_feeds(
     let mut conditions = Vec::new();
 
     if search_query.is_some() {
-        conditions.push("articles_fts MATCH ?");
+        conditions.push("articles_fts MATCH ?".to_string());
     }
-    if feed_id.is_some() {
-        conditions.push("a.feed_id = ?");
+    if let Some(ref ids) = feed_ids {
+        if !ids.is_empty() {
+            let placeholders: Vec<&str> = ids.iter().map(|_| "?").collect();
+            conditions.push(format!("a.feed_id IN ({})", placeholders.join(", ")));
+        }
     }
     if is_read.is_some() {
-        conditions.push("a.is_read = ?");
+        conditions.push("a.is_read = ?".to_string());
     }
     if is_starred.is_some() {
-        conditions.push("a.is_starred = ?");
+        conditions.push("a.is_starred = ?".to_string());
     }
     if date_from.is_some() {
-        conditions.push("a.published_at >= ?");
+        conditions.push("a.published_at >= ?".to_string());
     }
     if date_to.is_some() {
-        conditions.push("a.published_at <= ?");
+        conditions.push("a.published_at <= ?".to_string());
     }
 
     // Construct WHERE clause
@@ -310,8 +313,10 @@ pub async fn list_articles_with_feeds(
     if let Some(search) = search_query {
         query = query.bind(search);
     }
-    if let Some(fid) = feed_id {
-        query = query.bind(fid);
+    if let Some(ref ids) = feed_ids {
+        for id in ids {
+            query = query.bind(*id);
+        }
     }
     if let Some(read) = is_read {
         query = query.bind(read);
@@ -539,6 +544,45 @@ pub async fn get_feed_tags(pool: &SqlitePool, feed_id: i64) -> Result<Vec<Tag>, 
     .await?;
 
     Ok(tags)
+}
+
+// Group operations
+
+pub async fn list_groups(pool: &SqlitePool) -> Result<Vec<Group>, SqlxError> {
+    let groups = sqlx::query_as::<_, Group>(
+        r#"
+        SELECT * FROM groups
+        ORDER BY parent_id NULLS FIRST, position ASC, name ASC
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(groups)
+}
+
+/// Get all feed IDs that belong to a group or any of its descendants (recursive)
+pub async fn get_feed_ids_in_group_recursive(
+    pool: &SqlitePool,
+    group_id: i64,
+) -> Result<Vec<i64>, SqlxError> {
+    let rows = sqlx::query_scalar::<_, i64>(
+        r#"
+        WITH RECURSIVE descendants AS (
+            SELECT id FROM groups WHERE id = ?
+            UNION ALL
+            SELECT g.id FROM groups g
+            INNER JOIN descendants d ON g.parent_id = d.id
+        )
+        SELECT f.id FROM feeds f
+        WHERE f.group_id IN (SELECT id FROM descendants)
+        "#,
+    )
+    .bind(group_id)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows)
 }
 
 // Log operations
@@ -1139,9 +1183,10 @@ mod tests {
             .unwrap();
 
         // Test filter by unread
-        let unread = list_articles_with_feeds(&pool, None, Some(false), None, None, None, None, 10, 0)
-            .await
-            .unwrap();
+        let unread =
+            list_articles_with_feeds(&pool, None, Some(false), None, None, None, None, 10, 0)
+                .await
+                .unwrap();
         assert_eq!(unread.len(), 1);
         assert_eq!(unread[0].article.id, article1.id);
 

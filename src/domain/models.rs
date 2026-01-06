@@ -9,6 +9,7 @@ pub struct Feed {
     pub title: String,
     pub description: Option<String>,
     pub site_url: Option<String>,
+    pub group_id: Option<i64>,
     pub last_fetched_at: Option<DateTime<Utc>>,
     pub last_modified: Option<String>,
     pub etag: Option<String>,
@@ -75,6 +76,24 @@ pub struct FeedTag {
     pub feed_id: i64,
     pub tag_id: i64,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Group {
+    pub id: i64,
+    pub name: String,
+    pub parent_id: Option<i64>,
+    pub position: i64,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Represents a group with its children for tree rendering
+#[derive(Debug, Clone, Serialize)]
+pub struct GroupNode {
+    pub group: Group,
+    pub children: Vec<GroupNode>,
+    pub feeds: Vec<Feed>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

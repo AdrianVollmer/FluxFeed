@@ -1,4 +1,4 @@
-use crate::domain::models::{Article, Feed, LogWithFeed, Tag};
+use crate::domain::models::{Article, Feed, GroupNode, LogWithFeed, Tag};
 use crate::web::filters;
 use askama::Template;
 
@@ -67,10 +67,13 @@ pub struct FeedImportResultsTemplate {
 pub struct ArticlesListTemplate {
     pub articles: Vec<ArticleWithFeed>,
     pub feeds: Vec<Feed>,
+    pub group_tree: Vec<GroupNode>,
+    pub ungrouped_feeds: Vec<Feed>,
     pub offset: i64,
     pub limit: i64,
     pub has_more: bool,
-    pub filter_feed: Option<i64>,
+    pub filter_feed_ids: Vec<i64>,
+    pub filter_group_ids: Vec<i64>,
     pub filter_read: Option<bool>,
     pub filter_starred: Option<bool>,
     pub unread_count: i64,
@@ -115,7 +118,8 @@ pub struct ArticleCompactRowsTemplate {
 #[template(path = "articles/_load_more_button.html")]
 pub struct LoadMoreButtonTemplate {
     pub next_offset: i64,
-    pub filter_feed: Option<i64>,
+    pub filter_feed_ids: Option<String>,
+    pub filter_group_ids: Option<String>,
     pub filter_read: Option<bool>,
     pub filter_starred: Option<bool>,
     pub search_query: Option<String>,
@@ -169,4 +173,16 @@ pub struct ReaderModeTemplate {
     pub content: String,
     pub byline: Option<String>,
     pub excerpt: Option<String>,
+}
+
+#[derive(Template)]
+#[template(path = "articles/feed_filter_modal.html")]
+#[allow(dead_code)]
+pub struct FeedFilterModalTemplate {
+    pub group_tree: Vec<GroupNode>,
+    pub ungrouped_feeds: Vec<Feed>,
+    pub selected_feed_ids: Vec<i64>,
+    pub selected_group_ids: Vec<i64>,
+    pub filter_read: Option<bool>,
+    pub filter_starred: Option<bool>,
 }

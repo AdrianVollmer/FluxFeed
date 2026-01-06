@@ -60,8 +60,8 @@
             <!-- Mark all as read button -->
             {% if unread_count > 0 %}
             <button
-                hx-post="/articles/mark-all-read{% if filter_feed.is_some() %}?feed_id={{ filter_feed.unwrap() }}{% endif %}"
-                hx-confirm="Are you sure you want to mark all {% if filter_feed.is_some() %}filtered {% endif %}articles as read?"
+                hx-post="/articles/mark-all-read{% if !filter_feed_ids.is_empty() %}?feed_ids={{ filter_feed_ids|join(",") }}{% endif %}"
+                hx-confirm="Are you sure you want to mark all {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}filtered {% endif %}articles as read?"
                 class="btn btn-secondary">
                 Mark All as Read
             </button>
@@ -126,8 +126,8 @@
             {% if unread_count > 0 %}
             <div>
                 <button
-                    hx-post="/articles/mark-all-read{% if filter_feed.is_some() %}?feed_id={{ filter_feed.unwrap() }}{% endif %}"
-                    hx-confirm="Are you sure you want to mark all {% if filter_feed.is_some() %}filtered {% endif %}articles as read?"
+                    hx-post="/articles/mark-all-read{% if !filter_feed_ids.is_empty() %}?feed_ids={{ filter_feed_ids|join(",") }}{% endif %}"
+                    hx-confirm="Are you sure you want to mark all {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}filtered {% endif %}articles as read?"
                     class="btn btn-secondary w-full">
                     Mark All as Read
                 </button>
@@ -138,20 +138,27 @@
             {% if feeds.len() > 0 %}
             <div>
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter by Feed</h3>
-                <div class="flex flex-wrap gap-2">
-                    <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}"
-                       onclick="document.getElementById('article-controls-toggle').checked = false"
-                       class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+                <button
+                    hx-get="/articles/filter-modal?feed_ids={{ filter_feed_ids|join(",") }}&group_ids={{ filter_group_ids|join(",") }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
+                    hx-target="#feed-filter-modal"
+                    hx-swap="innerHTML"
+                    onclick="document.getElementById('article-controls-toggle').checked = false"
+                    class="btn btn-secondary w-full inline-flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
                         All Feeds
-                    </a>
-                    {% for feed in feeds %}
-                    <a href="/articles?feed_id={{ feed.id }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}"
-                       onclick="document.getElementById('article-controls-toggle').checked = false"
-                       class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_some() && filter_feed.unwrap() == feed.id %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                        {{ feed.title }}
-                    </a>
-                    {% endfor %}
-                </div>
+                    {% else %}
+                        {{ filter_feed_ids.len() + filter_group_ids.len() }} selected
+                    {% endif %}
+                </button>
+                {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}
+                <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}{% if filter_read.is_some() %}&{% else %}?{% endif %}is_starred={{ filter_starred.unwrap() }}{% endif %}"
+                   class="block text-sm text-blue-600 hover:underline mt-2 text-center">
+                    Clear filter
+                </a>
+                {% endif %}
             </div>
             {% endif %}
         </div>
@@ -159,22 +166,33 @@
 
     <!-- Feed filter (Desktop only) -->
     {% if feeds.len() > 0 %}
-    <div class="hidden md:block mb-6">
-        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Feed:</label>
-        <div class="flex flex-wrap gap-2">
-            <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}"
-               class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+    <div class="hidden md:flex md:items-center md:gap-4 mb-6">
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Feed:</label>
+        <button
+            hx-get="/articles/filter-modal?feed_ids={{ filter_feed_ids|join(",") }}&group_ids={{ filter_group_ids|join(",") }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
+            hx-target="#feed-filter-modal"
+            hx-swap="innerHTML"
+            class="btn btn-secondary inline-flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
                 All Feeds
-            </a>
-            {% for feed in feeds %}
-            <a href="/articles?feed_id={{ feed.id }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}"
-               class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_some() && filter_feed.unwrap() == feed.id %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                {{ feed.title }}
-            </a>
-            {% endfor %}
-        </div>
+            {% else %}
+                {{ filter_feed_ids.len() + filter_group_ids.len() }} selected
+            {% endif %}
+        </button>
+        {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}
+        <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}{% if filter_read.is_some() %}&{% else %}?{% endif %}is_starred={{ filter_starred.unwrap() }}{% endif %}"
+           class="text-sm text-blue-600 hover:underline">
+            Clear filter
+        </a>
+        {% endif %}
     </div>
     {% endif %}
+
+    <!-- Modal container for feed filter -->
+    <div id="feed-filter-modal"></div>
 
     <!-- Article list - Cards View -->
     <div id="articles-cards" class="space-y-4">
@@ -235,7 +253,7 @@
     <div id="load-more-container" class="mt-8 text-center">
         <button
             id="load-more-btn"
-            hx-get="/articles?offset={{ offset + limit }}{% if filter_feed.is_some() %}&feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
+            hx-get="/articles?offset={{ offset + limit }}{% if !filter_feed_ids.is_empty() %}&feed_ids={{ filter_feed_ids|join(",") }}{% endif %}{% if !filter_group_ids.is_empty() %}&group_ids={{ filter_group_ids|join(",") }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
             hx-swap="beforeend"
             class="btn btn-primary">
             Load More Articles

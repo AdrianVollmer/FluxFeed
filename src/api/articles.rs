@@ -1,9 +1,9 @@
 use crate::api::feeds::AppState;
-use crate::domain::{article_service, feed_service};
+use crate::domain::{article_service, feed_service, group_service};
 use crate::infrastructure::repository;
 use crate::web::templates::{
     ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleRowTemplate, ArticleRowsTemplate,
-    ArticleSearchTemplate, ArticlesListTemplate, ArticleWithFeed, ErrorTemplate,
+    ArticleSearchTemplate, ArticleWithFeed, ArticlesListTemplate, ErrorTemplate,
     LoadMoreButtonTemplate,
 };
 use askama::Template;
@@ -14,9 +14,10 @@ use axum::{
 };
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct ArticleListParams {
-    pub feed_id: Option<i64>,
+    pub feed_ids: Option<String>,  // Comma-separated feed IDs
+    pub group_ids: Option<String>, // Comma-separated group IDs
     pub is_read: Option<bool>,
     pub is_starred: Option<bool>,
     pub limit: Option<i64>,
@@ -29,7 +30,18 @@ pub struct ArticleListParams {
 
 #[derive(Deserialize)]
 pub struct MarkAllReadParams {
-    pub feed_id: Option<i64>,
+    pub feed_ids: Option<String>, // Comma-separated feed IDs
+}
+
+/// Parse comma-separated IDs from query parameter
+fn parse_ids(ids_str: Option<&str>) -> Vec<i64> {
+    ids_str
+        .map(|s| {
+            s.split(',')
+                .filter_map(|id| id.trim().parse().ok())
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 pub async fn list_articles(
@@ -44,10 +56,31 @@ pub async fn list_articles(
     let date_from = parse_date_param(params.date_from.as_deref(), true);
     let date_to = parse_date_param(params.date_to.as_deref(), false);
 
+    // Parse comma-separated IDs
+    let selected_feed_ids = parse_ids(params.feed_ids.as_deref());
+    let selected_group_ids = parse_ids(params.group_ids.as_deref());
+
+    // Resolve groups to feed IDs
+    let feed_ids = if selected_feed_ids.is_empty() && selected_group_ids.is_empty() {
+        None // No filter = all feeds
+    } else {
+        let ids = group_service::resolve_selection_to_feed_ids(
+            &state.db_pool,
+            &selected_group_ids,
+            &selected_feed_ids,
+        )
+        .await?;
+        if ids.is_empty() {
+            None
+        } else {
+            Some(ids)
+        }
+    };
+
     // Get articles with feed data in a single JOIN query (no N+1 problem)
     let articles_with_feed = repository::list_articles_with_feeds(
         &state.db_pool,
-        params.feed_id,
+        feed_ids,
         params.is_read,
         params.is_starred,
         params.q.clone(),
@@ -59,7 +92,10 @@ pub async fn list_articles(
     .await?;
 
     let has_more = articles_with_feed.len() > limit as usize;
-    let articles_to_show: Vec<_> = articles_with_feed.into_iter().take(limit as usize).collect();
+    let articles_to_show: Vec<_> = articles_with_feed
+        .into_iter()
+        .take(limit as usize)
+        .collect();
 
     // Check if this is an HTMX pagination request
     let is_htmx = headers.get("HX-Request").is_some();
@@ -74,7 +110,10 @@ pub async fn list_articles(
 }
 
 /// Parse date parameter to DateTime (start of day or end of day)
-fn parse_date_param(date_str: Option<&str>, start_of_day: bool) -> Option<chrono::DateTime<chrono::Utc>> {
+fn parse_date_param(
+    date_str: Option<&str>,
+    start_of_day: bool,
+) -> Option<chrono::DateTime<chrono::Utc>> {
     date_str
         .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
         .and_then(|d| {
@@ -115,7 +154,8 @@ fn render_htmx_pagination(
     if has_more {
         let button_template = LoadMoreButtonTemplate {
             next_offset: offset + limit,
-            filter_feed: params.feed_id,
+            filter_feed_ids: params.feed_ids.clone(),
+            filter_group_ids: params.group_ids.clone(),
             filter_read: params.is_read,
             filter_starred: params.is_starred,
             search_query: params.q.clone(),
@@ -144,19 +184,30 @@ async fn render_full_articles_page(
     limit: i64,
     params: &ArticleListParams,
 ) -> Result<Html<String>, AppError> {
-    // Get all feeds for the filter
+    // Get all feeds and groups for the filter modal
     let feeds = feed_service::list_all_feeds(&state.db_pool).await?;
+    let groups = repository::list_groups(&state.db_pool).await?;
+
+    // Build group tree for the filter modal
+    let (group_tree, ungrouped_feeds) = group_service::build_group_tree(groups, feeds.clone());
 
     // Get unread count
     let unread_count = article_service::get_unread_count(&state.db_pool).await?;
 
+    // Parse selected IDs for highlighting in the UI
+    let filter_feed_ids = parse_ids(params.feed_ids.as_deref());
+    let filter_group_ids = parse_ids(params.group_ids.as_deref());
+
     let template = ArticlesListTemplate {
         articles,
         feeds,
+        group_tree,
+        ungrouped_feeds,
         offset,
         limit,
         has_more,
-        filter_feed: params.feed_id,
+        filter_feed_ids,
+        filter_group_ids,
         filter_read: params.is_read,
         filter_starred: params.is_starred,
         unread_count,
@@ -244,7 +295,24 @@ pub async fn mark_all_read(
     State(state): State<AppState>,
     Query(params): Query<MarkAllReadParams>,
 ) -> Result<Response, AppError> {
-    let count = article_service::mark_all_read(&state.db_pool, params.feed_id).await?;
+    // Parse feed_ids and mark all as read
+    // For simplicity, we mark each feed individually if multiple are specified
+    let feed_ids = parse_ids(params.feed_ids.as_deref());
+
+    let count = if feed_ids.is_empty() {
+        // Mark all articles as read
+        article_service::mark_all_read(&state.db_pool, None).await?
+    } else if feed_ids.len() == 1 {
+        // Single feed
+        article_service::mark_all_read(&state.db_pool, Some(feed_ids[0])).await?
+    } else {
+        // Multiple feeds - mark each one
+        let mut total = 0u64;
+        for feed_id in feed_ids {
+            total += article_service::mark_all_read(&state.db_pool, Some(feed_id)).await?;
+        }
+        total
+    };
 
     tracing::info!("Marked {} articles as read", count);
 

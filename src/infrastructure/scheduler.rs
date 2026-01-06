@@ -545,11 +545,7 @@ async fn extract_opengraph_from_url(
                     if url.starts_with("http://") || url.starts_with("https://") {
                         Some(url.to_string())
                     } else {
-                        tracing::warn!(
-                            "Rejected unsafe og:image URL from {}: {}",
-                            url_str,
-                            url
-                        );
+                        tracing::warn!("Rejected unsafe og:image URL from {}: {}", url_str, url);
                         None
                     }
                 });
