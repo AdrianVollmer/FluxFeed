@@ -152,7 +152,7 @@ input[type="checkbox"]:focus-visible + label {
 .btn-primary {
   @apply text-white;
   background-color: #3B82F6; /* Fallback for browsers that don't support gradients with CSS variables */
-  background: linear-gradient(135deg, var(--primary-from), var(--primary-via), var(--primary-to));
+  background-image: linear-gradient(135deg, var(--primary-from), var(--primary-via), var(--primary-to));
   background-size: 200% 200%;
   box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3),
               0 0 20px -5px var(--shadow-glow);
