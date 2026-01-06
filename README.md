@@ -8,8 +8,9 @@ multiple users.
 
 > [!IMPORTANT]
 > **Disclaimer**: This was entirely vibe-coded as part of some
-> experimentation with this new technology. I know neither Rust nor more
-> than some basic CSS. If that is a deal-breaker for you, I understand.
+> personal experimentation with this new technology. I know neither Rust nor
+> more than the most basic part of CSS. If that is a deal breaker for you, I
+> understand.
 
 ## Tech Stack
 
