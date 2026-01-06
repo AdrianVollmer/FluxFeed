@@ -16,6 +16,8 @@ services:
     volumes:
       # Persist the database
       - fluxfeed-data:/app/data
+      # For Podman: Make the container use the host's DNS server
+      #  - /etc/resolv.conf:/etc/resolv.conf:ro
     restart: unless-stopped
 
 volumes:
