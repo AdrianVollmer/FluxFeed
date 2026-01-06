@@ -1,0 +1,10 @@
+<div class="flex gap-2 border border-gray-300 dark:border-gray-600 rounded p-1">
+    <button id="view-cards{{ view_id_suffix }}" onclick="setView('cards')" class="px-3 py-1 rounded text-sm transition">
+        {% include "icons/grid.html" %}
+        Cards
+    </button>
+    <button id="view-compact{{ view_id_suffix }}" onclick="setView('compact')" class="px-3 py-1 rounded text-sm transition">
+        {% include "icons/list.html" %}
+        Compact
+    </button>
+</div>

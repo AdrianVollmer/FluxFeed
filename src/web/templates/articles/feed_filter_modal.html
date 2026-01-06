@@ -33,7 +33,7 @@
                             <input type="checkbox" name="feed_ids" value="{{ feed.id }}"
                                    {% if feed.id|in_list(selected_feed_ids) %}checked{% endif %}
                                    class="feed-checkbox rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500">
-                            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ feed.color }}"></span>
+                            {% include "components/_feed_color_dot.html" %}
                             <span class="text-sm text-gray-700 dark:text-gray-300 truncate">{{ feed.title }}</span>
                         </label>
                         {% endfor %}

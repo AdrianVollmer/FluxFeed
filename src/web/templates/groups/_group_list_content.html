@@ -53,7 +53,7 @@
              data-drag-id="{{ feed.id }}">
             {% include "icons/drag-handle.html" %}
         </div>
-        <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ feed.color }}"></span>
+        {% include "components/_feed_color_dot.html" %}
         <a href="/feeds/{{ feed.id }}" class="text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex-1 truncate">
             {{ feed.title }}
         </a>
@@ -78,7 +78,7 @@
                      data-drag-id="{{ feed.id }}">
                     {% include "icons/drag-handle.html" %}
                 </div>
-                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ feed.color }}"></span>
+                {% include "components/_feed_color_dot.html" %}
                 <a href="/feeds/{{ feed.id }}" class="text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex-1 truncate">
                     {{ feed.title }}
                 </a>
