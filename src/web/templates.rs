@@ -6,6 +6,14 @@ use askama::Template;
 pub struct IndexTemplate;
 
 #[derive(Template)]
+#[template(path = "error.html")]
+pub struct ErrorTemplate {
+    pub status_code: u16,
+    pub status_text: String,
+    pub message: String,
+}
+
+#[derive(Template)]
 #[template(path = "feeds/list.html")]
 pub struct FeedsListTemplate {
     pub feeds: Vec<Feed>,

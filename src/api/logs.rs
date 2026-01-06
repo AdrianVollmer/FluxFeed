@@ -1,6 +1,8 @@
 use crate::api::feeds::AppState;
 use crate::infrastructure::repository;
-use crate::web::templates::{LoadMoreButtonLogsTemplate, LogRowsTemplate, LogsListTemplate};
+use crate::web::templates::{
+    ErrorTemplate, LoadMoreButtonLogsTemplate, LogRowsTemplate, LogsListTemplate,
+};
 use askama::Template;
 use axum::{
     extract::{Query, State},
@@ -105,13 +107,36 @@ impl From<sqlx::Error> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        match self {
+        let (status_code, status_text, message) = match self {
             AppError::TemplateError(err) => {
                 tracing::error!("Template error: {}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal Server Error".to_string(),
+                    "An error occurred while rendering the page. Please try again later."
+                        .to_string(),
+                )
             }
             AppError::DatabaseError(err) => {
                 tracing::error!("Database error: {}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal Server Error".to_string(),
+                    "A database error occurred. Please try again later.".to_string(),
+                )
+            }
+        };
+
+        let template = ErrorTemplate {
+            status_code: status_code.as_u16(),
+            status_text,
+            message,
+        };
+
+        match template.render() {
+            Ok(html) => (status_code, Html(html)).into_response(),
+            Err(err) => {
+                tracing::error!("Error rendering error template: {}", err);
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
             }
         }

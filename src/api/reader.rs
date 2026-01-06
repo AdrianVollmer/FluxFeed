@@ -1,6 +1,6 @@
 use crate::api::feeds::AppState;
 use crate::domain::reader_service;
-use crate::web::templates::ReaderModeTemplate;
+use crate::web::templates::{ErrorTemplate, ReaderModeTemplate};
 use askama::Template;
 use axum::{
     extract::{Path, State},
@@ -48,38 +48,67 @@ impl From<reader_service::ReaderServiceError> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        match self {
+        let (status_code, status_text, message) = match self {
             AppError::TemplateError(err) => {
                 tracing::error!("Template error: {}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal Server Error".to_string(),
+                    "An error occurred while rendering the page. Please try again later."
+                        .to_string(),
+                )
             }
-            AppError::ReaderServiceError(reader_service::ReaderServiceError::NotFound) => {
-                (StatusCode::NOT_FOUND, "Article not found").into_response()
-            }
+            AppError::ReaderServiceError(reader_service::ReaderServiceError::NotFound) => (
+                StatusCode::NOT_FOUND,
+                "Not Found".to_string(),
+                "The article you're looking for doesn't exist.".to_string(),
+            ),
             AppError::ReaderServiceError(reader_service::ReaderServiceError::DatabaseError(
                 err,
             )) => {
                 tracing::error!("Database error: {}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal Server Error".to_string(),
+                    "A database error occurred. Please try again later.".to_string(),
+                )
             }
             AppError::ReaderServiceError(reader_service::ReaderServiceError::HttpError(err)) => {
                 tracing::error!("HTTP error fetching article: {}", err);
-                (StatusCode::BAD_GATEWAY, "Failed to fetch article content").into_response()
+                (
+                    StatusCode::BAD_GATEWAY,
+                    "Failed to Fetch Article".to_string(),
+                    "Unable to fetch the article content from the source. The site may be down or blocking our request.".to_string(),
+                )
             }
             AppError::ReaderServiceError(reader_service::ReaderServiceError::ExtractionFailed) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
-                "Failed to extract readable content from article",
-            )
-                .into_response(),
+                "Content Extraction Failed".to_string(),
+                "Unable to extract readable content from this article. The page structure may not be compatible with reader mode.".to_string(),
+            ),
             AppError::ReaderServiceError(reader_service::ReaderServiceError::ReadabilityError(
                 err,
             )) => {
                 tracing::error!("Readability error: {}", err);
                 (
                     StatusCode::UNPROCESSABLE_ENTITY,
-                    "Failed to extract readable content from article",
+                    "Content Extraction Failed".to_string(),
+                    "Unable to extract readable content from this article. The page structure may not be compatible with reader mode.".to_string(),
                 )
-                    .into_response()
+            }
+        };
+
+        let template = ErrorTemplate {
+            status_code: status_code.as_u16(),
+            status_text,
+            message,
+        };
+
+        match template.render() {
+            Ok(html) => (status_code, Html(html)).into_response(),
+            Err(err) => {
+                tracing::error!("Error rendering error template: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
             }
         }
     }

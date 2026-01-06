@@ -1,8 +1,8 @@
 use crate::domain::feed_service;
 use crate::infrastructure::{repository, scheduler};
 use crate::web::templates::{
-    FeedDetailTemplate, FeedFormTemplate, FeedImportFormTemplate, FeedImportResultsTemplate,
-    FeedRowTemplate, FeedsListTemplate, ImportResult,
+    ErrorTemplate, FeedDetailTemplate, FeedFormTemplate, FeedImportFormTemplate,
+    FeedImportResultsTemplate, FeedRowTemplate, FeedsListTemplate, ImportResult,
 };
 use askama::Template;
 use axum::{
@@ -276,43 +276,75 @@ impl From<sqlx::Error> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        match self {
+        let (status_code, status_text, message) = match self {
             AppError::TemplateError(err) => {
                 tracing::error!("Template error: {}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal Server Error".to_string(),
+                    "An error occurred while rendering the page. Please try again later."
+                        .to_string(),
+                )
             }
-            AppError::ServiceError(feed_service::FeedServiceError::NotFound) => {
-                (StatusCode::NOT_FOUND, "Feed not found").into_response()
-            }
-            AppError::ServiceError(feed_service::FeedServiceError::DuplicateUrl) => {
-                (StatusCode::CONFLICT, "Feed URL already exists").into_response()
-            }
+            AppError::ServiceError(feed_service::FeedServiceError::NotFound) => (
+                StatusCode::NOT_FOUND,
+                "Not Found".to_string(),
+                "The feed you're looking for doesn't exist.".to_string(),
+            ),
+            AppError::ServiceError(feed_service::FeedServiceError::DuplicateUrl) => (
+                StatusCode::CONFLICT,
+                "Duplicate Feed".to_string(),
+                "This feed URL is already in your collection.".to_string(),
+            ),
             AppError::ServiceError(feed_service::FeedServiceError::InvalidUrl(msg)) => {
-                (StatusCode::BAD_REQUEST, msg).into_response()
+                (StatusCode::BAD_REQUEST, "Invalid URL".to_string(), msg)
             }
             AppError::ServiceError(feed_service::FeedServiceError::DatabaseError(err)) => {
                 tracing::error!("Database error: {}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal Server Error".to_string(),
+                    "A database error occurred. Please try again later.".to_string(),
+                )
             }
             AppError::ServiceError(feed_service::FeedServiceError::FetchError(msg)) => (
                 StatusCode::BAD_GATEWAY,
-                format!("Feed fetch failed: {}", msg),
-            )
-                .into_response(),
+                "Feed Fetch Failed".to_string(),
+                format!("Unable to fetch the feed: {}", msg),
+            ),
             AppError::ServiceError(feed_service::FeedServiceError::InvalidFrequency) => (
                 StatusCode::BAD_REQUEST,
-                "Invalid fetch frequency: must be 'adaptive' or hours between 1-168",
-            )
-                .into_response(),
+                "Invalid Frequency".to_string(),
+                "Fetch frequency must be 'adaptive' or a number of hours between 1-168."
+                    .to_string(),
+            ),
             AppError::DatabaseError(err) => {
                 tracing::error!("Database error: {}", err);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal Server Error".to_string(),
+                    "A database error occurred. Please try again later.".to_string(),
+                )
             }
             AppError::FetchError(msg) => (
                 StatusCode::BAD_GATEWAY,
-                format!("Feed fetch failed: {}", msg),
-            )
-                .into_response(),
+                "Feed Fetch Failed".to_string(),
+                format!("Unable to fetch the feed: {}", msg),
+            ),
+        };
+
+        let template = ErrorTemplate {
+            status_code: status_code.as_u16(),
+            status_text,
+            message,
+        };
+
+        match template.render() {
+            Ok(html) => (status_code, Html(html)).into_response(),
+            Err(err) => {
+                tracing::error!("Error rendering error template: {}", err);
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
+            }
         }
     }
 }
