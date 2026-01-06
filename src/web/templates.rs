@@ -91,6 +91,7 @@ pub struct ArticleCompactRowTemplate {
 }
 
 // Combined article + feed data for display
+#[derive(Clone)]
 pub struct ArticleWithFeed {
     pub article: Article,
     pub feed_title: String,

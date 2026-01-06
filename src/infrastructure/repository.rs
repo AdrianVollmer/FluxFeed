@@ -1,4 +1,5 @@
 use crate::domain::models::{Article, CreateFeed, Feed, Log, LogWithFeed, NewArticle, Tag};
+use crate::web::templates::ArticleWithFeed;
 use chrono::Utc;
 use sqlx::{Error as SqlxError, Row, SqlitePool};
 
@@ -305,6 +306,175 @@ pub async fn list_articles(
     let articles = query.bind(limit).bind(offset).fetch_all(pool).await?;
 
     Ok(articles)
+}
+
+/// Fetch articles with feed data in a single JOIN query (solves N+1 problem)
+#[allow(clippy::too_many_arguments)]
+pub async fn list_articles_with_feeds(
+    pool: &SqlitePool,
+    feed_id: Option<i64>,
+    is_read: Option<bool>,
+    is_starred: Option<bool>,
+    search_query: Option<String>,
+    date_from: Option<chrono::DateTime<chrono::Utc>>,
+    date_to: Option<chrono::DateTime<chrono::Utc>>,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<ArticleWithFeed>, SqlxError> {
+    let mut query_str = String::from(
+        r#"SELECT
+            a.id, a.feed_id, a.guid, a.title, a.url, a.content, a.summary,
+            a.author, a.published_at, a.is_read, a.is_starred,
+            a.og_image, a.og_description, a.og_site_name,
+            a.created_at, a.updated_at,
+            f.title as feed_title, f.color as feed_color
+        FROM articles a
+        INNER JOIN feeds f ON f.id = a.feed_id"#
+    );
+
+    // Add FTS join when search is active
+    if search_query.is_some() {
+        query_str.push_str(" INNER JOIN articles_fts ON a.id = articles_fts.rowid");
+    }
+
+    query_str.push_str(" WHERE 1=1");
+
+    // Add search filter
+    if search_query.is_some() {
+        query_str.push_str(" AND articles_fts MATCH ?");
+    }
+
+    // Add existing filters
+    if feed_id.is_some() {
+        query_str.push_str(" AND a.feed_id = ?");
+    }
+    if is_read.is_some() {
+        query_str.push_str(" AND a.is_read = ?");
+    }
+    if is_starred.is_some() {
+        query_str.push_str(" AND a.is_starred = ?");
+    }
+
+    // Add date range filters
+    if date_from.is_some() {
+        query_str.push_str(" AND a.published_at >= ?");
+    }
+    if date_to.is_some() {
+        query_str.push_str(" AND a.published_at <= ?");
+    }
+
+    query_str.push_str(" ORDER BY a.published_at DESC, a.created_at DESC LIMIT ? OFFSET ?");
+
+    let mut query = sqlx::query(&query_str);
+
+    // Bind parameters in correct order
+    if let Some(search) = search_query {
+        query = query.bind(search);
+    }
+    if let Some(fid) = feed_id {
+        query = query.bind(fid);
+    }
+    if let Some(read) = is_read {
+        query = query.bind(read);
+    }
+    if let Some(starred) = is_starred {
+        query = query.bind(starred);
+    }
+    if let Some(from) = date_from {
+        query = query.bind(from);
+    }
+    if let Some(to) = date_to {
+        query = query.bind(to);
+    }
+
+    let rows = query.bind(limit).bind(offset).fetch_all(pool).await?;
+
+    // Map rows to ArticleWithFeed
+    let mut articles_with_feed = Vec::new();
+    for row in rows {
+        let article = Article {
+            id: row.get("id"),
+            feed_id: row.get("feed_id"),
+            guid: row.get("guid"),
+            title: row.get("title"),
+            url: row.get("url"),
+            content: row.get("content"),
+            summary: row.get("summary"),
+            author: row.get("author"),
+            published_at: row.get("published_at"),
+            is_read: row.get("is_read"),
+            is_starred: row.get("is_starred"),
+            og_image: row.get("og_image"),
+            og_description: row.get("og_description"),
+            og_site_name: row.get("og_site_name"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        };
+
+        let feed_title: String = row.get("feed_title");
+        let feed_color: String = row.get("feed_color");
+
+        articles_with_feed.push(ArticleWithFeed {
+            article,
+            feed_title,
+            feed_color,
+        });
+    }
+
+    Ok(articles_with_feed)
+}
+
+/// Fetch a single article with feed data via JOIN
+pub async fn get_article_with_feed_by_id(
+    pool: &SqlitePool,
+    article_id: i64,
+) -> Result<Option<ArticleWithFeed>, SqlxError> {
+    let row = sqlx::query(
+        r#"SELECT
+            a.id, a.feed_id, a.guid, a.title, a.url, a.content, a.summary,
+            a.author, a.published_at, a.is_read, a.is_starred,
+            a.og_image, a.og_description, a.og_site_name,
+            a.created_at, a.updated_at,
+            f.title as feed_title, f.color as feed_color
+        FROM articles a
+        INNER JOIN feeds f ON f.id = a.feed_id
+        WHERE a.id = ?"#,
+    )
+    .bind(article_id)
+    .fetch_optional(pool)
+    .await?;
+
+    if let Some(row) = row {
+        let article = Article {
+            id: row.get("id"),
+            feed_id: row.get("feed_id"),
+            guid: row.get("guid"),
+            title: row.get("title"),
+            url: row.get("url"),
+            content: row.get("content"),
+            summary: row.get("summary"),
+            author: row.get("author"),
+            published_at: row.get("published_at"),
+            is_read: row.get("is_read"),
+            is_starred: row.get("is_starred"),
+            og_image: row.get("og_image"),
+            og_description: row.get("og_description"),
+            og_site_name: row.get("og_site_name"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        };
+
+        let feed_title: String = row.get("feed_title");
+        let feed_color: String = row.get("feed_color");
+
+        Ok(Some(ArticleWithFeed {
+            article,
+            feed_title,
+            feed_color,
+        }))
+    } else {
+        Ok(None)
+    }
 }
 
 pub async fn get_article_by_id(

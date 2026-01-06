@@ -3,8 +3,7 @@ use crate::domain::{article_service, feed_service};
 use crate::infrastructure::repository;
 use crate::web::templates::{
     ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleRowTemplate, ArticleRowsTemplate,
-    ArticleSearchTemplate, ArticleWithFeed, ArticlesListTemplate, ErrorTemplate,
-    LoadMoreButtonTemplate,
+    ArticleSearchTemplate, ArticlesListTemplate, ErrorTemplate, LoadMoreButtonTemplate,
 };
 use askama::Template;
 use axum::{
@@ -53,8 +52,8 @@ pub async fn list_articles(
         .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
         .map(|d| d.and_hms_opt(23, 59, 59).unwrap().and_utc());
 
-    // Get articles
-    let articles = article_service::list_articles(
+    // Get articles with feed data in a single JOIN query (no N+1 problem)
+    let articles_with_feed = repository::list_articles_with_feeds(
         &state.db_pool,
         params.feed_id,
         params.is_read,
@@ -67,40 +66,8 @@ pub async fn list_articles(
     )
     .await?;
 
-    let has_more = articles.len() > limit as usize;
-    let articles_to_show: Vec<_> = articles.into_iter().take(limit as usize).collect();
-
-    // Get feed info for each article
-    let mut articles_with_feed = Vec::new();
-    for article in articles_to_show {
-        let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
-            .await?
-            .unwrap_or_else(|| {
-                // Fallback if feed was deleted
-                crate::domain::models::Feed {
-                    id: article.feed_id,
-                    url: String::new(),
-                    title: "Unknown Feed".to_string(),
-                    description: None,
-                    site_url: None,
-                    last_fetched_at: None,
-                    last_modified: None,
-                    etag: None,
-                    fetch_interval_minutes: 30,
-                    color: "#3B82F6".to_string(),
-                    fetch_frequency: "smart".to_string(),
-                    ttl_minutes: None,
-                    created_at: chrono::Utc::now(),
-                    updated_at: chrono::Utc::now(),
-                }
-            });
-
-        articles_with_feed.push(ArticleWithFeed {
-            article,
-            feed_title: feed.title.clone(),
-            feed_color: feed.color,
-        });
-    }
+    let has_more = articles_with_feed.len() > limit as usize;
+    let articles_to_show: Vec<_> = articles_with_feed.into_iter().take(limit as usize).collect();
 
     // Check if this is an HTMX pagination request
     let is_htmx = headers.get("HX-Request").is_some();
@@ -113,12 +80,12 @@ pub async fn list_articles(
         let view_mode = params.view.as_deref().unwrap_or("cards");
         if view_mode == "compact" {
             let rows_template = ArticleCompactRowsTemplate {
-                articles: articles_with_feed,
+                articles: articles_to_show.clone(),
             };
             html.push_str(&rows_template.render()?);
         } else {
             let rows_template = ArticleRowsTemplate {
-                articles: articles_with_feed,
+                articles: articles_to_show.clone(),
             };
             html.push_str(&rows_template.render()?);
         }
@@ -154,7 +121,7 @@ pub async fn list_articles(
     let unread_count = article_service::get_unread_count(&state.db_pool).await?;
 
     let template = ArticlesListTemplate {
-        articles: articles_with_feed,
+        articles: articles_to_show,
         feeds,
         offset,
         limit,
@@ -175,34 +142,15 @@ pub async fn toggle_read_status(
     State(state): State<AppState>,
     Path(article_id): Path<i64>,
 ) -> Result<Html<String>, AppError> {
-    let article = article_service::toggle_read_status(&state.db_pool, article_id).await?;
+    article_service::toggle_read_status(&state.db_pool, article_id).await?;
 
-    // Get feed info
-    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+    // Get article with feed info in a single JOIN query
+    let article_with_feed = repository::get_article_with_feed_by_id(&state.db_pool, article_id)
         .await?
-        .unwrap_or_else(|| crate::domain::models::Feed {
-            id: article.feed_id,
-            url: String::new(),
-            title: "Unknown Feed".to_string(),
-            description: None,
-            site_url: None,
-            last_fetched_at: None,
-            last_modified: None,
-            etag: None,
-            fetch_interval_minutes: 30,
-            color: "#3B82F6".to_string(),
-            fetch_frequency: "smart".to_string(),
-            ttl_minutes: None,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
+        .ok_or(article_service::ArticleServiceError::NotFound)?;
 
     let template = ArticleRowTemplate {
-        item: ArticleWithFeed {
-            article,
-            feed_title: feed.title,
-            feed_color: feed.color,
-        },
+        item: article_with_feed,
     };
 
     Ok(Html(template.render()?))
@@ -212,34 +160,15 @@ pub async fn toggle_read_status_compact(
     State(state): State<AppState>,
     Path(article_id): Path<i64>,
 ) -> Result<Html<String>, AppError> {
-    let article = article_service::toggle_read_status(&state.db_pool, article_id).await?;
+    article_service::toggle_read_status(&state.db_pool, article_id).await?;
 
-    // Get feed info
-    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+    // Get article with feed info in a single JOIN query
+    let article_with_feed = repository::get_article_with_feed_by_id(&state.db_pool, article_id)
         .await?
-        .unwrap_or_else(|| crate::domain::models::Feed {
-            id: article.feed_id,
-            url: String::new(),
-            title: "Unknown Feed".to_string(),
-            description: None,
-            site_url: None,
-            last_fetched_at: None,
-            last_modified: None,
-            etag: None,
-            fetch_interval_minutes: 30,
-            color: "#3B82F6".to_string(),
-            fetch_frequency: "smart".to_string(),
-            ttl_minutes: None,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
+        .ok_or(article_service::ArticleServiceError::NotFound)?;
 
     let template = ArticleCompactRowTemplate {
-        item: ArticleWithFeed {
-            article,
-            feed_title: feed.title,
-            feed_color: feed.color,
-        },
+        item: article_with_feed,
     };
 
     Ok(Html(template.render()?))
@@ -249,34 +178,15 @@ pub async fn toggle_starred_status(
     State(state): State<AppState>,
     Path(article_id): Path<i64>,
 ) -> Result<Html<String>, AppError> {
-    let article = article_service::toggle_starred_status(&state.db_pool, article_id).await?;
+    article_service::toggle_starred_status(&state.db_pool, article_id).await?;
 
-    // Get feed info
-    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+    // Get article with feed info in a single JOIN query
+    let article_with_feed = repository::get_article_with_feed_by_id(&state.db_pool, article_id)
         .await?
-        .unwrap_or_else(|| crate::domain::models::Feed {
-            id: article.feed_id,
-            url: String::new(),
-            title: "Unknown Feed".to_string(),
-            description: None,
-            site_url: None,
-            last_fetched_at: None,
-            last_modified: None,
-            etag: None,
-            fetch_interval_minutes: 30,
-            color: "#3B82F6".to_string(),
-            fetch_frequency: "smart".to_string(),
-            ttl_minutes: None,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
+        .ok_or(article_service::ArticleServiceError::NotFound)?;
 
     let template = ArticleRowTemplate {
-        item: ArticleWithFeed {
-            article,
-            feed_title: feed.title,
-            feed_color: feed.color,
-        },
+        item: article_with_feed,
     };
 
     Ok(Html(template.render()?))
@@ -286,34 +196,15 @@ pub async fn toggle_starred_status_compact(
     State(state): State<AppState>,
     Path(article_id): Path<i64>,
 ) -> Result<Html<String>, AppError> {
-    let article = article_service::toggle_starred_status(&state.db_pool, article_id).await?;
+    article_service::toggle_starred_status(&state.db_pool, article_id).await?;
 
-    // Get feed info
-    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+    // Get article with feed info in a single JOIN query
+    let article_with_feed = repository::get_article_with_feed_by_id(&state.db_pool, article_id)
         .await?
-        .unwrap_or_else(|| crate::domain::models::Feed {
-            id: article.feed_id,
-            url: String::new(),
-            title: "Unknown Feed".to_string(),
-            description: None,
-            site_url: None,
-            last_fetched_at: None,
-            last_modified: None,
-            etag: None,
-            fetch_interval_minutes: 30,
-            color: "#3B82F6".to_string(),
-            fetch_frequency: "smart".to_string(),
-            ttl_minutes: None,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
+        .ok_or(article_service::ArticleServiceError::NotFound)?;
 
     let template = ArticleCompactRowTemplate {
-        item: ArticleWithFeed {
-            article,
-            feed_title: feed.title,
-            feed_color: feed.color,
-        },
+        item: article_with_feed,
     };
 
     Ok(Html(template.render()?))
@@ -340,34 +231,15 @@ pub async fn mark_read_status(
     State(state): State<AppState>,
     Path(article_id): Path<i64>,
 ) -> Result<Html<String>, AppError> {
-    let article = article_service::mark_as_read(&state.db_pool, article_id).await?;
+    article_service::mark_as_read(&state.db_pool, article_id).await?;
 
-    // Get feed info
-    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+    // Get article with feed info in a single JOIN query
+    let article_with_feed = repository::get_article_with_feed_by_id(&state.db_pool, article_id)
         .await?
-        .unwrap_or_else(|| crate::domain::models::Feed {
-            id: article.feed_id,
-            url: String::new(),
-            title: "Unknown Feed".to_string(),
-            description: None,
-            site_url: None,
-            last_fetched_at: None,
-            last_modified: None,
-            etag: None,
-            fetch_interval_minutes: 30,
-            color: "#3B82F6".to_string(),
-            fetch_frequency: "smart".to_string(),
-            ttl_minutes: None,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
+        .ok_or(article_service::ArticleServiceError::NotFound)?;
 
     let template = ArticleRowTemplate {
-        item: ArticleWithFeed {
-            article,
-            feed_title: feed.title,
-            feed_color: feed.color,
-        },
+        item: article_with_feed,
     };
 
     Ok(Html(template.render()?))
@@ -377,34 +249,15 @@ pub async fn mark_read_status_compact(
     State(state): State<AppState>,
     Path(article_id): Path<i64>,
 ) -> Result<Html<String>, AppError> {
-    let article = article_service::mark_as_read(&state.db_pool, article_id).await?;
+    article_service::mark_as_read(&state.db_pool, article_id).await?;
 
-    // Get feed info
-    let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
+    // Get article with feed info in a single JOIN query
+    let article_with_feed = repository::get_article_with_feed_by_id(&state.db_pool, article_id)
         .await?
-        .unwrap_or_else(|| crate::domain::models::Feed {
-            id: article.feed_id,
-            url: String::new(),
-            title: "Unknown Feed".to_string(),
-            description: None,
-            site_url: None,
-            last_fetched_at: None,
-            last_modified: None,
-            etag: None,
-            fetch_interval_minutes: 30,
-            color: "#3B82F6".to_string(),
-            fetch_frequency: "smart".to_string(),
-            ttl_minutes: None,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-        });
+        .ok_or(article_service::ArticleServiceError::NotFound)?;
 
     let template = ArticleCompactRowTemplate {
-        item: ArticleWithFeed {
-            article,
-            feed_title: feed.title,
-            feed_color: feed.color,
-        },
+        item: article_with_feed,
     };
 
     Ok(Html(template.render()?))
@@ -523,7 +376,8 @@ pub async fn search_articles(
     // Only search if we have a query or date filter
     let (articles_with_feed, has_more) =
         if params.q.is_some() || date_from.is_some() || date_to.is_some() {
-            let articles = article_service::list_articles(
+            // Get articles with feed data in a single JOIN query (no N+1 problem)
+            let articles_with_feed = repository::list_articles_with_feeds(
                 &state.db_pool,
                 None, // No feed filter on search page
                 None, // No read filter on search page
@@ -536,37 +390,11 @@ pub async fn search_articles(
             )
             .await?;
 
-            let has_more_results = articles.len() > limit as usize;
-            let articles_to_show: Vec<_> = articles.into_iter().take(limit as usize).collect();
-
-            // Get feed info for each article
-            let mut articles_with_feed = Vec::new();
-            for article in articles_to_show {
-                let feed = repository::get_feed_by_id(&state.db_pool, article.feed_id)
-                    .await?
-                    .unwrap_or_else(|| crate::domain::models::Feed {
-                        id: article.feed_id,
-                        url: String::new(),
-                        title: "Unknown Feed".to_string(),
-                        description: None,
-                        site_url: None,
-                        last_fetched_at: None,
-                        last_modified: None,
-                        etag: None,
-                        fetch_interval_minutes: 30,
-                        color: "#3B82F6".to_string(),
-                        fetch_frequency: "smart".to_string(),
-                        ttl_minutes: None,
-                        created_at: chrono::Utc::now(),
-                        updated_at: chrono::Utc::now(),
-                    });
-
-                articles_with_feed.push(ArticleWithFeed {
-                    article,
-                    feed_title: feed.title.clone(),
-                    feed_color: feed.color,
-                });
-            }
+            let has_more_results = articles_with_feed.len() > limit as usize;
+            let articles_to_show: Vec<_> = articles_with_feed
+                .into_iter()
+                .take(limit as usize)
+                .collect();
 
             // Check if this is an HTMX pagination request
             let is_htmx = headers.get("HX-Request").is_some();
@@ -574,12 +402,12 @@ pub async fn search_articles(
             if is_htmx && offset > 0 {
                 // Return just the article rows for pagination
                 let rows_template = ArticleRowsTemplate {
-                    articles: articles_with_feed,
+                    articles: articles_to_show,
                 };
                 return Ok(Html(rows_template.render()?));
             }
 
-            (articles_with_feed, has_more_results)
+            (articles_to_show, has_more_results)
         } else {
             (Vec::new(), false)
         };
