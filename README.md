@@ -3,7 +3,8 @@
 A modern, resource-efficient RSS feed reader built with Rust.
 
 The primary use case is running this program as a self-hosted Docker
-instance accessed locally or via VPN.
+instance accessed locally or via VPN. There is currently no support for
+multiple users.
 
 ## Tech Stack
 
@@ -46,7 +47,7 @@ SQLX_OFFLINE=true cargo build --release
 ./target/release/fluxfeed
 ```
 
-The server will start on http://localhost:3000
+The server will start on <http://localhost:3000>.
 
 ### Database
 
@@ -79,12 +80,15 @@ The easiest way to run FluxFeed is with Docker.
 docker compose up -d
 ```
 
-The app will be available at http://localhost:3000 with persistent
+The app will be available at <http://localhost:3000> with persistent
 storage.
 
 ### Using Docker directly
 
-Build the image:
+There is a publicly available Docker image:
+`ghcr.io/adrianvollmer/fluxfeed:latest`
+
+To build the image:
 
 ``` bash
 docker build -t fluxfeed .
@@ -93,7 +97,7 @@ docker build -t fluxfeed .
 Run the container:
 
 ``` bash
-docker run -d \
+docker run --rm -d \
   -p 3000:3000 \
   -v fluxfeed-data:/app/data \
   -e DATABASE_URL=sqlite:///app/data/fluxfeed.db \
