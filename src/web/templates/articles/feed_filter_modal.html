@@ -5,9 +5,7 @@
         <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
             <h2 class="text-xl font-bold text-gray-900 dark:text-white">Filter by Feeds</h2>
             <button onclick="closeFeedFilterModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+                {% include "icons/close.html" %}
             </button>
         </div>
 
@@ -45,9 +43,7 @@
                     <!-- Empty state -->
                     {% if group_tree.is_empty() && ungrouped_feeds.is_empty() %}
                     <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
-                        </svg>
+                        {% include "icons/rss.html" %}
                         <p>No feeds available</p>
                         <a href="/feeds" class="text-blue-600 hover:underline text-sm">Add some feeds</a>
                     </div>
@@ -67,62 +63,3 @@
         </div>
     </div>
 </div>
-
-<script>
-function closeFeedFilterModal() {
-    document.getElementById('feed-filter-modal').innerHTML = '';
-}
-
-function selectAllFeeds() {
-    document.querySelectorAll('.feed-checkbox, .group-checkbox').forEach(cb => cb.checked = true);
-}
-
-function selectNoneFeeds() {
-    document.querySelectorAll('.feed-checkbox, .group-checkbox').forEach(cb => cb.checked = false);
-}
-
-function applyFeedFilter() {
-    const feedIds = Array.from(document.querySelectorAll('.feed-checkbox:checked'))
-        .map(cb => cb.value);
-    const groupIds = Array.from(document.querySelectorAll('.group-checkbox:checked'))
-        .map(cb => cb.value);
-
-    const params = new URLSearchParams(window.location.search);
-
-    // Clear existing filter params
-    params.delete('feed_ids');
-    params.delete('group_ids');
-    params.delete('offset'); // Reset pagination when filter changes
-
-    if (feedIds.length > 0) {
-        params.set('feed_ids', feedIds.join(','));
-    }
-    if (groupIds.length > 0) {
-        params.set('group_ids', groupIds.join(','));
-    }
-
-    const queryString = params.toString();
-    window.location.href = '/articles' + (queryString ? '?' + queryString : '');
-}
-
-// Toggle group checkbox cascades to all child checkboxes
-document.querySelectorAll('.group-checkbox').forEach(groupCb => {
-    groupCb.addEventListener('change', function() {
-        const container = this.closest('.group-container');
-        if (container) {
-            container.querySelectorAll('.feed-checkbox, .group-checkbox').forEach(cb => {
-                if (cb !== this) {
-                    cb.checked = this.checked;
-                }
-            });
-        }
-    });
-});
-
-// Close modal on Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeFeedFilterModal();
-    }
-});
-</script>

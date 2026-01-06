@@ -15,9 +15,7 @@
 
             <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-500">
                 <span class="flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-                    </svg>
+                    {% include "icons/link.html" %}
                     <a href="{{ feed.url }}" target="_blank" class="hover:underline truncate max-w-xs">
                         {{ feed.url }}
                     </a>
@@ -25,9 +23,7 @@
 
                 {% if feed.site_url.is_some() %}
                 <span class="flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
-                    </svg>
+                    {% include "icons/globe.html" %}
                     <a href="{{ feed.site_url.as_ref().unwrap() }}" target="_blank" class="hover:underline">
                         Site
                     </a>
@@ -42,9 +38,7 @@
             hx-target="#feed-{{ feed.id }}"
             hx-swap="outerHTML swap:1s"
             class="ml-4 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
+            {% include "icons/trash.html" %}
         </button>
     </div>
 </div>

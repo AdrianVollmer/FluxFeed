@@ -28,14 +28,10 @@
             <div class="drag-handle cursor-grab active:cursor-grabbing p-1 -m-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                  data-drag-type="group"
                  data-drag-id="{{ group.id }}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                </svg>
+                {% include "icons/drag-handle.html" %}
             </div>
             <!-- Folder icon -->
-            <svg class="w-4 h-4 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-            </svg>
+            {% include "icons/folder-filled.html" %}
             <!-- Group name (clickable to edit) -->
             <button
                 hx-get="/groups/{{ group.id }}/edit"
@@ -55,9 +51,7 @@
         <div class="drag-handle cursor-grab active:cursor-grabbing p-1 -m-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
              data-drag-type="feed"
              data-drag-id="{{ feed.id }}">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-            </svg>
+            {% include "icons/drag-handle.html" %}
         </div>
         <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ feed.color }}"></span>
         <a href="/feeds/{{ feed.id }}" class="text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex-1 truncate">
@@ -72,9 +66,7 @@
          data-drop-id=""
          data-drop-type="ungrouped">
         <div class="flex items-center gap-2 px-2 py-1 text-gray-500 dark:text-gray-400">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-            </svg>
+            {% include "icons/box.html" %}
             <span class="text-sm font-medium">Ungrouped Feeds</span>
         </div>
         <div class="ml-6 space-y-0.5 mt-1">
@@ -84,9 +76,7 @@
                 <div class="drag-handle cursor-grab active:cursor-grabbing p-1 -m-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                      data-drag-type="feed"
                      data-drag-id="{{ feed.id }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                    </svg>
+                    {% include "icons/drag-handle.html" %}
                 </div>
                 <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ feed.color }}"></span>
                 <a href="/feeds/{{ feed.id }}" class="text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex-1 truncate">

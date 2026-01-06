@@ -22,17 +22,13 @@
 
         <!-- Row 2: Title with expand icon -->
         <div class="flex items-start gap-2">
-            <svg class="expand-icon w-4 h-4 text-gray-400 transition-transform flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
+            {% include "icons/chevron-right-mt.html" %}
             <div class="text-sm font-medium {% if item.article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %} min-w-0">
                 {% if item.article.url.is_some() %}
                 <a href="{{ item.article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2"
                    onclick="event.stopPropagation(); htmx.ajax('POST', '/articles/{{ item.article.id }}/mark-read-compact', {target:'#article-compact-{{ item.article.id }}', swap:'outerHTML'})">
                     {{ item.article.title }}
-                    <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
+                    {% include "icons/external-link-sm.html" %}
                 </a>
                 {% else %}
                 <span class="line-clamp-2">{{ item.article.title }}</span>
@@ -75,17 +71,13 @@
         <!-- Title -->
         <div class="px-4 py-4 min-w-0">
             <div class="flex items-center gap-2">
-                <svg class="expand-icon w-4 h-4 text-gray-400 transition-transform flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
+                {% include "icons/chevron-right.html" %}
                 <div class="text-sm font-medium {% if item.article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %} truncate">
                     {% if item.article.url.is_some() %}
                     <a href="{{ item.article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 dark:hover:text-blue-400"
                        onclick="event.stopPropagation(); htmx.ajax('POST', '/articles/{{ item.article.id }}/mark-read-compact', {target:'#article-compact-{{ item.article.id }}', swap:'outerHTML'})">
                         {{ item.article.title }}
-                        <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
+                        {% include "icons/external-link-sm.html" %}
                     </a>
                     {% else %}
                     {{ item.article.title }}
@@ -149,9 +141,7 @@
                 <!-- Article metadata -->
                 <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
                     <span class="flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
+                        {% include "icons/calendar.html" %}
                         {% if item.article.published_at.is_some() %}
                         {{ item.article.published_at.as_ref().unwrap().format("%b %d, %Y %H:%M") }}
                         {% else %}
@@ -161,9 +151,7 @@
 
                     {% if item.article.author.is_some() %}
                     <span class="flex items-center">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
+                        {% include "icons/user.html" %}
                         {{ item.article.author.as_ref().unwrap() }}
                     </span>
                     {% endif %}
