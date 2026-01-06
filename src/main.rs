@@ -4,6 +4,16 @@ mod domain;
 mod infrastructure;
 mod web;
 
+/// Returns the FluxFeed user agent string with the current version
+///
+/// Format: "FluxFeed/X.Y.Z"
+///
+/// The version is read from Cargo.toml at compile time, ensuring it's
+/// always in sync with the package version.
+pub fn user_agent() -> String {
+    format!("FluxFeed/{}", env!("CARGO_PKG_VERSION"))
+}
+
 use api::feeds::AppState;
 use askama::Template;
 use axum::{

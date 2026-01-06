@@ -48,7 +48,7 @@ pub async fn get_reader_content(
     // Fetch the article content from the URL
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
-        .user_agent("FluxFeed/0.1.0")
+        .user_agent(crate::user_agent())
         .build()?;
 
     let response = client.get(article_url).send().await?;

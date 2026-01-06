@@ -42,7 +42,7 @@ pub struct RssFetcher {
 impl RssFetcher {
     pub fn new() -> Result<Self, FetchError> {
         let client = Client::builder()
-            .user_agent("FluxFeed/0.1.0")
+            .user_agent(crate::user_agent())
             .gzip(true)
             .brotli(true)
             .timeout(Duration::from_secs(30))
