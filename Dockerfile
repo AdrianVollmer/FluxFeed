@@ -7,6 +7,7 @@ COPY package*.json ./
 RUN npm ci
 COPY static/css/input.css ./static/css/
 COPY tailwind.config.js ./
+COPY src/web/templates ./src/web/templates
 RUN npm run build:css
 
 # Stage 2: Build Rust application
