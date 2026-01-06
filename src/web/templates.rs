@@ -1,4 +1,5 @@
 use crate::domain::models::{Article, Feed, LogWithFeed, Tag};
+use crate::web::filters;
 use askama::Template;
 
 #[derive(Template)]

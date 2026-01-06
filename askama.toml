@@ -1,2 +1,5 @@
 [general]
 dirs = ["src/web/templates"]
+
+[filters]
+app_version = "crate::web::filters::app_version"
