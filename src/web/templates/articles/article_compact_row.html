@@ -1,4 +1,4 @@
-<tr id="article-compact-{{ item.article.id }}" class="compact-article-row {% if item.article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity cursor-pointer border-l-4" data-article-id="{{ item.article.id }}" style="border-left-color: {{ item.feed_color }}">
+<tr id="article-compact-{{ item.article.id }}" class="group compact-article-row {% if item.article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity cursor-pointer border-l-4" data-article-id="{{ item.article.id }}" style="border-left-color: {{ item.feed_color }}">
     <td class="px-3 py-4 whitespace-nowrap">
         <button
             hx-post="/articles/{{ item.article.id }}/toggle-read-compact"
@@ -28,10 +28,13 @@
             </div>
         </div>
     </td>
-    <td class="px-6 py-4 whitespace-nowrap">
-        <span class="text-xs px-2 py-1 rounded" style="background-color: {{ item.feed_color }}20; color: {{ item.feed_color }};">
-            {{ item.feed_title }}
-        </span>
+    <td class="px-6 py-4">
+        <div class="relative inline-block overflow-hidden max-w-full">
+            <div class="text-xs px-2 py-1 rounded truncate" style="background-color: {{ item.feed_color }}20; color: {{ item.feed_color }};" title="{{ item.feed_title }}">
+                {{ item.feed_title }}
+            </div>
+            <div class="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-gray-800 to-transparent pointer-events-none"></div>
+        </div>
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
         {% if item.article.author.is_some() %}
