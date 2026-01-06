@@ -373,6 +373,14 @@ table tbody tr:hover {
   box-shadow: inset 0 0 20px -10px var(--shadow-glow);
 }
 
+/* Line clamp utility for multi-line truncation */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Fetch Now button loading state */
 .fetch-now-btn.htmx-request .fetch-icon,
 .fetch-now-btn.htmx-request .fetch-text {

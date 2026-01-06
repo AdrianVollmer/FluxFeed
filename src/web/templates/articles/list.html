@@ -197,7 +197,7 @@
         {% endif %}
     </div>
 
-    <!-- Article list - Compact Table View -->
+    <!-- Article list - Compact View -->
     <div id="articles-compact" class="hidden">
         {% if articles.len() == 0 %}
         <div class="card text-center py-16">
@@ -214,22 +214,18 @@
             </p>
         </div>
         {% else %}
-        <div class="overflow-x-auto">
-            <table class="w-full divide-y divide-gray-200 dark:divide-gray-700 table-fixed">
-                <thead class="bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                        <th scope="col" class="w-8 px-3 py-3"></th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
-                        <th scope="col" class="w-44 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Feed</th>
-                        <th scope="col" class="w-36 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</th>
-                        <th scope="col" class="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                        <th scope="col" class="w-16 px-3 py-3"></th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {% include "articles/_article_compact_rows.html" %}
-                </tbody>
-            </table>
+        <!-- Desktop header (hidden on mobile) -->
+        <div class="hidden md:grid md:grid-cols-[auto_1fr_180px_140px_120px_60px] md:gap-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div class="w-8 px-3 py-3"></div>
+            <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</div>
+            <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Feed</div>
+            <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</div>
+            <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</div>
+            <div class="w-16 px-3 py-3"></div>
+        </div>
+        <!-- Compact article rows -->
+        <div class="bg-white dark:bg-gray-800">
+            {% include "articles/_article_compact_rows.html" %}
         </div>
         {% endif %}
     </div>
@@ -264,7 +260,7 @@ function updateLoadMoreButton() {
 
     // Update target based on view
     if (savedView === 'compact') {
-        loadMoreBtn.setAttribute('hx-target', '#articles-compact tbody');
+        loadMoreBtn.setAttribute('hx-target', '#articles-compact > div:last-child');
     } else {
         loadMoreBtn.setAttribute('hx-target', '#articles-cards');
     }
