@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100" height="100" fill="url(#bgGradient)" rx="20"/>
+
+  <!-- Flowing wave elements -->
+  <path d="M 0 30 Q 25 20 50 30 T 100 30 L 100 0 L 0 0 Z" fill="#60A5FA" opacity="0.3"/>
+  <path d="M 0 50 Q 25 40 50 50 T 100 50 L 100 0 L 0 0 Z" fill="#60A5FA" opacity="0.2"/>
+  <path d="M 0 80 Q 25 70 50 80 T 100 80 L 100 100 L 0 100 Z" fill="#1E40AF" opacity="0.3"/>
+  <path d="M 0 95 Q 25 85 50 95 T 100 95 L 100 100 L 0 100 Z" fill="#1E40AF" opacity="0.2"/>
+
+  <!-- FF Letters -->
+  <text x="50" y="70" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#FFFFFF" text-anchor="middle">FF</text>
+</svg>
