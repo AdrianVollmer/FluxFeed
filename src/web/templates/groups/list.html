@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Groups - FluxFeed{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold">Groups</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Drag the grip icon to reorganize, click a group name to edit</p>
+        </div>
+        <button
+            hx-get="/groups/new"
+            hx-target="#group-form-modal"
+            hx-swap="innerHTML"
+            class="btn btn-primary">
+            + Add Group
+        </button>
+    </div>
+
+    <!-- Modal container -->
+    <div id="group-form-modal"></div>
+
+    <!-- Groups tree -->
+    <div id="group-list" class="space-y-1">
+        {% include "groups/_group_list_content.html" %}
+    </div>
+</div>
+
+<script>
+(function() {
+    let draggedElement = null;
+    let draggedType = null;
+    let draggedId = null;
+
+    // Make drag handles draggable
+    function setupDraggable(handle) {
+        handle.setAttribute('draggable', 'true');
+
+        handle.addEventListener('dragstart', function(e) {
+            draggedElement = handle;
+            draggedType = handle.dataset.dragType;
+            draggedId = handle.dataset.dragId;
+
+            // Find the parent row and add opacity
+            const row = handle.closest('.flex');
+            if (row) row.classList.add('opacity-50');
+
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', draggedId);
+
+            // Set a custom drag image (optional)
+            const dragImage = row || handle;
+            e.dataTransfer.setDragImage(dragImage, 20, 20);
+        });
+
+        handle.addEventListener('dragend', function(e) {
+            // Remove opacity from parent row
+            const row = handle.closest('.flex');
+            if (row) row.classList.remove('opacity-50');
+
+            document.querySelectorAll('.drop-highlight').forEach(el => el.classList.remove('drop-highlight'));
+            draggedElement = null;
+            draggedType = null;
+            draggedId = null;
+        });
+    }
+
+    // Make groups and ungrouped area drop targets
+    function setupDropTarget(el) {
+        el.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            // Don't allow dropping a group onto itself
+            if (draggedType === 'group' && el.dataset.dropId === draggedId) {
+                return;
+            }
+
+            el.classList.add('drop-highlight');
+        });
+
+        el.addEventListener('dragleave', function(e) {
+            // Only remove highlight if we're actually leaving this element
+            if (!el.contains(e.relatedTarget)) {
+                el.classList.remove('drop-highlight');
+            }
+        });
+
+        el.addEventListener('drop', function(e) {
+            e.preventDefault();
+            el.classList.remove('drop-highlight');
+
+            const targetGroupId = el.dataset.dropId;
+
+            // Don't drop on self
+            if (draggedType === 'group' && targetGroupId === draggedId) {
+                return;
+            }
+
+            // Make the appropriate HTMX request
+            if (draggedType === 'feed') {
+                htmx.ajax('PUT', '/feeds/' + draggedId + '/group', {
+                    target: '#group-list',
+                    swap: 'innerHTML',
+                    values: { group_id: targetGroupId || '' }
+                });
+            } else if (draggedType === 'group') {
+                htmx.ajax('PUT', '/groups/' + draggedId + '/parent', {
+                    target: '#group-list',
+                    swap: 'innerHTML',
+                    values: { parent_id: targetGroupId || '' }
+                });
+            }
+        });
+    }
+
+    function initDragDrop() {
+        // Setup draggable handles (only the grip icons)
+        document.querySelectorAll('.drag-handle[data-drag-type]').forEach(setupDraggable);
+
+        // Setup drop targets (groups and ungrouped area)
+        document.querySelectorAll('[data-drop-id]').forEach(setupDropTarget);
+    }
+
+    // Initialize on page load
+    initDragDrop();
+
+    // Re-initialize after HTMX swaps
+    document.body.addEventListener('htmx:afterSwap', function(e) {
+        if (e.detail.target.id === 'group-list' || e.detail.target.closest('#group-list')) {
+            initDragDrop();
+        }
+    });
+})();
+</script>
+
+<style>
+.drop-highlight {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    outline: 2px dashed #3B82F6;
+    outline-offset: -2px;
+}
+</style>
+{% endblock %}

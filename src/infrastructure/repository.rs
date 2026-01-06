@@ -585,6 +585,159 @@ pub async fn get_feed_ids_in_group_recursive(
     Ok(rows)
 }
 
+/// Get all descendant group IDs of a group (recursive)
+pub async fn get_descendant_group_ids(
+    pool: &SqlitePool,
+    group_id: i64,
+) -> Result<Vec<i64>, SqlxError> {
+    let rows = sqlx::query_scalar::<_, i64>(
+        r#"
+        WITH RECURSIVE descendants AS (
+            SELECT id FROM groups WHERE parent_id = ?
+            UNION ALL
+            SELECT g.id FROM groups g
+            INNER JOIN descendants d ON g.parent_id = d.id
+        )
+        SELECT id FROM descendants
+        "#,
+    )
+    .bind(group_id)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows)
+}
+
+/// Update a group's parent (for drag-and-drop moving)
+pub async fn update_group_parent(
+    pool: &SqlitePool,
+    id: i64,
+    parent_id: Option<i64>,
+) -> Result<(), SqlxError> {
+    sqlx::query(
+        r#"
+        UPDATE groups
+        SET parent_id = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        "#,
+    )
+    .bind(parent_id)
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn get_group(pool: &SqlitePool, id: i64) -> Result<Option<Group>, SqlxError> {
+    let group = sqlx::query_as::<_, Group>(
+        r#"
+        SELECT * FROM groups WHERE id = ?
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(group)
+}
+
+pub async fn create_group(
+    pool: &SqlitePool,
+    name: &str,
+    parent_id: Option<i64>,
+) -> Result<Group, SqlxError> {
+    // Get max position for ordering
+    let max_position: Option<i64> = sqlx::query_scalar(
+        r#"
+        SELECT MAX(position) FROM groups WHERE parent_id IS ?
+        "#,
+    )
+    .bind(parent_id)
+    .fetch_one(pool)
+    .await?;
+
+    let position = max_position.unwrap_or(0) + 1;
+
+    let result = sqlx::query(
+        r#"
+        INSERT INTO groups (name, parent_id, position)
+        VALUES (?, ?, ?)
+        "#,
+    )
+    .bind(name)
+    .bind(parent_id)
+    .bind(position)
+    .execute(pool)
+    .await?;
+
+    let id = result.last_insert_rowid();
+
+    // Fetch and return the created group
+    get_group(pool, id)
+        .await?
+        .ok_or(SqlxError::RowNotFound)
+}
+
+pub async fn update_group(
+    pool: &SqlitePool,
+    id: i64,
+    name: &str,
+    parent_id: Option<i64>,
+) -> Result<Group, SqlxError> {
+    sqlx::query(
+        r#"
+        UPDATE groups
+        SET name = ?, parent_id = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        "#,
+    )
+    .bind(name)
+    .bind(parent_id)
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    get_group(pool, id)
+        .await?
+        .ok_or(SqlxError::RowNotFound)
+}
+
+pub async fn delete_group(pool: &SqlitePool, id: i64) -> Result<(), SqlxError> {
+    // Note: ON DELETE SET NULL in schema will unassign feeds from this group
+    // ON DELETE CASCADE will delete child groups
+    sqlx::query(
+        r#"
+        DELETE FROM groups WHERE id = ?
+        "#,
+    )
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn update_feed_group(
+    pool: &SqlitePool,
+    feed_id: i64,
+    group_id: Option<i64>,
+) -> Result<(), SqlxError> {
+    sqlx::query(
+        r#"
+        UPDATE feeds
+        SET group_id = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        "#,
+    )
+    .bind(group_id)
+    .bind(feed_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 // Log operations
 pub async fn insert_log(
     pool: &SqlitePool,

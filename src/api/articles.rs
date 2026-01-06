@@ -368,6 +368,7 @@ pub enum AppError {
     ServiceError(article_service::ArticleServiceError),
     FeedServiceError(feed_service::FeedServiceError),
     DatabaseError(sqlx::Error),
+    NotFound(String),
 }
 
 impl From<askama::Error> for AppError {
@@ -432,6 +433,11 @@ impl IntoResponse for AppError {
                     "A database error occurred. Please try again later.".to_string(),
                 )
             }
+            AppError::NotFound(msg) => (
+                StatusCode::NOT_FOUND,
+                "Not Found".to_string(),
+                msg,
+            ),
         };
 
         let template = ErrorTemplate {

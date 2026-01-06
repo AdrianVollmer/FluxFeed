@@ -96,6 +96,19 @@ pub struct GroupNode {
     pub feeds: Vec<Feed>,
 }
 
+/// Represents an item in a flattened tree view (for template iteration)
+#[derive(Debug, Clone, Serialize)]
+pub enum FlatTreeItem {
+    Group {
+        group: Group,
+        depth: usize,
+    },
+    Feed {
+        feed: Feed,
+        depth: usize,
+    },
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Log {
     pub id: i64,

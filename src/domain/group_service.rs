@@ -1,4 +1,4 @@
-use crate::domain::models::{Feed, Group, GroupNode};
+use crate::domain::models::{Feed, FlatTreeItem, Group, GroupNode};
 use crate::infrastructure::repository;
 use sqlx::SqlitePool;
 use std::collections::HashMap;
@@ -76,6 +76,38 @@ pub fn build_group_tree(groups: Vec<Group>, feeds: Vec<Feed>) -> (Vec<GroupNode>
     ungrouped.sort_by(|a, b| a.title.cmp(&b.title));
 
     (root_groups, ungrouped)
+}
+
+/// Flatten a group tree into a list of items with depth information
+pub fn flatten_group_tree(tree: &[GroupNode]) -> Vec<FlatTreeItem> {
+    let mut items = Vec::new();
+
+    fn flatten_node(node: &GroupNode, depth: usize, items: &mut Vec<FlatTreeItem>) {
+        // Add the group itself
+        items.push(FlatTreeItem::Group {
+            group: node.group.clone(),
+            depth,
+        });
+
+        // Add feeds in this group
+        for feed in &node.feeds {
+            items.push(FlatTreeItem::Feed {
+                feed: feed.clone(),
+                depth: depth + 1,
+            });
+        }
+
+        // Recurse into children
+        for child in &node.children {
+            flatten_node(child, depth + 1, items);
+        }
+    }
+
+    for node in tree {
+        flatten_node(node, 0, &mut items);
+    }
+
+    items
 }
 
 /// Resolve selected groups and feeds to a list of feed IDs

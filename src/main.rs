@@ -18,7 +18,7 @@ use api::feeds::AppState;
 use askama::Template;
 use axum::{
     response::Html,
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use config::Config;
@@ -80,6 +80,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/feeds/:id/fetch", post(api::feeds::fetch_feed))
         .route("/feeds/:id/edit", get(api::feeds::show_edit_feed_form))
         .route("/feeds/:id/update", post(api::feeds::update_feed))
+        .route("/feeds/:id/group", put(api::groups::assign_feed_to_group))
+        // Group routes
+        .route(
+            "/groups",
+            get(api::groups::list_groups).post(api::groups::create_group),
+        )
+        .route("/groups/new", get(api::groups::show_new_group_form))
+        .route(
+            "/groups/assign-feed/:feed_id",
+            get(api::groups::show_assign_feed_form),
+        )
+        .route(
+            "/groups/:id",
+            delete(api::groups::delete_group).put(api::groups::update_group),
+        )
+        .route("/groups/:id/edit", get(api::groups::show_edit_group_form))
+        .route("/groups/:id/parent", put(api::groups::move_group))
         .route("/articles", get(api::articles::list_articles))
         .route("/articles/search", get(api::articles::search_articles))
         .route(

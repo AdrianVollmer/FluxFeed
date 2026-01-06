@@ -186,3 +186,35 @@ pub struct FeedFilterModalTemplate {
     pub filter_read: Option<bool>,
     pub filter_starred: Option<bool>,
 }
+
+// Group templates
+use crate::domain::models::{FlatTreeItem, Group};
+
+#[derive(Template)]
+#[template(path = "groups/list.html")]
+pub struct GroupsListTemplate {
+    pub tree_items: Vec<FlatTreeItem>,
+    pub ungrouped_feeds: Vec<Feed>,
+}
+
+#[derive(Template)]
+#[template(path = "groups/_group_list_content.html")]
+pub struct GroupListContentTemplate {
+    pub tree_items: Vec<FlatTreeItem>,
+    pub ungrouped_feeds: Vec<Feed>,
+}
+
+
+#[derive(Template)]
+#[template(path = "groups/form.html")]
+pub struct GroupFormTemplate {
+    pub group: Option<Group>,
+    pub available_groups: Vec<Group>,
+}
+
+#[derive(Template)]
+#[template(path = "groups/assign_feed.html")]
+pub struct AssignFeedTemplate {
+    pub feed: Feed,
+    pub groups: Vec<Group>,
+}
