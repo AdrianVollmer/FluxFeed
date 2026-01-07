@@ -45,38 +45,44 @@
 </div>
 
 <!-- Mobile Navigation Slide-in Panel (outside header to escape stacking context) -->
-<div class="fixed top-0 left-0 h-screen w-64 mobile-nav-panel transform -translate-x-full peer-checked:translate-x-0 transition-transform duration-300 ease-out flex flex-col p-6 z-[9999] md:hidden">
-    <!-- Close button -->
-    <label for="mobile-nav-toggle" class="self-end cursor-pointer mb-8 p-2">
-        {% include "icons/close.html" %}
-    </label>
+<div class="fixed top-0 left-0 h-screen w-72 mobile-nav-panel transform -translate-x-full peer-checked:translate-x-0 transition-transform duration-300 ease-out flex flex-col z-[9999] lg:hidden overflow-y-auto">
+    <!-- Header with close button -->
+    <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <span class="text-lg font-bold text-blue-600 dark:text-blue-400">FluxFeed</span>
+        <label for="mobile-nav-toggle" class="cursor-pointer p-2 -mr-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+            {% include "icons/close.html" %}
+        </label>
+    </div>
 
     <!-- Nav links -->
-    <nav class="flex flex-col space-y-6">
+    <nav class="flex flex-col p-4 space-y-1">
         <a href="/articles"
            onclick="document.getElementById('mobile-nav-toggle').checked = false"
-           class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+           class="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             Articles
         </a>
         <a href="/articles/search"
            onclick="document.getElementById('mobile-nav-toggle').checked = false"
-           class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+           class="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             Search
         </a>
         <a href="/groups"
            onclick="document.getElementById('mobile-nav-toggle').checked = false"
-           class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+           class="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             Groups
         </a>
         <a href="/feeds"
            onclick="document.getElementById('mobile-nav-toggle').checked = false"
-           class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+           class="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             Feeds
         </a>
         <a href="/logs"
            onclick="document.getElementById('mobile-nav-toggle').checked = false"
-           class="text-lg font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+           class="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
             Logs
         </a>
     </nav>
+
+    <!-- Page-specific content slot (populated by individual pages) -->
+    <div id="mobile-nav-extra" class="flex-1"></div>
 </div>

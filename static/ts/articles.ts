@@ -48,33 +48,33 @@ function setView(view: string): void {
   // Update UI
   const cardsView = document.getElementById('articles-cards');
   const compactView = document.getElementById('articles-compact');
-  const cardsBtn = document.getElementById('view-cards');
-  const compactBtn = document.getElementById('view-compact');
-  const cardsBtnMobile = document.getElementById('view-cards-mobile');
-  const compactBtnMobile = document.getElementById('view-compact-mobile');
+
+  // All view toggle buttons (desktop sidebar, mobile nav)
+  const allCardsBtns = document.querySelectorAll('[id^="view-cards"]');
+  const allCompactBtns = document.querySelectorAll('[id^="view-compact"]');
 
   if (view === 'compact') {
     cardsView?.classList.add('hidden');
     compactView?.classList.remove('hidden');
-    cardsBtn?.classList.remove('bg-blue-600', 'text-white');
-    cardsBtn?.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-    compactBtn?.classList.add('bg-blue-600', 'text-white');
-    compactBtn?.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-    cardsBtnMobile?.classList.remove('bg-blue-600', 'text-white');
-    cardsBtnMobile?.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-    compactBtnMobile?.classList.add('bg-blue-600', 'text-white');
-    compactBtnMobile?.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+    allCardsBtns.forEach(btn => {
+      btn.classList.remove('bg-blue-600', 'text-white');
+      btn.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+    });
+    allCompactBtns.forEach(btn => {
+      btn.classList.add('bg-blue-600', 'text-white');
+      btn.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+    });
   } else {
     cardsView?.classList.remove('hidden');
     compactView?.classList.add('hidden');
-    cardsBtn?.classList.add('bg-blue-600', 'text-white');
-    cardsBtn?.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-    compactBtn?.classList.remove('bg-blue-600', 'text-white');
-    compactBtn?.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-    cardsBtnMobile?.classList.add('bg-blue-600', 'text-white');
-    cardsBtnMobile?.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
-    compactBtnMobile?.classList.remove('bg-blue-600', 'text-white');
-    compactBtnMobile?.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+    allCardsBtns.forEach(btn => {
+      btn.classList.add('bg-blue-600', 'text-white');
+      btn.classList.remove('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+    });
+    allCompactBtns.forEach(btn => {
+      btn.classList.remove('bg-blue-600', 'text-white');
+      btn.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700');
+    });
   }
 
   // Update load more button for new view

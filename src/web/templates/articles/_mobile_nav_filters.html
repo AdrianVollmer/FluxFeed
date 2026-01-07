@@ -1,0 +1,108 @@
+<!-- Article Filters for Mobile Nav (will be moved to #mobile-nav-extra via JS) -->
+<template id="article-filters-template">
+    <div class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4">
+        <!-- View Mode -->
+        <div>
+            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">View</h3>
+            <div class="flex gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <button id="view-cards-mobile" onclick="setView('cards'); document.getElementById('mobile-nav-toggle').checked = false;"
+                    class="flex-1 px-3 py-1.5 rounded text-sm font-medium transition flex items-center justify-center gap-1.5">
+                    {% include "icons/grid.html" %}
+                    Cards
+                </button>
+                <button id="view-compact-mobile" onclick="setView('compact'); document.getElementById('mobile-nav-toggle').checked = false;"
+                    class="flex-1 px-3 py-1.5 rounded text-sm font-medium transition flex items-center justify-center gap-1.5">
+                    {% include "icons/list.html" %}
+                    List
+                </button>
+            </div>
+        </div>
+
+        <!-- Show Filter -->
+        <div>
+            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Show</h3>
+            <div class="space-y-1">
+                <a href="/articles?is_read=false"
+                   onclick="document.getElementById('mobile-nav-toggle').checked = false"
+                   class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
+                          {% if active_filter == "unread" %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                    <span>Unread</span>
+                    <span class="text-xs {% if active_filter == "unread" %}text-blue-600 dark:text-blue-400{% else %}text-gray-500{% endif %}">{{ article_counts.unread }}</span>
+                </a>
+                <a href="/articles?show=all"
+                   onclick="document.getElementById('mobile-nav-toggle').checked = false"
+                   class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
+                          {% if active_filter == "all" %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                    <span>All</span>
+                    <span class="text-xs {% if active_filter == "all" %}text-blue-600 dark:text-blue-400{% else %}text-gray-500{% endif %}">{{ article_counts.total }}</span>
+                </a>
+                <a href="/articles?is_read=true"
+                   onclick="document.getElementById('mobile-nav-toggle').checked = false"
+                   class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
+                          {% if active_filter == "read" %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                    <span>Read</span>
+                    <span class="text-xs {% if active_filter == "read" %}text-blue-600 dark:text-blue-400{% else %}text-gray-500{% endif %}">{{ article_counts.read }}</span>
+                </a>
+                <a href="/articles?is_starred=true"
+                   onclick="document.getElementById('mobile-nav-toggle').checked = false"
+                   class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
+                          {% if active_filter == "starred" %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                    <span class="flex items-center gap-2">
+                        {% include "icons/star-inline.html" %}
+                        Starred
+                    </span>
+                    <span class="text-xs {% if active_filter == "starred" %}text-blue-600 dark:text-blue-400{% else %}text-gray-500{% endif %}">{{ article_counts.starred }}</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Feed Filter -->
+        {% if feeds.len() > 0 %}
+        <div>
+            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">From</h3>
+            <button
+                hx-get="/articles/filter-modal?feed_ids={{ filter_feed_ids|join(",") }}&group_ids={{ filter_group_ids|join(",") }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
+                hx-target="#feed-filter-modal"
+                hx-swap="innerHTML"
+                onclick="document.getElementById('mobile-nav-toggle').checked = false"
+                class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
+                       {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300{% else %}bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300{% endif %}">
+                <span class="flex items-center gap-2">
+                    {% include "icons/folder.html" %}
+                    {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
+                        All Feeds
+                    {% else %}
+                        {{ filter_feed_ids.len() + filter_group_ids.len() }} selected
+                    {% endif %}
+                </span>
+                {% include "icons/chevron-right.html" %}
+            </button>
+        </div>
+        {% endif %}
+
+        <!-- Mark All as Read -->
+        {% if article_counts.unread > 0 %}
+        <div class="pt-2">
+            <button
+                hx-post="/articles/mark-all-read{% if !filter_feed_ids.is_empty() %}?feed_ids={{ filter_feed_ids|join(",") }}{% endif %}"
+                hx-confirm="Are you sure you want to mark all {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}filtered {% endif %}articles as read?"
+                onclick="document.getElementById('mobile-nav-toggle').checked = false"
+                class="w-full px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition flex items-center justify-center gap-2">
+                {% include "icons/check-double.html" %}
+                Mark All as Read
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</template>
+
+<script>
+// Move article filters into the mobile nav slot
+document.addEventListener('DOMContentLoaded', function() {
+    const template = document.getElementById('article-filters-template');
+    const slot = document.getElementById('mobile-nav-extra');
+    if (template && slot) {
+        slot.appendChild(template.content.cloneNode(true));
+    }
+});
+</script>

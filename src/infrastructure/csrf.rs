@@ -88,7 +88,10 @@ pub async fn csrf_middleware(req: Request, next: Next) -> Response {
             }
             (Some(_), Some(_)) => {
                 tracing::warn!("CSRF validation failed: token mismatch");
-                return (StatusCode::FORBIDDEN, "CSRF validation failed: token mismatch")
+                return (
+                    StatusCode::FORBIDDEN,
+                    "CSRF validation failed: token mismatch",
+                )
                     .into_response();
             }
         }
@@ -107,7 +110,9 @@ pub async fn csrf_middleware(req: Request, next: Next) -> Response {
             CSRF_COOKIE_NAME, new_token
         );
         if let Ok(header_value) = cookie_value.parse() {
-            response.headers_mut().insert(header::SET_COOKIE, header_value);
+            response
+                .headers_mut()
+                .insert(header::SET_COOKIE, header_value);
         }
     }
 

@@ -63,7 +63,11 @@ impl RssFetcher {
     ) -> Result<FetchResult, FetchError> {
         // SSRF protection: validate URL at fetch time to prevent DNS rebinding
         if let Err(e) = ssrf::validate_url(url) {
-            tracing::warn!("SSRF validation failed at fetch time for URL {}: {}", url, e);
+            tracing::warn!(
+                "SSRF validation failed at fetch time for URL {}: {}",
+                url,
+                e
+            );
             return Err(FetchError::SsrfBlocked);
         }
 

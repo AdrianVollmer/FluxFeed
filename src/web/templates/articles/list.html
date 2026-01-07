@@ -5,229 +5,130 @@
 {% block scripts %}
 <script src="{{ "articles.js"|js_path }}" defer></script>
 <script src="{{ "feed-filter.js"|js_path }}" defer></script>
+{% include "articles/_mobile_nav_filters.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto">
-    <!-- Checkbox for article controls state -->
-    <input type="checkbox" id="article-controls-toggle" class="hidden peer" autocomplete="off" />
+<div class="max-w-6xl mx-auto">
+    <div class="flex gap-8">
+        <!-- Sidebar (desktop only) -->
+        {% include "articles/_sidebar.html" %}
 
-    <div class="flex justify-between items-center mb-4 md:mb-8">
-        <h1 class="text-3xl font-bold">Articles</h1>
+        <!-- Main Content -->
+        <div class="flex-1 min-w-0">
+            <!-- Header with filter indicator (mobile) -->
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold">Articles</h1>
 
-        <!-- Mobile Controls Toggle -->
-        <label for="article-controls-toggle" class="md:hidden btn btn-secondary cursor-pointer flex items-center gap-2">
-            {% include "icons/filter.html" %}
-            Filters
-        </label>
-    </div>
-
-    <!-- Desktop Controls (visible >= md) -->
-    <div class="hidden md:flex md:flex-row md:justify-between md:items-center mb-8 gap-4">
-        <div class="flex flex-col sm:flex-row gap-3">
-            <!-- View toggle -->
-            {% let view_id_suffix = "" %}
-            {% include "articles/_view_toggle.html" %}
-
-            <!-- Filter buttons -->
-            <div class="flex gap-3">
-                <a href="/articles" class="btn {% if filter_read.is_none() && filter_starred.is_none() && filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}btn-primary{% else %}btn-secondary{% endif %}">
-                    All
-                </a>
-                <a href="/articles?is_read=false" class="btn {% if filter_read.is_some() && !filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                    Unread ({{ unread_count }})
-                </a>
-                <a href="/articles?is_read=true" class="btn {% if filter_read.is_some() && filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                    Read
-                </a>
-                <a href="/articles?is_starred=true" class="btn {% if filter_starred.is_some() && filter_starred.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                    {% include "icons/star-inline.html" %}
-                    Starred
-                </a>
-                {% if feeds.len() > 0 %}
-                <div class="flex items-center gap-1">
-                    <button
-                        hx-get="/articles/filter-modal?feed_ids={{ filter_feed_ids|join(",") }}&group_ids={{ filter_group_ids|join(",") }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
-                        hx-target="#feed-filter-modal"
-                        hx-swap="innerHTML"
-                        class="btn {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}btn-primary{% else %}btn-secondary{% endif %} inline-flex items-center gap-2">
-                        {% include "icons/folder.html" %}
-                        {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
-                            Feeds
-                        {% else %}
-                            {{ filter_feed_ids.len() + filter_group_ids.len() }} Feed{% if filter_feed_ids.len() + filter_group_ids.len() != 1 %}s{% endif %}
-                        {% endif %}
-                    </button>
-                    {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}
-                    <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}{% if filter_read.is_some() %}&{% else %}?{% endif %}is_starred={{ filter_starred.unwrap() }}{% endif %}"
-                       class="btn btn-primary px-2" title="Clear feed filter">
-                        {% include "icons/close-sm.html" %}
-                    </a>
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Mark all as read button -->
-            {% if unread_count > 0 %}
-            <button
-                hx-post="/articles/mark-all-read{% if !filter_feed_ids.is_empty() %}?feed_ids={{ filter_feed_ids|join(",") }}{% endif %}"
-                hx-confirm="Are you sure you want to mark all {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}filtered {% endif %}articles as read?"
-                class="btn btn-secondary">
-                Mark All as Read
-            </button>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Mobile Controls Accordion -->
-    <div class="max-h-0 opacity-0 overflow-hidden peer-checked:max-h-[1000px] peer-checked:opacity-100 transition-all duration-300 ease-in-out md:hidden mb-6">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 backdrop-blur-xl border border-gray-200 dark:border-gray-700 shadow-lg space-y-4">
-
-            <!-- View Mode Section -->
-            <div>
-                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">View Mode</h3>
-                {% let view_id_suffix = "-mobile" %}
-                {% include "articles/_view_toggle.html" %}
-            </div>
-
-            <!-- Read Status Filter Section -->
-            <div>
-                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Read Status</h3>
-                <div class="flex flex-wrap gap-2">
-                    <a href="/articles"
-                       onclick="document.getElementById('article-controls-toggle').checked = false"
-                       class="btn {% if filter_read.is_none() && filter_starred.is_none() %}btn-primary{% else %}btn-secondary{% endif %}">
-                        All
-                    </a>
-                    <a href="/articles?is_read=false"
-                       onclick="document.getElementById('article-controls-toggle').checked = false"
-                       class="btn {% if filter_read.is_some() && !filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                        Unread ({{ unread_count }})
-                    </a>
-                    <a href="/articles?is_read=true"
-                       onclick="document.getElementById('article-controls-toggle').checked = false"
-                       class="btn {% if filter_read.is_some() && filter_read.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                        Read
-                    </a>
-                    <a href="/articles?is_starred=true"
-                       onclick="document.getElementById('article-controls-toggle').checked = false"
-                       class="btn {% if filter_starred.is_some() && filter_starred.unwrap() %}btn-primary{% else %}btn-secondary{% endif %}">
-                        {% include "icons/star-inline.html" %}
-                        Starred
-                    </a>
-                </div>
-            </div>
-
-            <!-- Mark All as Read -->
-            {% if unread_count > 0 %}
-            <div>
-                <button
-                    hx-post="/articles/mark-all-read{% if !filter_feed_ids.is_empty() %}?feed_ids={{ filter_feed_ids|join(",") }}{% endif %}"
-                    hx-confirm="Are you sure you want to mark all {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}filtered {% endif %}articles as read?"
-                    class="btn btn-secondary w-full">
-                    Mark All as Read
-                </button>
-            </div>
-            {% endif %}
-
-            <!-- Feed Filter -->
-            {% if feeds.len() > 0 %}
-            <div class="flex items-center gap-1">
-                <button
-                    hx-get="/articles/filter-modal?feed_ids={{ filter_feed_ids|join(",") }}&group_ids={{ filter_group_ids|join(",") }}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
-                    hx-target="#feed-filter-modal"
-                    hx-swap="innerHTML"
-                    onclick="document.getElementById('article-controls-toggle').checked = false"
-                    class="btn {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}btn-primary{% else %}btn-secondary{% endif %} flex-1 inline-flex items-center justify-center gap-2">
-                    {% include "icons/folder.html" %}
-                    {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
-                        Feeds
+                <!-- Mobile: Current filter indicator -->
+                <div class="lg:hidden text-sm text-gray-600 dark:text-gray-400">
+                    {% if active_filter == "unread" %}
+                        Unread ({{ article_counts.unread }})
+                    {% else if active_filter == "starred" %}
+                        Starred ({{ article_counts.starred }})
+                    {% else if active_filter == "read" %}
+                        Read ({{ article_counts.read }})
                     {% else %}
-                        {{ filter_feed_ids.len() + filter_group_ids.len() }} Feed{% if filter_feed_ids.len() + filter_group_ids.len() != 1 %}s{% endif %}
+                        All ({{ article_counts.total }})
                     {% endif %}
-                </button>
-                {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}
-                <a href="/articles{% if filter_read.is_some() %}?is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}{% if filter_read.is_some() %}&{% else %}?{% endif %}is_starred={{ filter_starred.unwrap() }}{% endif %}"
-                   onclick="document.getElementById('article-controls-toggle').checked = false"
-                   class="btn btn-primary px-3" title="Clear feed filter">
-                    {% include "icons/close-sm.html" %}
-                </a>
+                </div>
+            </div>
+
+            <!-- Modal container for feed filter -->
+            <div id="feed-filter-modal"></div>
+
+            <!-- Article list - Cards View -->
+            <div id="articles-cards" class="space-y-4">
+                {% if articles.len() == 0 %}
+                <div class="card empty-state">
+                    <div class="empty-state-icon">
+                        {% include "icons/newspaper.html" %}
+                    </div>
+                    <p class="empty-state-title">
+                        {% if active_filter == "unread" %}
+                            No unread articles
+                        {% else if active_filter == "starred" %}
+                            No starred articles
+                        {% else if active_filter == "read" %}
+                            No read articles
+                        {% else %}
+                            No articles yet
+                        {% endif %}
+                    </p>
+                    <p class="empty-state-description">
+                        {% if feeds.len() == 0 %}
+                            <a href="/feeds" class="text-blue-600 hover:underline">Add some feeds</a> to get started!
+                        {% else if active_filter == "unread" %}
+                            You're all caught up! <a href="/articles?show=all" class="text-blue-600 hover:underline">View all articles</a>
+                        {% else %}
+                            Articles will appear here automatically. The next fetch is scheduled soon.
+                        {% endif %}
+                    </p>
+                </div>
+                {% else %}
+                {% include "articles/_article_rows.html" %}
                 {% endif %}
+            </div>
+
+            <!-- Article list - Compact View -->
+            <div id="articles-compact" class="hidden">
+                {% if articles.len() == 0 %}
+                <div class="card empty-state">
+                    <div class="empty-state-icon">
+                        {% include "icons/newspaper.html" %}
+                    </div>
+                    <p class="empty-state-title">
+                        {% if active_filter == "unread" %}
+                            No unread articles
+                        {% else if active_filter == "starred" %}
+                            No starred articles
+                        {% else if active_filter == "read" %}
+                            No read articles
+                        {% else %}
+                            No articles yet
+                        {% endif %}
+                    </p>
+                    <p class="empty-state-description">
+                        {% if feeds.len() == 0 %}
+                            <a href="/feeds" class="text-blue-600 hover:underline">Add some feeds</a> to get started!
+                        {% else if active_filter == "unread" %}
+                            You're all caught up! <a href="/articles?show=all" class="text-blue-600 hover:underline">View all articles</a>
+                        {% else %}
+                            Articles will appear here automatically. The next fetch is scheduled soon.
+                        {% endif %}
+                    </p>
+                </div>
+                {% else %}
+                <!-- Desktop header (hidden on mobile) -->
+                <div class="hidden md:grid md:grid-cols-[auto_1fr_160px_120px_115px_90px] md:gap-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    <div class="w-8 px-3 py-3"></div>
+                    <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</div>
+                    <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Feed</div>
+                    <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</div>
+                    <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</div>
+                    <div class="w-16 px-3 py-3"></div>
+                </div>
+                <!-- Compact article rows -->
+                <div class="bg-white dark:bg-gray-800">
+                    {% include "articles/_article_compact_rows.html" %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Load more button -->
+            {% if has_more %}
+            <div id="load-more-container" class="mt-8 text-center">
+                <button
+                    id="load-more-btn"
+                    hx-get="/articles?offset={{ offset + limit }}{% if !filter_feed_ids.is_empty() %}&feed_ids={{ filter_feed_ids|join(",") }}{% endif %}{% if !filter_group_ids.is_empty() %}&group_ids={{ filter_group_ids|join(",") }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
+                    hx-swap="beforeend"
+                    class="btn btn-primary">
+                    Load More Articles
+                </button>
             </div>
             {% endif %}
         </div>
     </div>
-
-    <!-- Modal container for feed filter -->
-    <div id="feed-filter-modal"></div>
-
-    <!-- Article list - Cards View -->
-    <div id="articles-cards" class="space-y-4">
-        {% if articles.len() == 0 %}
-        <div class="card empty-state">
-            <div class="empty-state-icon">
-                {% include "icons/newspaper.html" %}
-            </div>
-            <p class="empty-state-title">No articles yet</p>
-            <p class="empty-state-description">
-                {% if feeds.len() == 0 %}
-                    <a href="/feeds" class="text-blue-600 hover:underline">Add some feeds</a> to get started!
-                {% else %}
-                    Articles will appear here automatically. The next fetch is scheduled soon.
-                {% endif %}
-            </p>
-        </div>
-        {% else %}
-        {% include "articles/_article_rows.html" %}
-        {% endif %}
-    </div>
-
-    <!-- Article list - Compact View -->
-    <div id="articles-compact" class="hidden">
-        {% if articles.len() == 0 %}
-        <div class="card empty-state">
-            <div class="empty-state-icon">
-                {% include "icons/newspaper.html" %}
-            </div>
-            <p class="empty-state-title">No articles yet</p>
-            <p class="empty-state-description">
-                {% if feeds.len() == 0 %}
-                    <a href="/feeds" class="text-blue-600 hover:underline">Add some feeds</a> to get started!
-                {% else %}
-                    Articles will appear here automatically. The next fetch is scheduled soon.
-                {% endif %}
-            </p>
-        </div>
-        {% else %}
-        <!-- Desktop header (hidden on mobile) -->
-        <div class="hidden md:grid md:grid-cols-[auto_1fr_160px_120px_115px_90px] md:gap-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-            <div class="w-8 px-3 py-3"></div>
-            <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</div>
-            <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Feed</div>
-            <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</div>
-            <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</div>
-            <div class="w-16 px-3 py-3"></div>
-        </div>
-        <!-- Compact article rows -->
-        <div class="bg-white dark:bg-gray-800">
-            {% include "articles/_article_compact_rows.html" %}
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Load more button -->
-    {% if has_more %}
-    <div id="load-more-container" class="mt-8 text-center">
-        <button
-            id="load-more-btn"
-            hx-get="/articles?offset={{ offset + limit }}{% if !filter_feed_ids.is_empty() %}&feed_ids={{ filter_feed_ids|join(",") }}{% endif %}{% if !filter_group_ids.is_empty() %}&group_ids={{ filter_group_ids|join(",") }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
-            hx-swap="beforeend"
-            class="btn btn-primary">
-            Load More Articles
-        </button>
-    </div>
-    {% endif %}
 </div>
 
 {% endblock %}

@@ -521,12 +521,34 @@ pub async fn mark_all_articles_read(
     Ok(result.rows_affected())
 }
 
-pub async fn get_total_unread_count(pool: &SqlitePool) -> Result<i64, SqlxError> {
-    let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM articles WHERE is_read = 0")
-        .fetch_one(pool)
-        .await?;
+pub async fn get_article_counts(pool: &SqlitePool) -> Result<ArticleCounts, SqlxError> {
+    let counts: (i64, i64, i64, i64) = sqlx::query_as(
+        r#"
+        SELECT
+            COUNT(*) as total,
+            SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread,
+            SUM(CASE WHEN is_read = 1 THEN 1 ELSE 0 END) as read,
+            SUM(CASE WHEN is_starred = 1 THEN 1 ELSE 0 END) as starred
+        FROM articles
+        "#,
+    )
+    .fetch_one(pool)
+    .await?;
 
-    Ok(count.0)
+    Ok(ArticleCounts {
+        total: counts.0,
+        unread: counts.1,
+        read: counts.2,
+        starred: counts.3,
+    })
+}
+
+#[derive(Debug, Clone)]
+pub struct ArticleCounts {
+    pub total: i64,
+    pub unread: i64,
+    pub read: i64,
+    pub starred: i64,
 }
 
 // Tag operations

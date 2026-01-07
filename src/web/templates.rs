@@ -1,4 +1,5 @@
 use crate::domain::models::{Article, Feed, GroupNode, LogWithFeed, Tag};
+use crate::infrastructure::repository::ArticleCounts;
 use crate::web::filters;
 use askama::Template;
 
@@ -76,7 +77,8 @@ pub struct ArticlesListTemplate {
     pub filter_group_ids: Vec<i64>,
     pub filter_read: Option<bool>,
     pub filter_starred: Option<bool>,
-    pub unread_count: i64,
+    pub article_counts: ArticleCounts,
+    pub active_filter: String,
     pub search_query: Option<String>,
     pub date_from: Option<String>,
     pub date_to: Option<String>,

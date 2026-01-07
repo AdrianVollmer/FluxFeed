@@ -26,6 +26,7 @@ pub struct ArticleListParams {
     pub q: Option<String>,
     pub date_from: Option<String>,
     pub date_to: Option<String>,
+    pub show: Option<String>, // "all" to override smart default
 }
 
 #[derive(Deserialize)]
@@ -77,11 +78,37 @@ pub async fn list_articles(
         }
     };
 
+    // Get article counts for sidebar and smart default
+    let counts = repository::get_article_counts(&state.db_pool).await?;
+
+    // Apply smart default: show unread if any exist, otherwise show all
+    // User can override with explicit params or show=all
+    let (effective_is_read, active_filter) = if params.is_starred == Some(true) {
+        // Starred filter takes precedence
+        (None, "starred".to_string())
+    } else if let Some(is_read) = params.is_read {
+        // Explicit is_read param
+        if is_read {
+            (Some(true), "read".to_string())
+        } else {
+            (Some(false), "unread".to_string())
+        }
+    } else if params.show.as_deref() == Some("all") {
+        // Explicit show=all overrides smart default
+        (None, "all".to_string())
+    } else if counts.unread > 0 {
+        // Smart default: show unread when there are unread articles
+        (Some(false), "unread".to_string())
+    } else {
+        // No unread articles, show all
+        (None, "all".to_string())
+    };
+
     // Get articles with feed data in a single JOIN query (no N+1 problem)
     let articles_with_feed = repository::list_articles_with_feeds(
         &state.db_pool,
         feed_ids,
-        params.is_read,
+        effective_is_read,
         params.is_starred,
         params.q.clone(),
         date_from,
@@ -105,8 +132,23 @@ pub async fn list_articles(
         return render_htmx_pagination(articles_to_show, has_more, offset, limit, &params);
     }
 
+    let effective_filter = EffectiveFilter {
+        is_read: effective_is_read,
+        counts,
+        active_filter,
+    };
+
     // Render full page
-    render_full_articles_page(&state, articles_to_show, has_more, offset, limit, &params).await
+    render_full_articles_page(
+        &state,
+        articles_to_show,
+        has_more,
+        offset,
+        limit,
+        &params,
+        effective_filter,
+    )
+    .await
 }
 
 /// Parse date parameter to DateTime (start of day or end of day)
@@ -183,6 +225,7 @@ async fn render_full_articles_page(
     offset: i64,
     limit: i64,
     params: &ArticleListParams,
+    effective_filter: EffectiveFilter,
 ) -> Result<Html<String>, AppError> {
     // Get all feeds and groups for the filter modal
     let feeds = feed_service::list_all_feeds(&state.db_pool).await?;
@@ -190,9 +233,6 @@ async fn render_full_articles_page(
 
     // Build group tree for the filter modal
     let (group_tree, ungrouped_feeds) = group_service::build_group_tree(groups, feeds.clone());
-
-    // Get unread count
-    let unread_count = article_service::get_unread_count(&state.db_pool).await?;
 
     // Parse selected IDs for highlighting in the UI
     let filter_feed_ids = parse_ids(params.feed_ids.as_deref());
@@ -208,15 +248,23 @@ async fn render_full_articles_page(
         has_more,
         filter_feed_ids,
         filter_group_ids,
-        filter_read: params.is_read,
+        filter_read: effective_filter.is_read,
         filter_starred: params.is_starred,
-        unread_count,
+        article_counts: effective_filter.counts,
+        active_filter: effective_filter.active_filter,
         search_query: params.q.clone(),
         date_from: params.date_from.clone(),
         date_to: params.date_to.clone(),
     };
 
     Ok(Html(template.render()?))
+}
+
+/// Represents the effective filter after applying smart defaults
+struct EffectiveFilter {
+    is_read: Option<bool>,
+    counts: repository::ArticleCounts,
+    active_filter: String, // "all", "unread", "read", "starred"
 }
 
 pub async fn toggle_read_status(

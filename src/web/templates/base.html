@@ -64,5 +64,39 @@
             });
         }
     </script>
+
+    <!-- Mobile swipe gesture for nav -->
+    <script>
+        (function() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            const edgeThreshold = 30; // px from left edge to trigger
+            const swipeThreshold = 50; // min px to count as swipe
+
+            document.addEventListener('touchstart', function(e) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+
+            document.addEventListener('touchend', function(e) {
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = Math.abs(touchEndY - touchStartY);
+                const toggle = document.getElementById('mobile-nav-toggle');
+
+                if (!toggle || deltaY > Math.abs(deltaX)) return; // ignore vertical swipes
+
+                // Swipe right from left edge -> open nav
+                if (touchStartX < edgeThreshold && deltaX > swipeThreshold && !toggle.checked) {
+                    toggle.checked = true;
+                }
+                // Swipe left while nav is open -> close nav
+                else if (deltaX < -swipeThreshold && toggle.checked) {
+                    toggle.checked = false;
+                }
+            }, { passive: true });
+        })();
+    </script>
 </body>
 </html>

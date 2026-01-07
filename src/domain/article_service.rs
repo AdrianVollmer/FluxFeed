@@ -55,10 +55,6 @@ pub async fn mark_all_read(
     Ok(repository::mark_all_articles_read(pool, feed_id).await?)
 }
 
-pub async fn get_unread_count(pool: &SqlitePool) -> Result<i64, ArticleServiceError> {
-    Ok(repository::get_total_unread_count(pool).await?)
-}
-
 pub async fn mark_as_read(
     pool: &SqlitePool,
     article_id: i64,
