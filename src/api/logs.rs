@@ -14,6 +14,7 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct LogListParams {
     pub feed_id: Option<i64>,
+    pub feed_name: Option<String>,
     pub log_type: Option<String>,
     pub limit: Option<i64>,
     pub offset: Option<i64>,
@@ -31,6 +32,7 @@ pub async fn list_logs(
     let logs = repository::list_logs_with_feeds(
         &state.db_pool,
         params.feed_id,
+        params.feed_name.as_deref(),
         params.log_type.as_deref(),
         limit + 1, // Fetch one extra to check if there are more
         offset,
@@ -56,6 +58,7 @@ pub async fn list_logs(
             let button_template = LoadMoreButtonLogsTemplate {
                 next_offset: offset + limit,
                 filter_feed: params.feed_id,
+                filter_feed_name: params.feed_name.clone(),
                 filter_log_type: params.log_type.clone(),
             };
             html.push_str(
@@ -81,6 +84,7 @@ pub async fn list_logs(
         limit,
         has_more,
         filter_feed: params.feed_id,
+        filter_feed_name: params.feed_name,
         filter_log_type: params.log_type,
     };
 

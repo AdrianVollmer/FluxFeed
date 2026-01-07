@@ -763,6 +763,7 @@ pub async fn insert_log(
 pub async fn list_logs_with_feeds(
     pool: &SqlitePool,
     feed_id: Option<i64>,
+    feed_name: Option<&str>,
     log_type: Option<&str>,
     limit: i64,
     offset: i64,
@@ -779,6 +780,9 @@ pub async fn list_logs_with_feeds(
 
     if feed_id.is_some() {
         conditions.push("l.feed_id = ?");
+    }
+    if feed_name.is_some() {
+        conditions.push("f.title LIKE ?");
     }
     if log_type.is_some() {
         conditions.push("l.log_type = ?");
@@ -802,6 +806,9 @@ pub async fn list_logs_with_feeds(
 
     if let Some(id) = feed_id {
         query = query.bind(id);
+    }
+    if let Some(name) = feed_name {
+        query = query.bind(format!("%{}%", name));
     }
     if let Some(lt) = log_type {
         query = query.bind(lt);

@@ -44,23 +44,25 @@
         </div>
 
         <!-- Feed filter (Desktop) -->
-        {% if feeds.len() > 0 %}
         <div>
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Feed:</label>
-            <div class="flex flex-wrap gap-2">
-                <a href="/logs{% if filter_log_type.is_some() %}?log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
-                   class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
-                    All Feeds
-                </a>
-                {% for feed in feeds %}
-                <a href="/logs?feed_id={{ feed.id }}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
-                   class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_some() && filter_feed.unwrap() == feed.id %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                    {{ feed.title }}
-                </a>
-                {% endfor %}
-            </div>
+            <label for="feed-filter-desktop" class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Feed:</label>
+            <form action="/logs" method="get" class="flex gap-2 items-center">
+                {% if filter_log_type.is_some() %}
+                <input type="hidden" name="log_type" value="{{ filter_log_type.as_ref().unwrap() }}">
+                {% endif %}
+                <input
+                    type="text"
+                    id="feed-filter-desktop"
+                    name="feed_name"
+                    value="{% if filter_feed_name.is_some() %}{{ filter_feed_name.as_ref().unwrap() }}{% endif %}"
+                    placeholder="Search feeds..."
+                    class="form-input max-w-xs">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                {% if filter_feed_name.is_some() %}
+                <a href="/logs{% if filter_log_type.is_some() %}?log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}" class="btn btn-secondary">Clear</a>
+                {% endif %}
+            </form>
         </div>
-        {% endif %}
     </div>
 
     <!-- Mobile Controls Accordion -->
@@ -100,25 +102,26 @@
             </div>
 
             <!-- Feed Filter Section -->
-            {% if feeds.len() > 0 %}
             <div>
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter by Feed</h3>
-                <div class="flex flex-wrap gap-2">
-                    <a href="/logs{% if filter_log_type.is_some() %}?log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
-                       onclick="document.getElementById('log-controls-toggle').checked = false"
-                       class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
-                        All Feeds
-                    </a>
-                    {% for feed in feeds %}
-                    <a href="/logs?feed_id={{ feed.id }}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
-                       onclick="document.getElementById('log-controls-toggle').checked = false"
-                       class="px-3 py-1 rounded-full text-sm {% if filter_feed.is_some() && filter_feed.unwrap() == feed.id %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
-                        {{ feed.title }}
-                    </a>
-                    {% endfor %}
-                </div>
+                <form action="/logs" method="get" class="flex gap-2 items-center">
+                    {% if filter_log_type.is_some() %}
+                    <input type="hidden" name="log_type" value="{{ filter_log_type.as_ref().unwrap() }}">
+                    {% endif %}
+                    <input
+                        type="text"
+                        name="feed_name"
+                        value="{% if filter_feed_name.is_some() %}{{ filter_feed_name.as_ref().unwrap() }}{% endif %}"
+                        placeholder="Search feeds..."
+                        class="form-input flex-1">
+                    <button type="submit" class="btn btn-primary" onclick="document.getElementById('log-controls-toggle').checked = false">Filter</button>
+                </form>
+                {% if filter_feed_name.is_some() %}
+                <a href="/logs{% if filter_log_type.is_some() %}?log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
+                   onclick="document.getElementById('log-controls-toggle').checked = false"
+                   class="btn btn-secondary mt-2 w-full text-center">Clear Filter</a>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 
@@ -161,7 +164,7 @@
     {% if has_more %}
     <div id="load-more-container" class="mt-8 text-center">
         <button
-            hx-get="/logs?offset={{ offset + limit }}{% if filter_feed.is_some() %}&feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
+            hx-get="/logs?offset={{ offset + limit }}{% if filter_feed.is_some() %}&feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_feed_name.is_some() %}&feed_name={{ filter_feed_name.as_ref().unwrap()|urlencode }}{% endif %}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
             hx-target="tbody"
             hx-swap="beforeend"
             class="btn btn-primary">

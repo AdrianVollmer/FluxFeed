@@ -148,6 +148,7 @@ pub struct LogsListTemplate {
     pub limit: i64,
     pub has_more: bool,
     pub filter_feed: Option<i64>,
+    pub filter_feed_name: Option<String>,
     pub filter_log_type: Option<String>,
 }
 
@@ -162,6 +163,7 @@ pub struct LogRowsTemplate {
 pub struct LoadMoreButtonLogsTemplate {
     pub next_offset: i64,
     pub filter_feed: Option<i64>,
+    pub filter_feed_name: Option<String>,
     pub filter_log_type: Option<String>,
 }
 
