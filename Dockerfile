@@ -1,16 +1,17 @@
 # Multi-stage build for minimal final image
 
-# Stage 1: Build frontend assets (CSS and JS)
+# Stage 1: Build frontend assets (CSS, JS, and icons)
 FROM node:20-slim AS frontend-builder
 WORKDIR /build
 COPY package*.json ./
 RUN npm ci
 COPY static/css/input.css ./static/css/
 COPY static/ts ./static/ts
-COPY scripts/build-ts.js ./scripts/
+COPY static/favicon.svg ./static/
+COPY scripts/build-ts.js scripts/generate-icons.js ./scripts/
 COPY tailwind.config.js tsconfig.json ./
 COPY src/web/templates ./src/web/templates
-RUN npm run build
+RUN npm run build && npm run generate:icons
 
 # Stage 2: Build Rust application
 FROM rust:1.92-bookworm AS builder
@@ -65,10 +66,11 @@ COPY --from=builder /build/target/release/fluxfeed /app/fluxfeed
 # Copy static files (base assets: icons, htmx, favicon, etc.)
 COPY --chown=fluxfeed:fluxfeed static /app/static
 
-# Copy compiled CSS and JS from frontend-builder
+# Copy compiled CSS, JS, and icons from frontend-builder
 COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/css/tailwind.css /app/static/css/
 COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/js/dist /app/static/js/dist
 COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/js/manifest.json /app/static/js/
+COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/icons /app/static/icons
 
 # Switch to non-root user
 USER fluxfeed
