@@ -2,9 +2,9 @@ use crate::api::feeds::AppState;
 use crate::domain::{article_service, feed_service, group_service};
 use crate::infrastructure::repository;
 use crate::web::templates::{
-    ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleRowTemplate, ArticleRowsTemplate,
-    ArticleSearchTemplate, ArticleWithFeed, ArticlesListTemplate, ErrorTemplate,
-    LoadMoreButtonTemplate,
+    ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleListFooterTemplate,
+    ArticleRowTemplate, ArticleRowsTemplate, ArticleSearchTemplate, ArticleWithFeed,
+    ArticlesListTemplate, ErrorTemplate,
 };
 use askama::Template;
 use axum::{
@@ -168,7 +168,7 @@ fn parse_date_param(
         .map(|dt| dt.and_utc())
 }
 
-/// Render HTMX pagination response (article rows + load more button)
+/// Render HTMX pagination response (article rows + list footer)
 fn render_htmx_pagination(
     articles: Vec<ArticleWithFeed>,
     has_more: bool,
@@ -192,27 +192,27 @@ fn render_htmx_pagination(
         html.push_str(&rows_template.render()?);
     }
 
-    // Update the Load More button using out-of-band swap
-    if has_more {
-        let button_template = LoadMoreButtonTemplate {
-            next_offset: offset + limit,
-            filter_feed_ids: params.feed_ids.clone(),
-            filter_group_ids: params.group_ids.clone(),
-            filter_read: params.is_read,
-            filter_starred: params.is_starred,
-            search_query: params.q.clone(),
-            date_from: params.date_from.clone(),
-            date_to: params.date_to.clone(),
-        };
-        html.push_str(
-            r#"<div id="load-more-container" hx-swap-oob="true" class="mt-8 text-center">"#,
-        );
-        html.push_str(&button_template.render()?);
-        html.push_str("</div>");
-    } else {
-        // Remove the Load More button if no more articles
-        html.push_str(r#"<div id="load-more-container" hx-swap-oob="true"></div>"#);
-    }
+    // Show "Mark All as Read" unless we're filtering for already-read articles
+    let show_mark_all_read = params.is_read != Some(true);
+
+    // Update the list footer using out-of-band swap
+    let footer_template = ArticleListFooterTemplate {
+        has_more,
+        show_mark_all_read,
+        next_offset: offset + limit,
+        filter_feed_ids: params.feed_ids.clone(),
+        filter_group_ids: params.group_ids.clone(),
+        filter_read: params.is_read,
+        filter_starred: params.is_starred,
+        search_query: params.q.clone(),
+        date_from: params.date_from.clone(),
+        date_to: params.date_to.clone(),
+    };
+    html.push_str(
+        r#"<div id="article-list-footer" hx-swap-oob="true" class="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">"#,
+    );
+    html.push_str(&footer_template.render()?);
+    html.push_str("</div>");
 
     Ok(Html(html))
 }

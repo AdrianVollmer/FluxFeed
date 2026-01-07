@@ -113,8 +113,10 @@ pub struct ArticleCompactRowsTemplate {
 }
 
 #[derive(Template)]
-#[template(path = "articles/_load_more_button.html")]
-pub struct LoadMoreButtonTemplate {
+#[template(path = "articles/_list_footer.html")]
+pub struct ArticleListFooterTemplate {
+    pub has_more: bool,
+    pub show_mark_all_read: bool,
     pub next_offset: i64,
     pub filter_feed_ids: Option<String>,
     pub filter_group_ids: Option<String>,
