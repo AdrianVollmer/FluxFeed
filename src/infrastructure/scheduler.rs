@@ -121,14 +121,15 @@ async fn handle_feed_update(
 }
 
 /// Update feed TTL and fetch interval if needed (adaptive mode)
+/// Uses both TTL from the feed and historical article frequency
 async fn update_feed_ttl_if_needed(
     pool: &sqlx::SqlitePool,
     feed: &crate::domain::models::Feed,
     ttl: Option<i64>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if feed.fetch_frequency == "adaptive" {
-        let new_interval = if let Some(ttl_value) = ttl {
-            // Clamp TTL to 1 hour - 1 week (60-10080 minutes)
+        // Get interval from TTL (clamped to 1hr - 1 week)
+        let ttl_interval = if let Some(ttl_value) = ttl {
             let clamped = ttl_value.clamp(60, 10080);
             if ttl_value != clamped {
                 tracing::info!(
@@ -140,19 +141,56 @@ async fn update_feed_ttl_if_needed(
             }
             clamped
         } else {
-            // No TTL in feed, use default 60 minutes (1 hour)
-            tracing::debug!("Feed {} has no TTL, using default 60 minutes", feed.id);
-            60
+            60 // Default 1 hour if no TTL
+        };
+
+        // Get interval from article frequency (also clamped to 1hr - 1 week)
+        let article_interval = match repository::get_feed_article_frequency(pool, feed.id).await {
+            Ok(Some(avg_minutes)) => {
+                // Use half the average article interval (to catch new articles reasonably quickly)
+                // but still clamp to 1hr - 1 week
+                let target = (avg_minutes / 2).clamp(60, 10080);
+                tracing::debug!(
+                    "Feed {} article frequency: {}m avg, target interval: {}m",
+                    feed.id,
+                    avg_minutes,
+                    target
+                );
+                Some(target)
+            }
+            Ok(None) => {
+                tracing::debug!(
+                    "Feed {} has insufficient articles for frequency calculation",
+                    feed.id
+                );
+                None
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "Failed to get article frequency for feed {}: {}",
+                    feed.id,
+                    e
+                );
+                None
+            }
+        };
+
+        // Use the maximum of TTL interval and article-based interval
+        // This ensures we don't poll too frequently for slow feeds
+        let new_interval = match article_interval {
+            Some(ai) => ttl_interval.max(ai),
+            None => ttl_interval,
         };
 
         // Update interval if changed
         if new_interval != feed.fetch_interval_minutes {
             tracing::info!(
-                "Updating feed {} interval: {}m -> {}m (TTL: {:?})",
+                "Updating feed {} interval: {}m -> {}m (TTL: {:?}, article-based: {:?})",
                 feed.id,
                 feed.fetch_interval_minutes,
                 new_interval,
-                ttl
+                ttl,
+                article_interval
             );
             repository::update_feed_ttl(pool, feed.id, ttl, new_interval).await?;
         } else if ttl.is_some() && feed.ttl_minutes != ttl {

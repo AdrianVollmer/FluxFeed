@@ -8,8 +8,8 @@ pub async fn create_feed(pool: &SqlitePool, create_feed: CreateFeed) -> Result<F
 
     let feed = sqlx::query_as::<_, Feed>(
         r#"
-        INSERT INTO feeds (url, title, description, fetch_interval_minutes, created_at, updated_at)
-        VALUES (?, ?, ?, 30, ?, ?)
+        INSERT INTO feeds (url, title, description, fetch_frequency, fetch_interval_minutes, created_at, updated_at)
+        VALUES (?, ?, ?, 'adaptive', 60, ?, ?)
         RETURNING *
         "#,
     )
@@ -899,6 +899,49 @@ pub async fn update_feed_ttl(
     .await?;
 
     Ok(())
+}
+
+/// Calculate average minutes between articles for a feed based on recent articles
+/// Returns None if there are fewer than 2 articles with published dates
+pub async fn get_feed_article_frequency(
+    pool: &SqlitePool,
+    feed_id: i64,
+) -> Result<Option<i64>, SqlxError> {
+    // Get the last 20 articles with published_at dates, ordered by date
+    let articles: Vec<(chrono::DateTime<Utc>,)> = sqlx::query_as(
+        r#"
+        SELECT published_at FROM articles
+        WHERE feed_id = ? AND published_at IS NOT NULL
+        ORDER BY published_at DESC
+        LIMIT 20
+        "#,
+    )
+    .bind(feed_id)
+    .fetch_all(pool)
+    .await?;
+
+    if articles.len() < 2 {
+        return Ok(None);
+    }
+
+    // Calculate average time between consecutive articles
+    let mut total_minutes: i64 = 0;
+    let mut count = 0;
+
+    for window in articles.windows(2) {
+        let newer = &window[0].0;
+        let older = &window[1].0;
+        let diff = newer.signed_duration_since(*older);
+        total_minutes += diff.num_minutes();
+        count += 1;
+    }
+
+    if count == 0 {
+        return Ok(None);
+    }
+
+    let avg_minutes = total_minutes / count;
+    Ok(Some(avg_minutes))
 }
 
 /// Update only TTL (for custom frequency mode - store but don't use)
