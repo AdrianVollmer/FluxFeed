@@ -17,11 +17,13 @@ pub fn user_agent() -> String {
 use api::feeds::AppState;
 use askama::Template;
 use axum::{
+    middleware,
     response::Html,
     routing::{delete, get, post, put},
     Router,
 };
 use config::Config;
+use infrastructure::csrf::csrf_middleware;
 use infrastructure::database::setup_database;
 use tower_http::{compression::CompressionLayer, services::ServeDir, trace::TraceLayer};
 use web::templates::IndexTemplate;
@@ -135,6 +137,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/logs", get(api::logs::list_logs))
         .route("/api/fetch", post(api::manual_fetch::trigger_fetch))
         .nest_service("/static", ServeDir::new("static"))
+        .layer(middleware::from_fn(csrf_middleware))
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())
         .with_state(state);

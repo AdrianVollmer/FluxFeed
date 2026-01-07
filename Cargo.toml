@@ -56,5 +56,10 @@ thiserror = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+# CSRF protection
+rand = "0.8"
+base64 = "0.22"
+http = "1.2"
+
 [dev-dependencies]
 axum-test = "16"
