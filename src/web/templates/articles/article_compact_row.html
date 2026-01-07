@@ -55,7 +55,7 @@
     </div>
 
     <!-- Desktop Layout (>= md) -->
-    <div class="hidden md:grid md:grid-cols-[auto_1fr_160px_120px_100px_70px] md:items-center md:gap-2">
+    <div class="hidden md:grid md:grid-cols-[auto_1fr_160px_120px_115px_90px] md:items-center md:gap-2">
         <!-- Read indicator -->
         <div class="px-3 py-4">
             <button
@@ -103,7 +103,7 @@
         </div>
 
         <!-- Date -->
-        <div class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 truncate whitespace-nowrap">
+        <div class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
             {% if item.article.published_at.is_some() %}
             {{ item.article.published_at.as_ref().unwrap().format("%b %d, %Y") }}
             {% else %}
