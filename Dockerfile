@@ -6,7 +6,7 @@ WORKDIR /build
 COPY package*.json ./
 RUN npm ci
 COPY static/css/input.css ./static/css/
-COPY static/js/ts ./static/js/ts
+COPY static/ts ./static/ts
 COPY scripts/build-ts.js ./scripts/
 COPY tailwind.config.js tsconfig.json ./
 COPY src/web/templates ./src/web/templates
