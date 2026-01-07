@@ -310,11 +310,15 @@ impl IntoResponse for AppError {
                     "A database error occurred. Please try again later.".to_string(),
                 )
             }
-            AppError::ServiceError(feed_service::FeedServiceError::FetchError(msg)) => (
-                StatusCode::BAD_GATEWAY,
-                "Feed Fetch Failed".to_string(),
-                format!("Unable to fetch the feed: {}", msg),
-            ),
+            AppError::ServiceError(feed_service::FeedServiceError::FetchError(msg)) => {
+                // Log the actual error for debugging
+                tracing::warn!("Feed fetch error: {}", msg);
+                (
+                    StatusCode::BAD_GATEWAY,
+                    "Feed Fetch Failed".to_string(),
+                    "Unable to fetch the feed. Please check the URL and try again.".to_string(),
+                )
+            }
             AppError::ServiceError(feed_service::FeedServiceError::InvalidFrequency) => (
                 StatusCode::BAD_REQUEST,
                 "Invalid Frequency".to_string(),
@@ -335,11 +339,15 @@ impl IntoResponse for AppError {
                     "A database error occurred. Please try again later.".to_string(),
                 )
             }
-            AppError::FetchError(msg) => (
-                StatusCode::BAD_GATEWAY,
-                "Feed Fetch Failed".to_string(),
-                format!("Unable to fetch the feed: {}", msg),
-            ),
+            AppError::FetchError(msg) => {
+                // Log the actual error for debugging
+                tracing::warn!("Feed fetch error: {}", msg);
+                (
+                    StatusCode::BAD_GATEWAY,
+                    "Feed Fetch Failed".to_string(),
+                    "Unable to fetch the feed. Please check the URL and try again.".to_string(),
+                )
+            }
         };
 
         let template = ErrorTemplate {

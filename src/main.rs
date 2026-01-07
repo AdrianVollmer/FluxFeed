@@ -25,6 +25,7 @@ use axum::{
 use config::Config;
 use infrastructure::csrf::csrf_middleware;
 use infrastructure::database::setup_database;
+use infrastructure::security_headers::security_headers_middleware;
 use tower_http::{compression::CompressionLayer, services::ServeDir, trace::TraceLayer};
 use web::templates::IndexTemplate;
 
@@ -36,10 +37,11 @@ async fn index() -> Html<String> {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing
+    // Default to info level in production; use RUST_LOG env var to override
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "fluxfeed=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "fluxfeed=info,tower_http=info".into()),
         )
         .init();
 
@@ -137,6 +139,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/logs", get(api::logs::list_logs))
         .route("/api/fetch", post(api::manual_fetch::trigger_fetch))
         .nest_service("/static", ServeDir::new("static"))
+        .layer(middleware::from_fn(security_headers_middleware))
         .layer(middleware::from_fn(csrf_middleware))
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())

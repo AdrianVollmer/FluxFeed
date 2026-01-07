@@ -23,11 +23,13 @@ pub async fn trigger_fetch(State(state): State<AppState>) -> impl IntoResponse {
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
+            // Log the actual error server-side for debugging
             tracing::error!("Manual fetch failed: {}", e);
+            // Return a generic message to the client to avoid leaking internal details
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(FetchResponse {
-                    message: format!("Fetch failed: {}", e),
+                    message: "Feed fetch failed. Please try again later.".to_string(),
                     feeds_updated: 0,
                     new_articles: 0,
                 }),
