@@ -25,28 +25,28 @@
                 <a href="/articles?is_read=false"
                    onclick="document.getElementById('mobile-nav-toggle').checked = false"
                    class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
-                          {% if active_filter == "unread" %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                          {% if active_filter == "unread" %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
                     <span>Unread</span>
                     <span class="text-xs {% if active_filter == "unread" %}text-blue-600 dark:text-blue-400{% else %}text-gray-500{% endif %}">{{ article_counts.unread }}</span>
                 </a>
                 <a href="/articles?show=all"
                    onclick="document.getElementById('mobile-nav-toggle').checked = false"
                    class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
-                          {% if active_filter == "all" %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                          {% if active_filter == "all" %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
                     <span>All</span>
                     <span class="text-xs {% if active_filter == "all" %}text-blue-600 dark:text-blue-400{% else %}text-gray-500{% endif %}">{{ article_counts.total }}</span>
                 </a>
                 <a href="/articles?is_read=true"
                    onclick="document.getElementById('mobile-nav-toggle').checked = false"
                    class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
-                          {% if active_filter == "read" %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                          {% if active_filter == "read" %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
                     <span>Read</span>
                     <span class="text-xs {% if active_filter == "read" %}text-blue-600 dark:text-blue-400{% else %}text-gray-500{% endif %}">{{ article_counts.read }}</span>
                 </a>
                 <a href="/articles?is_starred=true"
                    onclick="document.getElementById('mobile-nav-toggle').checked = false"
                    class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
-                          {% if active_filter == "starred" %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
+                          {% if active_filter == "starred" %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium{% else %}hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300{% endif %}">
                     <span class="flex items-center gap-2">
                         {% include "icons/star-inline.html" %}
                         Starred
@@ -66,7 +66,7 @@
                 hx-swap="innerHTML"
                 onclick="document.getElementById('mobile-nav-toggle').checked = false"
                 class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
-                       {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300{% else %}bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300{% endif %}">
+                       {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300{% else %}bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300{% endif %}">
                 <span class="flex items-center gap-2">
                     {% include "icons/folder.html" %}
                     {% if filter_feed_ids.is_empty() && filter_group_ids.is_empty() %}
