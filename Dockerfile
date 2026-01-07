@@ -1,14 +1,16 @@
 # Multi-stage build for minimal final image
 
-# Stage 1: Build Tailwind CSS
-FROM node:20-slim AS css-builder
+# Stage 1: Build frontend assets (CSS and JS)
+FROM node:20-slim AS frontend-builder
 WORKDIR /build
 COPY package*.json ./
 RUN npm ci
 COPY static/css/input.css ./static/css/
-COPY tailwind.config.js ./
+COPY static/js/ts ./static/js/ts
+COPY scripts/build-ts.js ./scripts/
+COPY tailwind.config.js tsconfig.json ./
 COPY src/web/templates ./src/web/templates
-RUN npm run build:css
+RUN npm run build
 
 # Stage 2: Build Rust application
 FROM rust:1.92-bookworm AS builder
@@ -24,7 +26,7 @@ RUN apt-get update && apt-get install -y \
 # Copy manifests and SQLx metadata
 COPY Cargo.toml Cargo.lock ./
 COPY .sqlx ./.sqlx
-COPY static/js/manifest.json ./static/js/
+COPY --from=frontend-builder /build/static/js/manifest.json ./static/js/
 
 # Create a dummy main.rs to build dependencies (for caching)
 RUN mkdir src && \
@@ -60,11 +62,13 @@ RUN useradd -m -u 1000 fluxfeed && \
 # Copy binary from builder
 COPY --from=builder /build/target/release/fluxfeed /app/fluxfeed
 
-# Copy static files
+# Copy static files (base assets: icons, htmx, favicon, etc.)
 COPY --chown=fluxfeed:fluxfeed static /app/static
 
-# Copy compiled CSS from css-builder
-COPY --from=css-builder --chown=fluxfeed:fluxfeed /build/static/css/tailwind.css /app/static/css/
+# Copy compiled CSS and JS from frontend-builder
+COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/css/tailwind.css /app/static/css/
+COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/js/dist /app/static/js/dist
+COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/js/manifest.json /app/static/js/
 
 # Switch to non-root user
 USER fluxfeed
