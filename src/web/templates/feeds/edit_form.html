@@ -10,60 +10,60 @@
 
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <form method="POST" action="/feeds/{{ feed.id }}/update" id="frequency-form">
-            <div class="mb-6">
-                <label for="title" class="block text-sm font-medium mb-2 dark:text-gray-200">
+            <div class="form-group-lg">
+                <label for="title" class="form-label">
                     Title
                 </label>
                 <input type="text" id="title" name="title" value="{{ feed.title }}"
-                       class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                       class="form-input"
                        required>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                <p class="form-help">
                     The display name for this feed
                 </p>
             </div>
 
-            <div class="mb-6">
-                <label for="url" class="block text-sm font-medium mb-2 dark:text-gray-200">
+            <div class="form-group-lg">
+                <label for="url" class="form-label">
                     URL
                 </label>
                 <input type="url" id="url" name="url" value="{{ feed.url }}"
-                       class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white font-mono text-sm"
+                       class="form-input font-mono text-sm"
                        required>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                <p class="form-help">
                     The RSS/Atom feed URL
                 </p>
             </div>
 
-            <div class="mb-6">
-                <label for="description" class="block text-sm font-medium mb-2 dark:text-gray-200">
+            <div class="form-group-lg">
+                <label for="description" class="form-label">
                     Description
                 </label>
                 <textarea id="description" name="description" rows="3"
-                          class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white">{% match feed.description %}{% when Some with (desc) %}{{ desc }}{% when None %}{% endmatch %}</textarea>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                          class="form-textarea">{% match feed.description %}{% when Some with (desc) %}{{ desc }}{% when None %}{% endmatch %}</textarea>
+                <p class="form-help">
                     A brief description of this feed (optional)
                 </p>
             </div>
 
-            <div class="mb-6">
-                <label for="color" class="block text-sm font-medium mb-2 dark:text-gray-200">
+            <div class="form-group-lg">
+                <label for="color" class="form-label">
                     Feed Color
                 </label>
                 <div class="flex items-center gap-3">
                     <input type="color" id="color" name="color" value="{{ feed.color }}"
                            class="h-10 w-20 border border-gray-300 dark:border-gray-600 rounded cursor-pointer">
                     <input type="text" id="color-text" value="{{ feed.color }}"
-                           class="w-28 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700 dark:text-white font-mono text-sm"
+                           class="w-28 form-input font-mono text-sm"
                            pattern="^#[0-9A-Fa-f]{6}$"
                            maxlength="7">
                 </div>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                <p class="form-help">
                     This color will be used as an accent in article listings
                 </p>
             </div>
 
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-2 dark:text-gray-200">
+            <div class="form-group">
+                <label class="form-label">
                     Fetch Frequency
                 </label>
 
@@ -97,7 +97,7 @@
                     </label>
                 </div>
 
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                <p class="form-help">
                     Valid range: 1-168 hours (1 hour to 1 week)
                 </p>
             </div>

@@ -7,9 +7,9 @@
         hx-on::before-request="document.getElementById('feed-initializing-indicator').classList.remove('hidden')"
         hx-on::after-request="document.getElementById('feed-initializing-indicator').classList.add('hidden'); if(event.detail.successful) document.getElementById('feed-form-modal').innerHTML = ''">
 
-        <div class="mb-4">
-            <label for="url" class="block text-sm font-medium mb-2">
-                Feed URL <span class="text-red-500">*</span>
+        <div class="form-group">
+            <label for="url" class="form-label form-label-required">
+                Feed URL
             </label>
             <input
                 type="url"
@@ -17,15 +17,15 @@
                 name="url"
                 required
                 placeholder="https://example.com/feed.xml"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700"
+                class="form-input"
                 autofocus>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p class="form-help">
                 Enter the URL of an RSS or Atom feed
             </p>
         </div>
 
-        <div class="mb-6">
-            <label for="title" class="block text-sm font-medium mb-2">
+        <div class="form-group-lg">
+            <label for="title" class="form-label">
                 Custom Title (optional)
             </label>
             <input
@@ -33,8 +33,8 @@
                 id="title"
                 name="title"
                 placeholder="Leave empty to auto-detect"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700">
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                class="form-input">
+            <p class="form-help">
                 Optional: Provide a custom name for this feed
             </p>
         </div>

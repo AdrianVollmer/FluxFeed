@@ -19,8 +19,8 @@
 
             <div class="space-y-4">
                 <!-- Search Query -->
-                <div>
-                    <label for="search-query" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div class="form-group">
+                    <label for="search-query" class="form-label">
                         Search Query
                     </label>
                     <input
@@ -29,17 +29,17 @@
                         name="q"
                         value="{% if search_query.is_some() %}{{ search_query.as_ref().unwrap() }}{% endif %}"
                         placeholder="Search title, content, author..."
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        class="form-input"
                         autofocus>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="form-help">
                         Supports quotes for phrases, AND/OR operators, and column:term syntax
                     </p>
                 </div>
 
                 <!-- Date Range -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="date-from" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <div class="form-group">
+                        <label for="date-from" class="form-label">
                             From Date
                         </label>
                         <input
@@ -47,11 +47,11 @@
                             id="date-from"
                             name="date_from"
                             value="{% if date_from.is_some() %}{{ date_from.as_ref().unwrap() }}{% endif %}"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                            class="form-input">
                     </div>
 
-                    <div>
-                        <label for="date-to" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <div class="form-group">
+                        <label for="date-to" class="form-label">
                             To Date
                         </label>
                         <input
@@ -59,7 +59,7 @@
                             id="date-to"
                             name="date_to"
                             value="{% if date_to.is_some() %}{{ date_to.as_ref().unwrap() }}{% endif %}"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                            class="form-input">
                     </div>
                 </div>
 

@@ -420,3 +420,61 @@ button.rounded-full.border-2:not(.bg-gray-400):not(.border-gray-400) {
 button.rounded-full.border-2:hover {
   box-shadow: 0 0 15px var(--accent-cyan);
 }
+
+/* Form field patterns */
+.form-label {
+  @apply block text-sm font-medium mb-2 dark:text-gray-200;
+}
+
+.form-label-required::after {
+  content: ' *';
+  @apply text-red-500;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white;
+  @apply focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none;
+}
+
+.form-select {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white;
+  @apply focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none;
+}
+
+.form-textarea {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white;
+  @apply focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none;
+}
+
+.form-help {
+  @apply mt-1 text-xs text-gray-500 dark:text-gray-400;
+}
+
+.form-group {
+  @apply mb-4;
+}
+
+.form-group-lg {
+  @apply mb-6;
+}
+
+/* Empty state pattern */
+.empty-state {
+  @apply text-center py-12;
+}
+
+.empty-state-icon {
+  @apply mx-auto mb-4 text-gray-400 dark:text-gray-500;
+}
+
+.empty-state-title {
+  @apply text-xl text-gray-600 dark:text-gray-400 mb-2;
+}
+
+.empty-state-description {
+  @apply text-sm text-gray-500 dark:text-gray-400;
+}
+
+.empty-state-action {
+  @apply mt-4;
+}
