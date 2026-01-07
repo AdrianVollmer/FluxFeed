@@ -20,7 +20,12 @@
 node_modules/
 static/css/tailwind.css
 static/js/dist/
+static/icons/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude
+/claude/
+.claude/
