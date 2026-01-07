@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
 # Copy manifests and SQLx metadata
 COPY Cargo.toml Cargo.lock ./
 COPY .sqlx ./.sqlx
+COPY static/js/manifest.json ./static/js/
 
 # Create a dummy main.rs to build dependencies (for caching)
 RUN mkdir src && \
