@@ -4,10 +4,6 @@ use crate::web::filters;
 use askama::Template;
 
 #[derive(Template)]
-#[template(path = "index.html")]
-pub struct IndexTemplate;
-
-#[derive(Template)]
 #[template(path = "error.html")]
 pub struct ErrorTemplate {
     pub status_code: u16,

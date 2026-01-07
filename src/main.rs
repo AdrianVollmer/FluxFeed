@@ -15,10 +15,9 @@ pub fn user_agent() -> String {
 }
 
 use api::feeds::AppState;
-use askama::Template;
 use axum::{
     middleware,
-    response::Html,
+    response::Redirect,
     routing::{delete, get, post, put},
     Router,
 };
@@ -27,11 +26,9 @@ use infrastructure::csrf::csrf_middleware;
 use infrastructure::database::setup_database;
 use infrastructure::security_headers::security_headers_middleware;
 use tower_http::{compression::CompressionLayer, services::ServeDir, trace::TraceLayer};
-use web::templates::IndexTemplate;
 
-async fn index() -> Html<String> {
-    let template = IndexTemplate;
-    Html(template.render().unwrap())
+async fn index() -> Redirect {
+    Redirect::to("/articles")
 }
 
 #[tokio::main]
