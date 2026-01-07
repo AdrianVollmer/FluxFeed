@@ -44,7 +44,7 @@
                 <span class="text-gray-300 dark:text-gray-600">|</span>
                 {% endif %}
                 {% if item.article.published_at.is_some() %}
-                <span>{{ item.article.published_at.as_ref().unwrap().format("%b %d") }}</span>
+                <span title="{{ item.article.published_at.as_ref().unwrap().format("%b %d, %Y %H:%M") }}">{{ item.article.published_at.as_ref().unwrap()|friendly_date }}</span>
                 {% endif %}
             </div>
             <div class="flex gap-1 flex-shrink-0">
@@ -105,7 +105,7 @@
         <!-- Date -->
         <div class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
             {% if item.article.published_at.is_some() %}
-            {{ item.article.published_at.as_ref().unwrap().format("%b %d, %Y") }}
+            <span title="{{ item.article.published_at.as_ref().unwrap().format("%b %d, %Y %H:%M") }}">{{ item.article.published_at.as_ref().unwrap()|friendly_date }}</span>
             {% else %}
             <span class="text-gray-400">—</span>
             {% endif %}

@@ -3,5 +3,6 @@ dirs = ["src/web/templates"]
 
 [filters]
 app_version = "crate::web::filters::app_version"
+friendly_date = "crate::web::filters::friendly_date"
 in_list = "crate::web::filters::in_list"
 js_path = "crate::web::filters::js_path"

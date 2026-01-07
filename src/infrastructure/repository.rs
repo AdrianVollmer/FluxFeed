@@ -95,6 +95,20 @@ pub async fn get_feed_unread_count(pool: &SqlitePool, feed_id: i64) -> Result<i6
     Ok(count.0)
 }
 
+#[allow(dead_code)]
+pub async fn get_total_unread_count(pool: &SqlitePool) -> Result<i64, SqlxError> {
+    let count: (i64,) = sqlx::query_as(
+        r#"
+        SELECT COUNT(*) FROM articles
+        WHERE is_read = 0
+        "#,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(count.0)
+}
+
 // Article repository methods
 
 pub async fn insert_article_if_new(
