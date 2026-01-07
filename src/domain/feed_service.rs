@@ -1,5 +1,5 @@
 use crate::domain::models::{CreateFeed, Feed};
-use crate::infrastructure::{repository, scheduler};
+use crate::infrastructure::{repository, scheduler, ssrf};
 use sqlx::SqlitePool;
 use thiserror::Error;
 
@@ -23,6 +23,9 @@ pub enum FeedServiceError {
 
     #[error("Invalid fetch frequency: must be 'adaptive' or hours between 1-168")]
     InvalidFrequency,
+
+    #[error("URL points to internal/private network")]
+    SsrfBlocked,
 }
 
 pub async fn create_feed(
@@ -35,6 +38,12 @@ pub async fn create_feed(
         return Err(FeedServiceError::InvalidUrl(
             "URL must start with http:// or https://".to_string(),
         ));
+    }
+
+    // SSRF protection: validate URL doesn't point to internal networks
+    if let Err(e) = ssrf::validate_url(&url) {
+        tracing::warn!("SSRF validation failed for URL {}: {}", url, e);
+        return Err(FeedServiceError::SsrfBlocked);
     }
 
     // Use provided title or default to URL temporarily

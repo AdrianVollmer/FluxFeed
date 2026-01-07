@@ -228,6 +228,9 @@ pub async fn import_feeds(
                     feed_service::FeedServiceError::DatabaseError(err) => {
                         format!("Database error: {}", err)
                     }
+                    feed_service::FeedServiceError::SsrfBlocked => {
+                        "URL points to internal/private network (blocked for security)".to_string()
+                    }
                     _ => "Unknown error".to_string(),
                 };
                 results.push(ImportResult {
@@ -316,6 +319,12 @@ impl IntoResponse for AppError {
                 StatusCode::BAD_REQUEST,
                 "Invalid Frequency".to_string(),
                 "Fetch frequency must be 'adaptive' or a number of hours between 1-168."
+                    .to_string(),
+            ),
+            AppError::ServiceError(feed_service::FeedServiceError::SsrfBlocked) => (
+                StatusCode::BAD_REQUEST,
+                "URL Blocked".to_string(),
+                "This URL points to an internal or private network address and cannot be used."
                     .to_string(),
             ),
             AppError::DatabaseError(err) => {

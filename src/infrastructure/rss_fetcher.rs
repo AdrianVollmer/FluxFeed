@@ -1,3 +1,4 @@
+use crate::infrastructure::ssrf;
 use feed_rs::parser;
 use quick_xml::events::Event;
 use quick_xml::Reader;
@@ -23,6 +24,9 @@ pub enum FetchError {
 
     #[error("Invalid feed format")]
     InvalidFormat,
+
+    #[error("URL blocked: points to internal/private network")]
+    SsrfBlocked,
 }
 
 pub enum FetchResult {
@@ -57,6 +61,12 @@ impl RssFetcher {
         etag: Option<&str>,
         last_modified: Option<&str>,
     ) -> Result<FetchResult, FetchError> {
+        // SSRF protection: validate URL at fetch time to prevent DNS rebinding
+        if let Err(e) = ssrf::validate_url(url) {
+            tracing::warn!("SSRF validation failed at fetch time for URL {}: {}", url, e);
+            return Err(FetchError::SsrfBlocked);
+        }
+
         let mut request = self.client.get(url);
 
         // Add conditional GET headers
