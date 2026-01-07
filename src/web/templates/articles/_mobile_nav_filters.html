@@ -103,6 +103,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const slot = document.getElementById('mobile-nav-extra');
     if (template && slot) {
         slot.appendChild(template.content.cloneNode(true));
+        // Process HTMX attributes on the cloned content
+        htmx.process(slot);
     }
 });
 </script>
