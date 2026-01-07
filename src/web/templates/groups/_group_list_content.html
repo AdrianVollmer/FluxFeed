@@ -1,15 +1,18 @@
 {% if tree_items.is_empty() && ungrouped_feeds.is_empty() %}
-<div class="card text-center py-12">
-    <p class="text-gray-600 dark:text-gray-400 mb-4">
-        No groups or feeds yet. Create a group to organize your feeds!
+<div class="card empty-state">
+    <p class="empty-state-title">No groups or feeds yet</p>
+    <p class="empty-state-description">
+        Create a group to organize your feeds!
     </p>
-    <button
-        hx-get="/groups/new"
-        hx-target="#group-form-modal"
-        hx-swap="innerHTML"
-        class="btn btn-primary">
-        + Create Your First Group
-    </button>
+    <div class="empty-state-action">
+        <button
+            hx-get="/groups/new"
+            hx-target="#group-form-modal"
+            hx-swap="innerHTML"
+            class="btn btn-primary">
+            + Create Your First Group
+        </button>
+    </div>
 </div>
 {% else %}
 

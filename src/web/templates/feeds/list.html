@@ -53,17 +53,20 @@
     <!-- Feed list -->
     <div id="feed-list" class="space-y-4">
         {% if feeds.is_empty() %}
-        <div class="card text-center py-12">
-            <p class="text-gray-600 dark:text-gray-400 mb-4">
-                No feeds yet. Add your first RSS feed to get started!
+        <div class="card empty-state">
+            <p class="empty-state-title">No feeds yet</p>
+            <p class="empty-state-description">
+                Add your first RSS feed to get started!
             </p>
-            <button
-                hx-get="/feeds/new"
-                hx-target="#feed-form-modal"
-                hx-swap="innerHTML"
-                class="btn btn-primary">
-                + Add Your First Feed
-            </button>
+            <div class="empty-state-action">
+                <button
+                    hx-get="/feeds/new"
+                    hx-target="#feed-form-modal"
+                    hx-swap="innerHTML"
+                    class="btn btn-primary">
+                    + Add Your First Feed
+                </button>
+            </div>
         </div>
         {% else %}
         {% for feed in feeds %}

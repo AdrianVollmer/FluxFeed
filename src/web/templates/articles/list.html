@@ -165,10 +165,12 @@
     <!-- Article list - Cards View -->
     <div id="articles-cards" class="space-y-4">
         {% if articles.len() == 0 %}
-        <div class="card text-center py-16">
-            {% include "icons/newspaper.html" %}
-            <p class="text-xl text-gray-600 dark:text-gray-400 mb-2">No articles yet</p>
-            <p class="text-sm text-gray-500 dark:text-gray-500">
+        <div class="card empty-state">
+            <div class="empty-state-icon">
+                {% include "icons/newspaper.html" %}
+            </div>
+            <p class="empty-state-title">No articles yet</p>
+            <p class="empty-state-description">
                 {% if feeds.len() == 0 %}
                     <a href="/feeds" class="text-blue-600 hover:underline">Add some feeds</a> to get started!
                 {% else %}
@@ -184,10 +186,12 @@
     <!-- Article list - Compact View -->
     <div id="articles-compact" class="hidden">
         {% if articles.len() == 0 %}
-        <div class="card text-center py-16">
-            {% include "icons/newspaper.html" %}
-            <p class="text-xl text-gray-600 dark:text-gray-400 mb-2">No articles yet</p>
-            <p class="text-sm text-gray-500 dark:text-gray-500">
+        <div class="card empty-state">
+            <div class="empty-state-icon">
+                {% include "icons/newspaper.html" %}
+            </div>
+            <p class="empty-state-title">No articles yet</p>
+            <p class="empty-state-description">
                 {% if feeds.len() == 0 %}
                     <a href="/feeds" class="text-blue-600 hover:underline">Add some feeds</a> to get started!
                 {% else %}

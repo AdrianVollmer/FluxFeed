@@ -124,12 +124,14 @@
 
     <!-- Logs table -->
     {% if logs.len() == 0 %}
-    <div class="card text-center py-16">
-        <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        <p class="text-xl text-gray-600 dark:text-gray-400 mb-2">No logs yet</p>
-        <p class="text-sm text-gray-500 dark:text-gray-500">
+    <div class="card empty-state">
+        <div class="empty-state-icon">
+            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+        </div>
+        <p class="empty-state-title">No logs yet</p>
+        <p class="empty-state-description">
             {% if feeds.len() == 0 %}
                 <a href="/feeds" class="text-blue-600 hover:underline">Add some feeds</a> to start seeing fetch logs!
             {% else %}
