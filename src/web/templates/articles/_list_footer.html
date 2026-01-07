@@ -1,5 +1,6 @@
 {% if has_more %}
 <button
+    id="load-more-btn"
     hx-get="/articles?offset={{ next_offset }}{% if filter_feed_ids.is_some() %}&feed_ids={{ filter_feed_ids.as_ref().unwrap() }}{% endif %}{% if filter_group_ids.is_some() %}&group_ids={{ filter_group_ids.as_ref().unwrap() }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}{% if search_query.is_some() %}&q={{ search_query.as_ref().unwrap()|urlencode }}{% endif %}{% if date_from.is_some() %}&date_from={{ date_from.as_ref().unwrap() }}{% endif %}{% if date_to.is_some() %}&date_to={{ date_to.as_ref().unwrap() }}{% endif %}"
     hx-target="#articles-cards"
     hx-swap="beforeend"

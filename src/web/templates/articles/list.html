@@ -120,6 +120,7 @@
             <div id="article-list-footer" class="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
                 {% if has_more %}
                 <button
+                    id="load-more-btn"
                     hx-get="/articles?offset={{ offset + limit }}{% if !filter_feed_ids.is_empty() %}&feed_ids={{ filter_feed_ids|join(",") }}{% endif %}{% if !filter_group_ids.is_empty() %}&group_ids={{ filter_group_ids|join(",") }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
                     hx-target="#articles-cards"
                     hx-swap="beforeend"

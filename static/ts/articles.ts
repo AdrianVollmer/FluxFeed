@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Re-apply load more button settings after OOB swap
 document.body.addEventListener('htmx:afterSwap', (evt: Event) => {
   const detail = (evt as CustomEvent).detail;
-  if (detail?.target?.id === 'load-more-container') {
+  if (detail?.target?.id === 'article-list-footer') {
     updateLoadMoreButton();
   }
   // Also check for collapsible content after HTMX swaps
