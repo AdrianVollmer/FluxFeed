@@ -151,11 +151,12 @@ input[type="checkbox"]:focus-visible + label {
 
 .btn-primary {
   @apply text-white;
-  background-color: #3B82F6; /* Fallback for browsers that don't support gradients with CSS variables */
-  background-image: linear-gradient(135deg, var(--primary-from), var(--primary-via), var(--primary-to));
+  /* Use hardcoded colors instead of CSS variables for Firefox Android compatibility */
+  background-color: #3B82F6;
+  background-image: linear-gradient(135deg, #3B82F6, #2563EB, #1D4ED8);
   background-size: 200% 200%;
   box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3),
-              0 0 20px -5px var(--shadow-glow);
+              0 0 20px -5px rgba(59, 130, 246, 0.3);
   animation: gradient-shift 3s ease infinite;
 }
 
@@ -167,7 +168,7 @@ input[type="checkbox"]:focus-visible + label {
 .btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4),
-              0 0 30px -5px var(--shadow-glow);
+              0 0 30px -5px rgba(59, 130, 246, 0.5);
 }
 
 .btn-primary::after {
@@ -196,7 +197,7 @@ input[type="checkbox"]:focus-visible + label {
 
 .btn-secondary:hover {
   @apply bg-gray-300 dark:bg-gray-600;
-  border-color: var(--accent-cyan);
+  border-color: #06B6D4;
   box-shadow: 0 0 15px -3px rgba(6, 182, 212, 0.4);
   transform: translateY(-2px);
 }
@@ -222,7 +223,7 @@ input[type="checkbox"]:focus-visible + label {
   inset: 0;
   border-radius: 0.5rem;
   padding: 2px;
-  background: linear-gradient(135deg, var(--accent-cyan), var(--primary-from), var(--accent-purple));
+  background: linear-gradient(135deg, #06B6D4, #3B82F6, #8B5CF6);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -236,7 +237,7 @@ input[type="checkbox"]:focus-visible + label {
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04),
-    0 0 30px -5px var(--shadow-glow);
+    0 0 30px -5px rgba(59, 130, 246, 0.3);
 }
 
 .card:hover::before {
@@ -251,8 +252,8 @@ input[type="checkbox"]:focus-visible + label {
 }
 
 .prose a:hover {
-  text-shadow: 0 0 8px var(--accent-cyan),
-               0 0 12px var(--accent-cyan);
+  text-shadow: 0 0 8px #06B6D4,
+               0 0 12px #06B6D4;
 }
 
 a.hover\:text-blue-600,
@@ -262,7 +263,7 @@ a.hover\:text-blue-400 {
 
 a.hover\:text-blue-600:hover,
 a.hover\:text-blue-400:hover {
-  text-shadow: 0 0 8px var(--accent-cyan);
+  text-shadow: 0 0 8px #06B6D4;
 }
 
 /* Article content styling */
@@ -331,7 +332,8 @@ input[type="text"],
 input[type="url"],
 select {
   @apply border border-gray-300 dark:border-gray-600 rounded px-3 py-2;
-  background: var(--glass-bg);
+  /* Use Tailwind classes for background instead of CSS variables for Firefox Android */
+  @apply bg-white/80 dark:bg-gray-900/80;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 0.3s ease;
@@ -340,9 +342,9 @@ select {
 input:focus,
 select:focus {
   @apply outline-none;
-  border-color: var(--accent-cyan);
+  border-color: #06B6D4;
   box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2),
-              0 0 20px -5px var(--accent-cyan);
+              0 0 20px -5px #06B6D4;
 }
 
 /* Enhanced pills and badges */
@@ -359,7 +361,7 @@ a .rounded-full:hover {
 
 /* Table enhancements for compact view */
 table thead {
-  background: var(--glass-bg) !important;
+  @apply bg-white/80 dark:bg-gray-900/80;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -370,7 +372,7 @@ table tbody tr {
 
 table tbody tr:hover {
   background: rgba(59, 130, 246, 0.05) !important;
-  box-shadow: inset 0 0 20px -10px var(--shadow-glow);
+  box-shadow: inset 0 0 20px -10px rgba(59, 130, 246, 0.3);
 }
 
 /* Line clamp utility for multi-line truncation */
@@ -414,11 +416,11 @@ button.rounded-full.border-2 {
 }
 
 button.rounded-full.border-2:not(.bg-gray-400):not(.border-gray-400) {
-  box-shadow: 0 0 10px -2px var(--primary-from);
+  box-shadow: 0 0 10px -2px #3B82F6;
 }
 
 button.rounded-full.border-2:hover {
-  box-shadow: 0 0 15px var(--accent-cyan);
+  box-shadow: 0 0 15px #06B6D4;
 }
 
 /* Form field patterns */
