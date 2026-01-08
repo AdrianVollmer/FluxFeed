@@ -11,15 +11,22 @@ A modern, resource-efficient RSS feed reader built with Rust.
   <a href="docs/articles-mobile-list-collage.png"><img src="docs/articles-mobile-list-collage.png" width="20%"></a>
 </p>
 
-The primary use case is running this program as a self-hosted Docker
-instance accessed locally or via VPN. There is currently no support for
-multiple users.
-
 > [!IMPORTANT]
 > **Disclaimer**: This was entirely vibe-coded as part of some personal
 > experimentation with this new technology. I know neither Rust nor more
 > than the most basic part of CSS. If that is a deal breaker for you, I
 > understand.
+
+## Features
+
+- Progressive Web App
+- Assign groups and tags to feeds
+- Reader mode
+- Search
+
+The primary use case is running this program as a self-hosted Docker
+instance accessed locally or via VPN. There is currently no support for
+multiple users.
 
 ## Demo
 
