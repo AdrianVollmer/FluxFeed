@@ -24,6 +24,7 @@ use axum::{
 use config::Config;
 use infrastructure::csrf::csrf_middleware;
 use infrastructure::database::setup_database;
+use infrastructure::error_pages::error_page_middleware;
 use infrastructure::security_headers::security_headers_middleware;
 use tower_http::{compression::CompressionLayer, services::ServeDir, trace::TraceLayer};
 
@@ -150,6 +151,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .nest_service("/static", ServeDir::new("static"))
         .layer(middleware::from_fn(security_headers_middleware))
         .layer(middleware::from_fn(csrf_middleware))
+        .layer(middleware::from_fn(error_page_middleware))
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())
         .with_state(state);
