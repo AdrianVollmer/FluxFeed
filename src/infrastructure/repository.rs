@@ -65,37 +65,7 @@ pub async fn delete_feed(pool: &SqlitePool, feed_id: i64) -> Result<bool, SqlxEr
     Ok(result.rows_affected() > 0)
 }
 
-#[allow(dead_code)]
-pub async fn get_feed_article_count(pool: &SqlitePool, feed_id: i64) -> Result<i64, SqlxError> {
-    let count: (i64,) = sqlx::query_as(
-        r#"
-        SELECT COUNT(*) FROM articles
-        WHERE feed_id = ?
-        "#,
-    )
-    .bind(feed_id)
-    .fetch_one(pool)
-    .await?;
-
-    Ok(count.0)
-}
-
-#[allow(dead_code)]
-pub async fn get_feed_unread_count(pool: &SqlitePool, feed_id: i64) -> Result<i64, SqlxError> {
-    let count: (i64,) = sqlx::query_as(
-        r#"
-        SELECT COUNT(*) FROM articles
-        WHERE feed_id = ? AND is_read = 0
-        "#,
-    )
-    .bind(feed_id)
-    .fetch_one(pool)
-    .await?;
-
-    Ok(count.0)
-}
-
-#[allow(dead_code)]
+#[allow(dead_code)] // Used in tests to verify mark_all_articles_read
 pub async fn get_total_unread_count(pool: &SqlitePool) -> Result<i64, SqlxError> {
     let count: (i64,) = sqlx::query_as(
         r#"
@@ -876,76 +846,6 @@ pub async fn list_logs_with_feeds(
     Ok(logs)
 }
 
-/// Update feed's TTL and fetch interval (for adaptive mode)
-#[allow(dead_code)]
-pub async fn update_feed_ttl(
-    pool: &SqlitePool,
-    feed_id: i64,
-    ttl_minutes: Option<i64>,
-    fetch_interval_minutes: i64,
-) -> Result<(), SqlxError> {
-    sqlx::query!(
-        r#"
-        UPDATE feeds
-        SET ttl_minutes = ?,
-            fetch_interval_minutes = ?,
-            updated_at = datetime('now')
-        WHERE id = ?
-        "#,
-        ttl_minutes,
-        fetch_interval_minutes,
-        feed_id
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
-
-/// Calculate average minutes between articles for a feed based on recent articles
-/// Returns None if there are fewer than 2 articles with published dates
-#[allow(dead_code)]
-pub async fn get_feed_article_frequency(
-    pool: &SqlitePool,
-    feed_id: i64,
-) -> Result<Option<i64>, SqlxError> {
-    // Get the last 20 articles with published_at dates, ordered by date
-    let articles: Vec<(chrono::DateTime<Utc>,)> = sqlx::query_as(
-        r#"
-        SELECT published_at FROM articles
-        WHERE feed_id = ? AND published_at IS NOT NULL
-        ORDER BY published_at DESC
-        LIMIT 20
-        "#,
-    )
-    .bind(feed_id)
-    .fetch_all(pool)
-    .await?;
-
-    if articles.len() < 2 {
-        return Ok(None);
-    }
-
-    // Calculate average time between consecutive articles
-    let mut total_minutes: i64 = 0;
-    let mut count = 0;
-
-    for window in articles.windows(2) {
-        let newer = &window[0].0;
-        let older = &window[1].0;
-        let diff = newer.signed_duration_since(*older);
-        total_minutes += diff.num_minutes();
-        count += 1;
-    }
-
-    if count == 0 {
-        return Ok(None);
-    }
-
-    let avg_minutes = total_minutes / count;
-    Ok(Some(avg_minutes))
-}
-
 /// Update only TTL (for custom frequency mode - store but don't use)
 pub async fn update_feed_ttl_only(
     pool: &SqlitePool,
@@ -984,32 +884,6 @@ pub async fn update_adaptive_fetch_state(
         WHERE id = ?
         "#,
         consecutive_new_articles,
-        fetch_interval_minutes,
-        feed_id
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
-
-/// Update feed's fetch frequency preference
-#[allow(dead_code)]
-pub async fn update_feed_frequency(
-    pool: &SqlitePool,
-    feed_id: i64,
-    fetch_frequency: &str,
-    fetch_interval_minutes: i64,
-) -> Result<(), SqlxError> {
-    sqlx::query!(
-        r#"
-        UPDATE feeds
-        SET fetch_frequency = ?,
-            fetch_interval_minutes = ?,
-            updated_at = datetime('now')
-        WHERE id = ?
-        "#,
-        fetch_frequency,
         fetch_interval_minutes,
         feed_id
     )
@@ -1306,47 +1180,6 @@ mod tests {
 
         let unread_count = get_total_unread_count(&pool).await.unwrap();
         assert_eq!(unread_count, 0);
-    }
-
-    #[tokio::test]
-    async fn test_get_feed_article_count() {
-        let pool = setup_test_db().await;
-
-        let feed = super::create_feed(
-            &pool,
-            CreateFeed {
-                url: "https://example.com/feed".to_string(),
-                title: "Test Feed".to_string(),
-                description: None,
-            },
-        )
-        .await
-        .unwrap();
-
-        let count = get_feed_article_count(&pool, feed.id).await.unwrap();
-        assert_eq!(count, 0);
-
-        insert_article_if_new(
-            &pool,
-            NewArticle {
-                feed_id: feed.id,
-                guid: "guid-1".to_string(),
-                title: "Article 1".to_string(),
-                url: None,
-                content: None,
-                summary: None,
-                author: None,
-                published_at: None,
-                og_image: None,
-                og_description: None,
-                og_site_name: None,
-            },
-        )
-        .await
-        .unwrap();
-
-        let count = get_feed_article_count(&pool, feed.id).await.unwrap();
-        assert_eq!(count, 1);
     }
 
     #[tokio::test]

@@ -99,17 +99,6 @@ pub async fn delete_feed(pool: &SqlitePool, feed_id: i64) -> Result<(), FeedServ
     }
 }
 
-#[allow(dead_code)]
-pub async fn get_feed_stats(
-    pool: &SqlitePool,
-    feed_id: i64,
-) -> Result<(i64, i64), FeedServiceError> {
-    let total = repository::get_feed_article_count(pool, feed_id).await?;
-    let unread = repository::get_feed_unread_count(pool, feed_id).await?;
-
-    Ok((total, unread))
-}
-
 /// Parse and validate fetch frequency
 /// Returns fetch_interval_minutes
 pub fn parse_fetch_frequency(frequency: &str) -> Result<i64, FeedServiceError> {
