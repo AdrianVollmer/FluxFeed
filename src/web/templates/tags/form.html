@@ -43,6 +43,13 @@
                     value="{% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}{% else %}#3B82F6{% endif %}"
                     class="form-input flex-1"
                     placeholder="#3B82F6">
+                <button
+                    type="button"
+                    id="randomize_btn"
+                    class="btn btn-secondary"
+                    title="Randomize color and style">
+                    Randomize
+                </button>
             </div>
         </div>
 
@@ -120,6 +127,22 @@ document.getElementById('color').addEventListener('input', function(e) {
     const val = e.target.value;
     if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
         document.getElementById('color_picker').value = val;
+    }
+});
+
+// Randomize color and style
+document.getElementById('randomize_btn').addEventListener('click', function() {
+    // Generate random hex color
+    const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase();
+    document.getElementById('color').value = randomColor;
+    document.getElementById('color_picker').value = randomColor;
+
+    // Pick random style
+    const styles = ['solid', 'outline', 'striped'];
+    const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+    const styleRadio = document.querySelector(`input[name="style"][value="${randomStyle}"]`);
+    if (styleRadio) {
+        styleRadio.checked = true;
     }
 });
 </script>
