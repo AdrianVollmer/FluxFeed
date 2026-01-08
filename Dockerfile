@@ -1,78 +1,63 @@
 # Multi-stage build for minimal final image
 
 # Stage 1: Build frontend assets (CSS, JS, and icons)
-FROM node:20-slim AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 WORKDIR /build
-COPY package*.json ./
+COPY . .
+
+RUN apk add --no-cache bash fontconfig
 RUN npm ci
-COPY static/css/input.css ./static/css/
-COPY static/ts ./static/ts
-COPY static/favicon.svg ./static/
-COPY scripts/build-ts.js scripts/generate-icons.js scripts/build.sh ./scripts/
-COPY tailwind.config.js tsconfig.json ./
-COPY src/web/templates ./src/web/templates
 RUN ./scripts/build.sh frontend
 
 # Stage 2: Build Rust application
-FROM rust:1.92-bookworm AS builder
+FROM rust:1.92-alpine AS builder
 WORKDIR /build
+COPY . .
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    pkg-config \
+# Install build dependencies for musl
+RUN apk add --no-cache \
+    musl-dev \
+    pkgconfig \
     perl \
     make \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy manifests and SQLx metadata
-COPY Cargo.toml Cargo.lock ./
-COPY .sqlx ./.sqlx
+    openssl-dev \
+    openssl-libs-static
 
 # Create dummy manifest.json for dependency caching (include_str! needs it)
 RUN mkdir -p static/js/dist && echo '{}' > static/js/dist/manifest.json
 
 # Create a dummy main.rs to build dependencies (for caching)
-RUN mkdir src && \
+RUN mv src src-real && mkdir -p src && \
     echo "fn main() {}" > src/main.rs && \
     SQLX_OFFLINE=true cargo build --release && \
-    rm -rf src
+    rm -rf src && \
+    mv src-real src
 
-# Copy real manifest from frontend-builder and source code
-COPY --from=frontend-builder /build/static/js/dist/manifest.json ./static/js/dist/
-COPY src ./src
-COPY migrations ./migrations
-COPY askama.toml ./
+# Copy real manifest from frontend-builder
+COPY --from=frontend-builder /build/static/js/dist ./static/js/dist
 
-# Build the application with real manifest
+# Build the application with real source
 RUN SQLX_OFFLINE=true cargo build --release
 
 # Stage 3: Runtime image
-FROM debian:bookworm-slim
+FROM alpine:3.21
 WORKDIR /app
 
-# Install runtime dependencies (including tzdata for timezone support)
-RUN apt-get update && apt-get install -y \
+# Install runtime dependencies (wget is included in busybox)
+RUN apk add --no-cache \
     ca-certificates \
-    libcurl4 \
-    curl \
-    tzdata \
-    && rm -rf /var/lib/apt/lists/*
+    tzdata
 
 # Create a non-root user
-RUN useradd -m -u 1000 fluxfeed && \
+RUN adduser -D -u 1000 fluxfeed && \
     mkdir -p /app/data && \
     chown -R fluxfeed:fluxfeed /app
 
 # Copy binary from builder
 COPY --from=builder /build/target/release/fluxfeed /app/fluxfeed
 
-# Copy static files (base assets: htmx, favicon, PWA files, etc.)
-COPY --chown=fluxfeed:fluxfeed static /app/static
-
-# Copy compiled CSS, JS, and icons from frontend-builder (overwrites placeholders)
-COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/css/tailwind.css /app/static/css/
-COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/js/dist /app/static/js/dist
-COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/icons /app/static/icons
+# Copy static files from frontend-builder (includes compiled CSS, JS, and icons)
+COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static /app/static
 
 # Switch to non-root user
 USER fluxfeed
@@ -89,7 +74,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-3000}/health || exit 1
+    CMD wget -q --spider http://localhost:${PORT:-3000}/health || exit 1
 
 # Run the application
 CMD ["/app/fluxfeed"]
