@@ -20,5 +20,16 @@ pub async fn setup_database(url: &str) -> Result<SqlitePool, SqlxError> {
         .execute(&pool)
         .await?;
 
+    // Performance optimizations
+    sqlx::query("PRAGMA synchronous = NORMAL") // Faster than FULL, still safe with WAL
+        .execute(&pool)
+        .await?;
+    sqlx::query("PRAGMA cache_size = -64000") // 64MB cache
+        .execute(&pool)
+        .await?;
+    sqlx::query("PRAGMA temp_store = MEMORY") // Store temp tables in memory
+        .execute(&pool)
+        .await?;
+
     Ok(pool)
 }
