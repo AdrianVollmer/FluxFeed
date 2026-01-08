@@ -98,6 +98,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/groups/:id/edit", get(api::groups::show_edit_group_form))
         .route("/groups/:id/parent", put(api::groups::move_group))
+        // Tag routes
+        .route(
+            "/tags",
+            get(api::tags::list_tags).post(api::tags::create_tag),
+        )
+        .route("/tags/new", get(api::tags::show_new_tag_form))
+        .route(
+            "/tags/:id",
+            delete(api::tags::delete_tag).put(api::tags::update_tag),
+        )
+        .route("/tags/:id/edit", get(api::tags::show_edit_tag_form))
         .route("/articles", get(api::articles::list_articles))
         .route("/articles/search", get(api::articles::search_articles))
         .route(

@@ -1,0 +1,26 @@
+{# Tag pill component - displays a tag with its configured color and style #}
+{# Expected variables: tag (Tag struct with name, color, style) #}
+
+{% if tag.style == "outline" %}
+<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2"
+      style="border-color: {{ tag.color }}; color: {{ tag.color }};">
+    {{ tag.name }}
+</span>
+{% else if tag.style == "striped" %}
+<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+      style="background: repeating-linear-gradient(
+        45deg,
+        {{ tag.color }},
+        {{ tag.color }} 4px,
+        {{ tag.color }}dd 4px,
+        {{ tag.color }}dd 8px
+      );">
+    {{ tag.name }}
+</span>
+{% else %}
+{# Default: solid style #}
+<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
+      style="background-color: {{ tag.color }};">
+    {{ tag.name }}
+</span>
+{% endif %}

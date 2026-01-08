@@ -38,6 +38,8 @@ pub struct FeedDetailTemplate {
 #[template(path = "feeds/edit_form.html")]
 pub struct FeedEditFormTemplate {
     pub feed: Feed,
+    pub all_tags: Vec<Tag>,
+    pub feed_tag_ids: Vec<i64>,
 }
 
 #[derive(Template)]
@@ -218,4 +220,24 @@ pub struct GroupFormTemplate {
 pub struct AssignFeedTemplate {
     pub feed: Feed,
     pub groups: Vec<Group>,
+}
+
+// Tag templates
+
+#[derive(Template)]
+#[template(path = "tags/list.html")]
+pub struct TagsListTemplate {
+    pub tags: Vec<Tag>,
+}
+
+#[derive(Template)]
+#[template(path = "tags/_list_content.html")]
+pub struct TagListContentTemplate {
+    pub tags: Vec<Tag>,
+}
+
+#[derive(Template)]
+#[template(path = "tags/form.html")]
+pub struct TagFormTemplate {
+    pub tag: Option<Tag>,
 }

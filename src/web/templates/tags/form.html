@@ -1,0 +1,125 @@
+<modal-dialog title="{% if tag.is_some() %}Edit Tag{% else %}Create Tag{% endif %}" close-target="tag-form-modal">
+    <form
+        {% if tag.is_some() %}
+        hx-put="/tags/{{ tag.as_ref().unwrap().id }}"
+        {% else %}
+        hx-post="/tags"
+        {% endif %}
+        hx-target="#tag-list"
+        hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.successful) document.getElementById('tag-form-modal').innerHTML = ''">
+
+        <div class="form-group">
+            <label for="name" class="form-label form-label-required">
+                Tag Name
+            </label>
+            <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                placeholder="e.g., Technology"
+                value="{% if tag.is_some() %}{{ tag.as_ref().unwrap().name }}{% endif %}"
+                class="form-input"
+                autofocus>
+        </div>
+
+        <div class="form-group">
+            <label for="color" class="form-label form-label-required">
+                Color
+            </label>
+            <div class="flex items-center gap-3">
+                <input
+                    type="color"
+                    id="color_picker"
+                    value="{% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}{% else %}#3B82F6{% endif %}"
+                    class="w-12 h-10 rounded cursor-pointer border border-gray-300 dark:border-gray-600">
+                <input
+                    type="text"
+                    id="color"
+                    name="color"
+                    required
+                    pattern="^#[0-9A-Fa-f]{6}$"
+                    value="{% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}{% else %}#3B82F6{% endif %}"
+                    class="form-input flex-1"
+                    placeholder="#3B82F6">
+            </div>
+        </div>
+
+        <div class="form-group-lg">
+            <label class="form-label form-label-required">
+                Style
+            </label>
+            <div class="grid grid-cols-3 gap-3 mt-2">
+                <label class="relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
+                    <input type="radio" name="style" value="solid" class="sr-only"
+                        {% if tag.is_none() || tag.as_ref().unwrap().style == "solid" %}checked{% endif %}>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white mb-2"
+                          style="background-color: {% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}{% else %}#3B82F6{% endif %};">
+                        Sample
+                    </span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Solid</span>
+                </label>
+
+                <label class="relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
+                    <input type="radio" name="style" value="outline" class="sr-only"
+                        {% if tag.is_some() && tag.as_ref().unwrap().style == "outline" %}checked{% endif %}>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 mb-2"
+                          style="border-color: {% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}{% else %}#3B82F6{% endif %}; color: {% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}{% else %}#3B82F6{% endif %};">
+                        Sample
+                    </span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Outline</span>
+                </label>
+
+                <label class="relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
+                    <input type="radio" name="style" value="striped" class="sr-only"
+                        {% if tag.is_some() && tag.as_ref().unwrap().style == "striped" %}checked{% endif %}>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white mb-2"
+                          style="background: repeating-linear-gradient(45deg, {% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}{% else %}#3B82F6{% endif %}, {% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}{% else %}#3B82F6{% endif %} 4px, {% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}dd{% else %}#3B82F6dd{% endif %} 4px, {% if tag.is_some() %}{{ tag.as_ref().unwrap().color }}dd{% else %}#3B82F6dd{% endif %} 8px);">
+                        Sample
+                    </span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Striped</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex {% if tag.is_some() %}justify-between{% else %}justify-end{% endif %} items-center">
+            {% if tag.is_some() %}
+            <button
+                type="button"
+                hx-delete="/tags/{{ tag.as_ref().unwrap().id }}"
+                hx-confirm="Delete tag '{{ tag.as_ref().unwrap().name }}'? It will be removed from all feeds."
+                hx-target="#tag-list"
+                hx-swap="innerHTML"
+                hx-on::after-request="if(event.detail.successful) document.getElementById('tag-form-modal').innerHTML = ''"
+                class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">
+                Delete Tag
+            </button>
+            {% endif %}
+            <div class="flex space-x-3">
+                <button
+                    type="button"
+                    onclick="document.getElementById('tag-form-modal').innerHTML = ''"
+                    class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    {% if tag.is_some() %}Save Changes{% else %}Create Tag{% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</modal-dialog>
+
+<script>
+// Sync color picker with text input
+document.getElementById('color_picker').addEventListener('input', function(e) {
+    document.getElementById('color').value = e.target.value.toUpperCase();
+});
+document.getElementById('color').addEventListener('input', function(e) {
+    const val = e.target.value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        document.getElementById('color_picker').value = val;
+    }
+});
+</script>

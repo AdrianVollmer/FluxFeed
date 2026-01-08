@@ -123,9 +123,7 @@
             {% if tags.len() > 0 %}
             <div class="flex flex-wrap gap-2">
                 {% for tag in tags %}
-                <span class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm">
-                    {{ tag.name }}
-                </span>
+                {% include "components/_tag_pill.html" %}
                 {% endfor %}
             </div>
             {% else %}

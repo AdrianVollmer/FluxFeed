@@ -32,6 +32,8 @@ pub struct UpdateFeedForm {
     pub description: Option<String>,
     pub fetch_frequency: String,
     pub color: String,
+    #[serde(default)]
+    pub tag_ids: Vec<i64>,
 }
 
 pub async fn list_feeds(State(state): State<AppState>) -> Result<Html<String>, AppError> {
@@ -120,7 +122,15 @@ pub async fn show_edit_feed_form(
         .await?
         .ok_or(feed_service::FeedServiceError::NotFound)?;
 
-    let template = crate::web::templates::FeedEditFormTemplate { feed };
+    let all_tags = repository::list_tags(&state.db_pool).await?;
+    let feed_tags = repository::get_feed_tags(&state.db_pool, feed_id).await?;
+    let feed_tag_ids: Vec<i64> = feed_tags.iter().map(|t| t.id).collect();
+
+    let template = crate::web::templates::FeedEditFormTemplate {
+        feed,
+        all_tags,
+        feed_tag_ids,
+    };
     Ok(Html(template.render()?))
 }
 
@@ -165,6 +175,9 @@ pub async fn update_feed(
         &form.color,
     )
     .await?;
+
+    // Update feed tags
+    repository::set_feed_tags(&state.db_pool, feed_id, &form.tag_ids).await?;
 
     // Redirect to feed detail page
     Ok(axum::response::Redirect::to(&format!("/feeds/{}", feed_id)))

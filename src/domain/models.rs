@@ -68,6 +68,8 @@ pub struct Article {
 pub struct Tag {
     pub id: i64,
     pub name: String,
+    pub color: String,
+    pub style: String,
     pub created_at: DateTime<Utc>,
 }
 
@@ -161,6 +163,8 @@ mod tests {
         let tag = Tag {
             id: 1,
             name: "Tech".to_string(),
+            color: "#3B82F6".to_string(),
+            style: "solid".to_string(),
             created_at: now,
         };
 
@@ -169,5 +173,7 @@ mod tests {
 
         assert_eq!(tag.id, deserialized.id);
         assert_eq!(tag.name, deserialized.name);
+        assert_eq!(tag.color, deserialized.color);
+        assert_eq!(tag.style, deserialized.style);
     }
 }

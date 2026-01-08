@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Tags - FluxFeed{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold">Tags</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Organize your feeds with colored tags</p>
+        </div>
+        <button
+            hx-get="/tags/new"
+            hx-target="#tag-form-modal"
+            hx-swap="innerHTML"
+            class="btn btn-primary">
+            + Add Tag
+        </button>
+    </div>
+
+    <!-- Modal container -->
+    <div id="tag-form-modal"></div>
+
+    <!-- Tags list -->
+    <div id="tag-list">
+        {% include "tags/_list_content.html" %}
+    </div>
+</div>
+{% endblock %}

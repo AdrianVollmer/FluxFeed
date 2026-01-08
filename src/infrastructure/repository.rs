@@ -536,6 +536,92 @@ pub struct ArticleCounts {
 }
 
 // Tag operations
+
+pub async fn list_tags(pool: &SqlitePool) -> Result<Vec<Tag>, SqlxError> {
+    let tags = sqlx::query_as::<_, Tag>(
+        r#"
+        SELECT * FROM tags
+        ORDER BY name ASC
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(tags)
+}
+
+pub async fn get_tag(pool: &SqlitePool, id: i64) -> Result<Option<Tag>, SqlxError> {
+    let tag = sqlx::query_as::<_, Tag>(
+        r#"
+        SELECT * FROM tags WHERE id = ?
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(tag)
+}
+
+pub async fn create_tag(
+    pool: &SqlitePool,
+    name: &str,
+    color: &str,
+    style: &str,
+) -> Result<Tag, SqlxError> {
+    let result = sqlx::query(
+        r#"
+        INSERT INTO tags (name, color, style)
+        VALUES (?, ?, ?)
+        "#,
+    )
+    .bind(name)
+    .bind(color)
+    .bind(style)
+    .execute(pool)
+    .await?;
+
+    let id = result.last_insert_rowid();
+    get_tag(pool, id).await?.ok_or(SqlxError::RowNotFound)
+}
+
+pub async fn update_tag(
+    pool: &SqlitePool,
+    id: i64,
+    name: &str,
+    color: &str,
+    style: &str,
+) -> Result<Tag, SqlxError> {
+    sqlx::query(
+        r#"
+        UPDATE tags
+        SET name = ?, color = ?, style = ?
+        WHERE id = ?
+        "#,
+    )
+    .bind(name)
+    .bind(color)
+    .bind(style)
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    get_tag(pool, id).await?.ok_or(SqlxError::RowNotFound)
+}
+
+pub async fn delete_tag(pool: &SqlitePool, id: i64) -> Result<(), SqlxError> {
+    sqlx::query(
+        r#"
+        DELETE FROM tags WHERE id = ?
+        "#,
+    )
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn get_feed_tags(pool: &SqlitePool, feed_id: i64) -> Result<Vec<Tag>, SqlxError> {
     let tags = sqlx::query_as::<_, Tag>(
         r#"
@@ -550,6 +636,39 @@ pub async fn get_feed_tags(pool: &SqlitePool, feed_id: i64) -> Result<Vec<Tag>, 
     .await?;
 
     Ok(tags)
+}
+
+/// Replace all tags for a feed with the given tag IDs
+pub async fn set_feed_tags(
+    pool: &SqlitePool,
+    feed_id: i64,
+    tag_ids: &[i64],
+) -> Result<(), SqlxError> {
+    // Delete existing tags for this feed
+    sqlx::query(
+        r#"
+        DELETE FROM feed_tags WHERE feed_id = ?
+        "#,
+    )
+    .bind(feed_id)
+    .execute(pool)
+    .await?;
+
+    // Insert new tags
+    for tag_id in tag_ids {
+        sqlx::query(
+            r#"
+            INSERT INTO feed_tags (feed_id, tag_id)
+            VALUES (?, ?)
+            "#,
+        )
+        .bind(feed_id)
+        .bind(tag_id)
+        .execute(pool)
+        .await?;
+    }
+
+    Ok(())
 }
 
 // Group operations

@@ -102,6 +102,43 @@
                 </p>
             </div>
 
+            <div class="form-group-lg">
+                <label class="form-label">
+                    Tags
+                </label>
+                {% if all_tags.is_empty() %}
+                <p class="text-gray-500 dark:text-gray-400 text-sm">
+                    No tags yet. <a href="/tags" class="text-blue-600 hover:underline">Create some tags</a> first.
+                </p>
+                {% else %}
+                <div class="flex flex-wrap gap-2">
+                    {% for tag in all_tags %}
+                    <label class="cursor-pointer">
+                        <input type="checkbox" name="tag_ids" value="{{ tag.id }}"
+                               {% if tag.id|in_list(feed_tag_ids) %}checked{% endif %}
+                               class="sr-only peer">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-all
+                                     peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-blue-500
+                                     dark:peer-checked:ring-offset-gray-800
+                                     opacity-50 peer-checked:opacity-100"
+                              {% if tag.style == "outline" %}
+                              style="border: 2px solid {{ tag.color }}; color: {{ tag.color }};"
+                              {% else if tag.style == "striped" %}
+                              style="background: repeating-linear-gradient(45deg, {{ tag.color }}, {{ tag.color }} 4px, {{ tag.color }}dd 4px, {{ tag.color }}dd 8px); color: white;"
+                              {% else %}
+                              style="background-color: {{ tag.color }}; color: white;"
+                              {% endif %}>
+                            {{ tag.name }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                <p class="form-help">
+                    Click tags to select or deselect them
+                </p>
+                {% endif %}
+            </div>
+
             <div class="flex gap-3">
                 <button type="submit"
                         class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
