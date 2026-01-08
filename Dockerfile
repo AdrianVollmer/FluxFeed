@@ -8,10 +8,10 @@ RUN npm ci
 COPY static/css/input.css ./static/css/
 COPY static/ts ./static/ts
 COPY static/favicon.svg ./static/
-COPY scripts/build-ts.js scripts/generate-icons.js ./scripts/
+COPY scripts/build-ts.js scripts/generate-icons.js scripts/build.sh ./scripts/
 COPY tailwind.config.js tsconfig.json ./
 COPY src/web/templates ./src/web/templates
-RUN npm run build && npm run generate:icons
+RUN ./scripts/build.sh frontend
 
 # Stage 2: Build Rust application
 FROM rust:1.92-bookworm AS builder
@@ -27,7 +27,9 @@ RUN apt-get update && apt-get install -y \
 # Copy manifests and SQLx metadata
 COPY Cargo.toml Cargo.lock ./
 COPY .sqlx ./.sqlx
-COPY --from=frontend-builder /build/static/js/manifest.json ./static/js/
+
+# Create dummy manifest.json for dependency caching (include_str! needs it)
+RUN mkdir -p static/js/dist && echo '{}' > static/js/dist/manifest.json
 
 # Create a dummy main.rs to build dependencies (for caching)
 RUN mkdir src && \
@@ -35,12 +37,13 @@ RUN mkdir src && \
     SQLX_OFFLINE=true cargo build --release && \
     rm -rf src
 
-# Copy source code and templates
+# Copy real manifest from frontend-builder and source code
+COPY --from=frontend-builder /build/static/js/dist/manifest.json ./static/js/dist/
 COPY src ./src
 COPY migrations ./migrations
 COPY askama.toml ./
 
-# Build the application
+# Build the application with real manifest
 RUN SQLX_OFFLINE=true cargo build --release
 
 # Stage 3: Runtime image
@@ -63,13 +66,12 @@ RUN useradd -m -u 1000 fluxfeed && \
 # Copy binary from builder
 COPY --from=builder /build/target/release/fluxfeed /app/fluxfeed
 
-# Copy static files (base assets: icons, htmx, favicon, etc.)
+# Copy static files (base assets: htmx, favicon, PWA files, etc.)
 COPY --chown=fluxfeed:fluxfeed static /app/static
 
-# Copy compiled CSS, JS, and icons from frontend-builder
+# Copy compiled CSS, JS, and icons from frontend-builder (overwrites placeholders)
 COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/css/tailwind.css /app/static/css/
 COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/js/dist /app/static/js/dist
-COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/js/manifest.json /app/static/js/
 COPY --from=frontend-builder --chown=fluxfeed:fluxfeed /build/static/icons /app/static/icons
 
 # Switch to non-root user

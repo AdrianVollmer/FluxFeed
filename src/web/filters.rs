@@ -37,7 +37,7 @@ pub fn in_list(value: &i64, list: &[i64]) -> askama::Result<bool> {
 
 /// JS manifest mapping base names to hashed filenames
 static JS_MANIFEST: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
-    let manifest_str = include_str!("../../static/js/manifest.json");
+    let manifest_str = include_str!("../../static/js/dist/manifest.json");
     serde_json::from_str(manifest_str).unwrap_or_default()
 });
 
