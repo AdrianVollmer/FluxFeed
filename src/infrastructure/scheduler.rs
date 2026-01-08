@@ -107,8 +107,10 @@ async fn handle_feed_update(
     // Log successful fetch
     repository::insert_log(pool, feed.id, "success", None, None, None).await?;
 
-    // Update fetch interval based on TTL if in adaptive mode
-    update_feed_ttl_if_needed(pool, feed, ttl).await?;
+    // Store TTL for display purposes (custom mode) or info
+    if ttl.is_some() && feed.ttl_minutes != ttl {
+        repository::update_feed_ttl_only(pool, feed.id, ttl).await?;
+    }
 
     // Update feed metadata from RSS
     update_feed_metadata_from_rss(pool, feed, &parsed_feed, etag, last_modified).await?;
@@ -117,91 +119,74 @@ async fn handle_feed_update(
     let new_articles_count =
         insert_articles_from_entries(pool, feed.id, parsed_feed.entries).await?;
 
+    // Update adaptive fetch interval based on whether we got new articles
+    update_adaptive_interval(pool, feed, new_articles_count).await?;
+
     Ok(FetchSingleFeedResult::Updated { new_articles_count })
 }
 
-/// Update feed TTL and fetch interval if needed (adaptive mode)
-/// Uses both TTL from the feed and historical article frequency
-async fn update_feed_ttl_if_needed(
+/// Minimum fetch interval: 1 hour
+const MIN_INTERVAL_MINUTES: i64 = 60;
+/// Maximum fetch interval: 1 week
+const MAX_INTERVAL_MINUTES: i64 = 10080;
+
+/// Update adaptive fetch interval based on whether new articles were found.
+///
+/// Algorithm:
+/// - If no new articles: double the interval
+/// - If new articles two fetches in a row: halve the interval
+/// - Interval is clamped between 1 hour and 1 week
+/// - Only applies to feeds with fetch_frequency = "adaptive"
+async fn update_adaptive_interval(
     pool: &sqlx::SqlitePool,
     feed: &crate::domain::models::Feed,
-    ttl: Option<i64>,
+    new_articles_count: usize,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if feed.fetch_frequency == "adaptive" {
-        // Get interval from TTL (clamped to 1hr - 1 week)
-        let ttl_interval = if let Some(ttl_value) = ttl {
-            let clamped = ttl_value.clamp(60, 10080);
-            if ttl_value != clamped {
-                tracing::info!(
-                    "Feed {} TTL {} clamped to {} minutes",
-                    feed.id,
-                    ttl_value,
-                    clamped
-                );
-            }
-            clamped
-        } else {
-            60 // Default 1 hour if no TTL
-        };
+    // Only adjust interval for adaptive mode
+    if feed.fetch_frequency != "adaptive" {
+        return Ok(());
+    }
 
-        // Get interval from article frequency (also clamped to 1hr - 1 week)
-        let article_interval = match repository::get_feed_article_frequency(pool, feed.id).await {
-            Ok(Some(avg_minutes)) => {
-                // Use half the average article interval (to catch new articles reasonably quickly)
-                // but still clamp to 1hr - 1 week
-                let target = (avg_minutes / 2).clamp(60, 10080);
-                tracing::debug!(
-                    "Feed {} article frequency: {}m avg, target interval: {}m",
-                    feed.id,
-                    avg_minutes,
-                    target
-                );
-                Some(target)
-            }
-            Ok(None) => {
-                tracing::debug!(
-                    "Feed {} has insufficient articles for frequency calculation",
-                    feed.id
-                );
-                None
-            }
-            Err(e) => {
-                tracing::warn!(
-                    "Failed to get article frequency for feed {}: {}",
-                    feed.id,
-                    e
-                );
-                None
-            }
-        };
+    let has_new_articles = new_articles_count > 0;
 
-        // Use the maximum of TTL interval and article-based interval
-        // This ensures we don't poll too frequently for slow feeds
-        let new_interval = match article_interval {
-            Some(ai) => ttl_interval.max(ai),
-            None => ttl_interval,
-        };
-
-        // Update interval if changed
-        if new_interval != feed.fetch_interval_minutes {
+    let (new_interval, new_consecutive) = if has_new_articles {
+        // We got new articles
+        if feed.consecutive_new_articles >= 1 {
+            // Two consecutive fetches with new articles: halve the interval
+            let halved = (feed.fetch_interval_minutes / 2).max(MIN_INTERVAL_MINUTES);
             tracing::info!(
-                "Updating feed {} interval: {}m -> {}m (TTL: {:?}, article-based: {:?})",
+                "Feed {} had new articles 2x in a row, halving interval: {}m -> {}m",
                 feed.id,
                 feed.fetch_interval_minutes,
-                new_interval,
-                ttl,
-                article_interval
+                halved
             );
-            repository::update_feed_ttl(pool, feed.id, ttl, new_interval).await?;
-        } else if ttl.is_some() && feed.ttl_minutes != ttl {
-            // Just update stored TTL value for display
-            repository::update_feed_ttl(pool, feed.id, ttl, feed.fetch_interval_minutes).await?;
+            (halved, 2) // Cap at 2 to avoid unbounded growth
+        } else {
+            // First fetch with new articles, just increment counter
+            tracing::debug!(
+                "Feed {} had new articles, incrementing consecutive counter",
+                feed.id
+            );
+            (feed.fetch_interval_minutes, 1)
         }
     } else {
-        // Custom frequency mode: just store TTL for user info, don't change interval
-        if ttl.is_some() && feed.ttl_minutes != ttl {
-            repository::update_feed_ttl_only(pool, feed.id, ttl).await?;
-        }
+        // No new articles: double the interval
+        let doubled = (feed.fetch_interval_minutes * 2).min(MAX_INTERVAL_MINUTES);
+        tracing::info!(
+            "Feed {} had no new articles, doubling interval: {}m -> {}m",
+            feed.id,
+            feed.fetch_interval_minutes,
+            doubled
+        );
+        (doubled, 0) // Reset consecutive counter
+    };
+
+    // Only update if something changed
+    if new_interval != feed.fetch_interval_minutes
+        || new_consecutive != feed.consecutive_new_articles
+    {
+        repository::update_adaptive_fetch_state(pool, feed.id, new_consecutive, new_interval)
+            .await?;
     }
 
     Ok(())
@@ -309,7 +294,7 @@ async fn insert_articles_from_entries(
     Ok(new_articles_count)
 }
 
-/// Handle feed not modified: log and update last_fetched_at
+/// Handle feed not modified: log, update last_fetched_at, and adjust adaptive interval
 async fn handle_feed_not_modified(
     pool: &sqlx::SqlitePool,
     feed: &crate::domain::models::Feed,
@@ -321,6 +306,9 @@ async fn handle_feed_not_modified(
 
     // Just update last_fetched_at
     repository::touch_feed(pool, feed.id).await?;
+
+    // Not modified means no new articles - update adaptive interval
+    update_adaptive_interval(pool, feed, 0).await?;
 
     Ok(FetchSingleFeedResult::NotModified)
 }

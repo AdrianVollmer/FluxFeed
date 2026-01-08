@@ -877,6 +877,7 @@ pub async fn list_logs_with_feeds(
 }
 
 /// Update feed's TTL and fetch interval (for adaptive mode)
+#[allow(dead_code)]
 pub async fn update_feed_ttl(
     pool: &SqlitePool,
     feed_id: i64,
@@ -903,6 +904,7 @@ pub async fn update_feed_ttl(
 
 /// Calculate average minutes between articles for a feed based on recent articles
 /// Returns None if there are fewer than 2 articles with published dates
+#[allow(dead_code)]
 pub async fn get_feed_article_frequency(
     pool: &SqlitePool,
     feed_id: i64,
@@ -958,6 +960,31 @@ pub async fn update_feed_ttl_only(
         WHERE id = ?
         "#,
         ttl_minutes,
+        feed_id
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+/// Update adaptive fetch state (consecutive_new_articles counter and interval)
+pub async fn update_adaptive_fetch_state(
+    pool: &SqlitePool,
+    feed_id: i64,
+    consecutive_new_articles: i64,
+    fetch_interval_minutes: i64,
+) -> Result<(), SqlxError> {
+    sqlx::query!(
+        r#"
+        UPDATE feeds
+        SET consecutive_new_articles = ?,
+            fetch_interval_minutes = ?,
+            updated_at = datetime('now')
+        WHERE id = ?
+        "#,
+        consecutive_new_articles,
+        fetch_interval_minutes,
         feed_id
     )
     .execute(pool)

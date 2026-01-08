@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE feeds\n        SET consecutive_new_articles = ?,\n            fetch_interval_minutes = ?,\n            updated_at = datetime('now')\n        WHERE id = ?\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "393a7ad6795d772e518da8e5c4430e78173ee40664b939c7fb11222a1ac9283f"
+}

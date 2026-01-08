@@ -163,6 +163,7 @@ mod tests {
             color: "#3B82F6".to_string(),
             fetch_frequency: "adaptive".to_string(),
             ttl_minutes: None,
+            consecutive_new_articles: 0,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }
