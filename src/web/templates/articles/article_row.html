@@ -71,6 +71,10 @@
                 <span class="text-xs px-2 py-1 rounded" style="background-color: {{ item.feed_color }}20; color: {{ item.feed_color }};">
                     {{ item.feed_title }}
                 </span>
+
+                {% for tag in item.tags %}
+                {% include "components/_tag_pill.html" %}
+                {% endfor %}
             </div>
 
             <!-- Article summary/content -->

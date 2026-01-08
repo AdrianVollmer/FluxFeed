@@ -118,6 +118,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(api::groups::show_feed_filter_modal),
         )
         .route(
+            "/articles/tag-filter-modal",
+            get(api::tags::show_tag_filter_modal),
+        )
+        .route(
             "/articles/:id/toggle-read",
             post(api::articles::toggle_read_status),
         )

@@ -13,11 +13,14 @@ use axum::{
     response::{Html, IntoResponse, Response},
 };
 use serde::Deserialize;
+use sqlx::SqlitePool;
+use std::collections::HashSet;
 
 #[derive(Deserialize, Clone)]
 pub struct ArticleListParams {
     pub feed_ids: Option<String>,  // Comma-separated feed IDs
     pub group_ids: Option<String>, // Comma-separated group IDs
+    pub tag_ids: Option<String>,   // Comma-separated tag IDs
     pub is_read: Option<bool>,
     pub is_starred: Option<bool>,
     pub limit: Option<i64>,
@@ -45,6 +48,37 @@ fn parse_ids(ids_str: Option<&str>) -> Vec<i64> {
         .unwrap_or_default()
 }
 
+/// Fetch tags for all unique feeds and attach to articles
+async fn attach_tags_to_articles(
+    pool: &SqlitePool,
+    mut articles: Vec<ArticleWithFeed>,
+) -> Result<Vec<ArticleWithFeed>, sqlx::Error> {
+    if articles.is_empty() {
+        return Ok(articles);
+    }
+
+    // Collect unique feed IDs
+    let feed_ids: Vec<i64> = articles
+        .iter()
+        .map(|a| a.article.feed_id)
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    // Batch-fetch tags for all feeds
+    let tags_map = repository::get_tags_for_feeds(pool, &feed_ids).await?;
+
+    // Attach tags to each article
+    for article in &mut articles {
+        article.tags = tags_map
+            .get(&article.article.feed_id)
+            .cloned()
+            .unwrap_or_default();
+    }
+
+    Ok(articles)
+}
+
 pub async fn list_articles(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -60,22 +94,53 @@ pub async fn list_articles(
     // Parse comma-separated IDs
     let selected_feed_ids = parse_ids(params.feed_ids.as_deref());
     let selected_group_ids = parse_ids(params.group_ids.as_deref());
+    let selected_tag_ids = parse_ids(params.tag_ids.as_deref());
 
     // Resolve groups to feed IDs
-    let feed_ids = if selected_feed_ids.is_empty() && selected_group_ids.is_empty() {
-        None // No filter = all feeds
+    let mut feed_ids_from_groups = if selected_feed_ids.is_empty() && selected_group_ids.is_empty()
+    {
+        Vec::new()
     } else {
-        let ids = group_service::resolve_selection_to_feed_ids(
+        group_service::resolve_selection_to_feed_ids(
             &state.db_pool,
             &selected_group_ids,
             &selected_feed_ids,
         )
-        .await?;
-        if ids.is_empty() {
-            None
+        .await?
+    };
+
+    // Resolve tags to feed IDs
+    let feed_ids_from_tags = if !selected_tag_ids.is_empty() {
+        repository::get_feed_ids_by_tags(&state.db_pool, &selected_tag_ids).await?
+    } else {
+        Vec::new()
+    };
+
+    // Combine feed filters
+    let feed_ids = if feed_ids_from_groups.is_empty()
+        && feed_ids_from_tags.is_empty()
+        && selected_feed_ids.is_empty()
+        && selected_group_ids.is_empty()
+        && selected_tag_ids.is_empty()
+    {
+        None // No filter = all feeds
+    } else if feed_ids_from_groups.is_empty() && !feed_ids_from_tags.is_empty() {
+        // Only tag filter active
+        Some(feed_ids_from_tags)
+    } else if !feed_ids_from_groups.is_empty() && feed_ids_from_tags.is_empty() {
+        // Only feed/group filter active
+        Some(feed_ids_from_groups)
+    } else if !feed_ids_from_groups.is_empty() && !feed_ids_from_tags.is_empty() {
+        // Both filters active - intersect them
+        feed_ids_from_groups.retain(|id| feed_ids_from_tags.contains(id));
+        if feed_ids_from_groups.is_empty() {
+            // No matching feeds - use impossible ID to get empty results
+            Some(vec![-1])
         } else {
-            Some(ids)
+            Some(feed_ids_from_groups)
         }
+    } else {
+        None
     };
 
     // Get article counts for sidebar and smart default
@@ -123,6 +188,9 @@ pub async fn list_articles(
         .into_iter()
         .take(limit as usize)
         .collect();
+
+    // Fetch and attach tags to articles
+    let articles_to_show = attach_tags_to_articles(&state.db_pool, articles_to_show).await?;
 
     // Check if this is an HTMX pagination request
     let is_htmx = headers.get("HX-Request").is_some();
@@ -202,6 +270,7 @@ fn render_htmx_pagination(
         next_offset: offset + limit,
         filter_feed_ids: params.feed_ids.clone(),
         filter_group_ids: params.group_ids.clone(),
+        filter_tag_ids: params.tag_ids.clone(),
         filter_read: params.is_read,
         filter_starred: params.is_starred,
         search_query: params.q.clone(),
@@ -230,6 +299,7 @@ async fn render_full_articles_page(
     // Get all feeds and groups for the filter modal
     let feeds = feed_service::list_all_feeds(&state.db_pool).await?;
     let groups = repository::list_groups(&state.db_pool).await?;
+    let all_tags = repository::list_tags(&state.db_pool).await?;
 
     // Build group tree for the filter modal
     let (group_tree, ungrouped_feeds) = group_service::build_group_tree(groups, feeds.clone());
@@ -237,6 +307,7 @@ async fn render_full_articles_page(
     // Parse selected IDs for highlighting in the UI
     let filter_feed_ids = parse_ids(params.feed_ids.as_deref());
     let filter_group_ids = parse_ids(params.group_ids.as_deref());
+    let filter_tag_ids = parse_ids(params.tag_ids.as_deref());
 
     let template = ArticlesListTemplate {
         articles,
@@ -248,6 +319,7 @@ async fn render_full_articles_page(
         has_more,
         filter_feed_ids,
         filter_group_ids,
+        filter_tag_ids,
         filter_read: effective_filter.is_read,
         filter_starred: params.is_starred,
         article_counts: effective_filter.counts,
@@ -255,6 +327,7 @@ async fn render_full_articles_page(
         search_query: params.q.clone(),
         date_from: params.date_from.clone(),
         date_to: params.date_to.clone(),
+        all_tags,
     };
 
     Ok(Html(template.render()?))
@@ -543,6 +616,10 @@ pub async fn search_articles(
                 .into_iter()
                 .take(limit as usize)
                 .collect();
+
+            // Fetch and attach tags to articles
+            let articles_to_show =
+                attach_tags_to_articles(&state.db_pool, articles_to_show).await?;
 
             // Check if this is an HTMX pagination request
             let is_htmx = headers.get("HX-Request").is_some();

@@ -73,6 +73,7 @@ pub struct ArticlesListTemplate {
     pub has_more: bool,
     pub filter_feed_ids: Vec<i64>,
     pub filter_group_ids: Vec<i64>,
+    pub filter_tag_ids: Vec<i64>,
     pub filter_read: Option<bool>,
     pub filter_starred: Option<bool>,
     pub article_counts: ArticleCounts,
@@ -80,6 +81,7 @@ pub struct ArticlesListTemplate {
     pub search_query: Option<String>,
     pub date_from: Option<String>,
     pub date_to: Option<String>,
+    pub all_tags: Vec<Tag>,
 }
 
 #[derive(Template)]
@@ -100,6 +102,7 @@ pub struct ArticleWithFeed {
     pub article: Article,
     pub feed_title: String,
     pub feed_color: String,
+    pub tags: Vec<Tag>,
 }
 
 #[derive(Template)]
@@ -122,6 +125,7 @@ pub struct ArticleListFooterTemplate {
     pub next_offset: i64,
     pub filter_feed_ids: Option<String>,
     pub filter_group_ids: Option<String>,
+    pub filter_tag_ids: Option<String>,
     pub filter_read: Option<bool>,
     pub filter_starred: Option<bool>,
     pub search_query: Option<String>,
@@ -189,6 +193,18 @@ pub struct FeedFilterModalTemplate {
     pub selected_group_ids: Vec<i64>,
     pub filter_read: Option<bool>,
     pub filter_starred: Option<bool>,
+}
+
+#[derive(Template)]
+#[template(path = "articles/tag_filter_modal.html")]
+#[allow(dead_code)]
+pub struct TagFilterModalTemplate {
+    pub tags: Vec<Tag>,
+    pub selected_tag_ids: Vec<i64>,
+    pub filter_read: Option<bool>,
+    pub filter_starred: Option<bool>,
+    pub filter_feed_ids: Vec<i64>,
+    pub filter_group_ids: Vec<i64>,
 }
 
 // Group templates

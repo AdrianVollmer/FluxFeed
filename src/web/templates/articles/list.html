@@ -5,6 +5,7 @@
 {% block scripts %}
 <script src="{{ "articles.js"|js_path }}" defer></script>
 <script src="{{ "feed-filter.js"|js_path }}" defer></script>
+<script src="{{ "tag-filter.js"|js_path }}" defer></script>
 {% include "articles/_mobile_nav_filters.html" %}
 {% endblock %}
 
@@ -36,6 +37,9 @@
 
             <!-- Modal container for feed filter -->
             <div id="feed-filter-modal"></div>
+
+            <!-- Modal container for tag filter -->
+            <div id="tag-filter-modal"></div>
 
             <!-- Article list - Cards View -->
             <div id="articles-cards" class="space-y-4">
@@ -121,7 +125,7 @@
                 {% if has_more %}
                 <button
                     id="load-more-btn"
-                    hx-get="/articles?offset={{ offset + limit }}{% if !filter_feed_ids.is_empty() %}&feed_ids={{ filter_feed_ids|join(",") }}{% endif %}{% if !filter_group_ids.is_empty() %}&group_ids={{ filter_group_ids|join(",") }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
+                    hx-get="/articles?offset={{ offset + limit }}{% if !filter_feed_ids.is_empty() %}&feed_ids={{ filter_feed_ids|join(",") }}{% endif %}{% if !filter_group_ids.is_empty() %}&group_ids={{ filter_group_ids|join(",") }}{% endif %}{% if !filter_tag_ids.is_empty() %}&tag_ids={{ filter_tag_ids|join(",") }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
                     hx-target="#articles-cards"
                     hx-swap="beforeend"
                     class="btn btn-primary">

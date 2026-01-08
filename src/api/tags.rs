@@ -1,10 +1,12 @@
 use crate::api::articles::AppError;
 use crate::api::feeds::AppState;
 use crate::infrastructure::repository;
-use crate::web::templates::{TagFormTemplate, TagListContentTemplate, TagsListTemplate};
+use crate::web::templates::{
+    TagFilterModalTemplate, TagFormTemplate, TagListContentTemplate, TagsListTemplate,
+};
 use askama::Template;
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     response::Html,
     Form,
 };
@@ -123,4 +125,47 @@ pub async fn delete_tag(
 
     // Return the updated tag list content (partial for HTMX)
     render_tag_list_content(&state).await
+}
+
+#[derive(Deserialize)]
+pub struct TagFilterModalParams {
+    pub tag_ids: Option<String>,
+    pub feed_ids: Option<String>,
+    pub group_ids: Option<String>,
+    pub is_read: Option<bool>,
+    pub is_starred: Option<bool>,
+}
+
+/// Parse comma-separated IDs from query parameter
+fn parse_ids(ids_str: Option<&str>) -> Vec<i64> {
+    ids_str
+        .map(|s| {
+            s.split(',')
+                .filter_map(|id| id.trim().parse().ok())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Show tag filter modal (GET /articles/tag-filter-modal)
+pub async fn show_tag_filter_modal(
+    State(state): State<AppState>,
+    Query(params): Query<TagFilterModalParams>,
+) -> Result<Html<String>, AppError> {
+    let tags = repository::list_tags(&state.db_pool).await?;
+
+    let selected_tag_ids = parse_ids(params.tag_ids.as_deref());
+    let filter_feed_ids = parse_ids(params.feed_ids.as_deref());
+    let filter_group_ids = parse_ids(params.group_ids.as_deref());
+
+    let template = TagFilterModalTemplate {
+        tags,
+        selected_tag_ids,
+        filter_read: params.is_read,
+        filter_starred: params.is_starred,
+        filter_feed_ids,
+        filter_group_ids,
+    };
+
+    Ok(Html(template.render()?))
 }

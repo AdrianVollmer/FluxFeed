@@ -161,6 +161,10 @@
                         {{ item.article.og_site_name.as_ref().unwrap() }}
                     </span>
                     {% endif %}
+
+                    {% for tag in item.tags %}
+                    {% include "components/_tag_pill.html" %}
+                    {% endfor %}
                 </div>
 
                 <!-- Article summary/content -->

@@ -2,6 +2,7 @@ use crate::domain::models::{Article, CreateFeed, Feed, Group, Log, LogWithFeed, 
 use crate::web::templates::ArticleWithFeed;
 use chrono::Utc;
 use sqlx::{Error as SqlxError, Row, SqlitePool};
+use std::collections::HashMap;
 
 pub async fn create_feed(pool: &SqlitePool, create_feed: CreateFeed) -> Result<Feed, SqlxError> {
     let now = Utc::now();
@@ -346,6 +347,7 @@ pub async fn list_articles_with_feeds(
             article,
             feed_title,
             feed_color,
+            tags: Vec::new(), // Tags are populated separately via batch fetch
         });
     }
 
@@ -373,9 +375,10 @@ pub async fn get_article_with_feed_by_id(
     .await?;
 
     if let Some(row) = row {
+        let feed_id: i64 = row.get("feed_id");
         let article = Article {
             id: row.get("id"),
-            feed_id: row.get("feed_id"),
+            feed_id,
             guid: row.get("guid"),
             title: row.get("title"),
             url: row.get("url"),
@@ -394,11 +397,13 @@ pub async fn get_article_with_feed_by_id(
 
         let feed_title: String = row.get("feed_title");
         let feed_color: String = row.get("feed_color");
+        let tags = get_feed_tags(pool, feed_id).await?;
 
         Ok(Some(ArticleWithFeed {
             article,
             feed_title,
             feed_color,
+            tags,
         }))
     } else {
         Ok(None)
@@ -636,6 +641,74 @@ pub async fn get_feed_tags(pool: &SqlitePool, feed_id: i64) -> Result<Vec<Tag>, 
     .await?;
 
     Ok(tags)
+}
+
+/// Batch-fetch tags for multiple feeds in a single query (avoids N+1)
+pub async fn get_tags_for_feeds(
+    pool: &SqlitePool,
+    feed_ids: &[i64],
+) -> Result<HashMap<i64, Vec<Tag>>, SqlxError> {
+    if feed_ids.is_empty() {
+        return Ok(HashMap::new());
+    }
+
+    let placeholders: Vec<&str> = feed_ids.iter().map(|_| "?").collect();
+    let query_str = format!(
+        r#"
+        SELECT ft.feed_id, t.id, t.name, t.color, t.style, t.created_at
+        FROM feed_tags ft
+        INNER JOIN tags t ON t.id = ft.tag_id
+        WHERE ft.feed_id IN ({})
+        ORDER BY t.name ASC
+        "#,
+        placeholders.join(", ")
+    );
+
+    let mut query = sqlx::query(&query_str);
+    for id in feed_ids {
+        query = query.bind(*id);
+    }
+
+    let rows = query.fetch_all(pool).await?;
+
+    let mut result: HashMap<i64, Vec<Tag>> = HashMap::new();
+    for row in rows {
+        let feed_id: i64 = row.get("feed_id");
+        let tag = Tag {
+            id: row.get("id"),
+            name: row.get("name"),
+            color: row.get("color"),
+            style: row.get("style"),
+            created_at: row.get("created_at"),
+        };
+        result.entry(feed_id).or_default().push(tag);
+    }
+
+    Ok(result)
+}
+
+/// Get all feed IDs that have any of the specified tags
+pub async fn get_feed_ids_by_tags(
+    pool: &SqlitePool,
+    tag_ids: &[i64],
+) -> Result<Vec<i64>, SqlxError> {
+    if tag_ids.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let placeholders: Vec<&str> = tag_ids.iter().map(|_| "?").collect();
+    let query_str = format!(
+        "SELECT DISTINCT feed_id FROM feed_tags WHERE tag_id IN ({})",
+        placeholders.join(", ")
+    );
+
+    let mut query = sqlx::query_scalar(&query_str);
+    for tag_id in tag_ids {
+        query = query.bind(*tag_id);
+    }
+
+    let feed_ids: Vec<i64> = query.fetch_all(pool).await?;
+    Ok(feed_ids)
 }
 
 /// Replace all tags for a feed with the given tag IDs
