@@ -180,7 +180,10 @@ pub async fn update_feed(
     repository::set_feed_tags(&state.db_pool, feed_id, &form.tag_ids).await?;
 
     // Redirect to feed detail page
-    Ok(axum::response::Redirect::to(&format!("/feeds/{}", feed_id)))
+    Ok((
+        StatusCode::OK,
+        [("HX-Redirect", format!("/feeds/{}", feed_id))],
+    ))
 }
 
 pub async fn show_import_form() -> Result<Html<String>, AppError> {

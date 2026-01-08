@@ -9,7 +9,7 @@
     <h1 class="text-3xl font-bold mb-6 dark:text-white">Edit Feed</h1>
 
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <form method="POST" action="/feeds/{{ feed.id }}/update" id="frequency-form">
+        <form hx-put="/feeds/{{ feed.id }}" hx-swap="none" id="frequency-form">
             <div class="form-group-lg">
                 <label for="title" class="form-label">
                     Title

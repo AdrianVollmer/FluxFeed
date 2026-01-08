@@ -76,11 +76,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/feeds/import", post(api::feeds::import_feeds))
         .route(
             "/feeds/:id",
-            get(api::feeds::show_feed).delete(api::feeds::delete_feed),
+            get(api::feeds::show_feed)
+                .put(api::feeds::update_feed)
+                .delete(api::feeds::delete_feed),
         )
         .route("/feeds/:id/fetch", post(api::feeds::fetch_feed))
         .route("/feeds/:id/edit", get(api::feeds::show_edit_feed_form))
-        .route("/feeds/:id/update", post(api::feeds::update_feed))
         .route("/feeds/:id/group", put(api::groups::assign_feed_to_group))
         // Group routes
         .route(
