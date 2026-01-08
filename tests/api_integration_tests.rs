@@ -25,8 +25,12 @@ async fn setup_test_app() -> (TestServer, SqlitePool) {
         .route("/feeds", axum::routing::get(feeds::list_feeds))
         .route("/feeds", axum::routing::post(feeds::create_feed))
         .route("/feeds/new", axum::routing::get(feeds::show_feed_form))
-        .route("/feeds/:id", axum::routing::get(feeds::show_feed))
-        .route("/feeds/:id", axum::routing::delete(feeds::delete_feed))
+        .route(
+            "/feeds/:id",
+            axum::routing::get(feeds::show_feed)
+                .post(feeds::update_feed)
+                .delete(feeds::delete_feed),
+        )
         .route("/articles", axum::routing::get(articles::list_articles))
         .route(
             "/articles/:id/toggle-read",
@@ -128,5 +132,43 @@ async fn test_mark_all_read_with_no_articles() {
     assert!(
         response.status_code() == StatusCode::OK
             || response.status_code() == StatusCode::NO_CONTENT
+    );
+}
+
+#[tokio::test]
+async fn test_update_feed_form_deserialization() {
+    let (server, pool) = setup_test_app().await;
+
+    // First create a feed directly in the database
+    sqlx::query!(
+        r#"INSERT INTO feeds (url, title, color, fetch_frequency, fetch_interval_minutes, created_at)
+           VALUES ('https://example.com/feed.xml', 'Test Feed', '#3b82f6', 'adaptive', 60, datetime('now'))"#
+    )
+    .execute(&pool)
+    .await
+    .expect("Failed to insert test feed");
+
+    // Now try to update it with the same form data that was failing
+    let response = server
+        .post("/feeds/1")
+        .form(&[
+            ("title", "Updated Feed"),
+            ("url", "https://example.com/feed.xml"),
+            ("description", "A test description"),
+            ("color", "#3b82f6"),
+            ("fetch_frequency", "adaptive"),
+            ("custom_hours", "24"),
+            ("tag_ids", "1"),
+        ])
+        .await;
+
+    println!("Response status: {:?}", response.status_code());
+    println!("Response body: {}", response.text());
+
+    // The request should be accepted (not 422)
+    assert_ne!(
+        response.status_code(),
+        StatusCode::UNPROCESSABLE_ENTITY,
+        "Form deserialization failed with 422"
     );
 }

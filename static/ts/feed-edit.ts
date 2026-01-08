@@ -23,23 +23,16 @@ function initFeedEditForm(): void {
   }
 
   if (form) {
-    // Handle form submission to combine radio + custom hours
-    form.addEventListener('submit', function() {
+    // Handle HTMX form submission to combine radio + custom hours
+    form.addEventListener('htmx:configRequest', function(event: Event) {
+      const htmxEvent = event as CustomEvent;
       const radios = document.getElementsByName('fetch_frequency') as NodeListOf<HTMLInputElement>;
       const customHours = document.getElementById('custom_hours') as HTMLInputElement | null;
 
       for (const radio of radios) {
-        if (radio.checked) {
-          if (radio.value === 'custom' && customHours) {
-            // Replace with hours value
-            const hours = customHours.value;
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = 'fetch_frequency';
-            hidden.value = hours;
-            this.appendChild(hidden);
-            radio.disabled = true;
-          }
+        if (radio.checked && radio.value === 'custom' && customHours) {
+          // Replace 'custom' with actual hours value in the request parameters
+          htmxEvent.detail.parameters['fetch_frequency'] = customHours.value;
           break;
         }
       }

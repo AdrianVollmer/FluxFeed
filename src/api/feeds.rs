@@ -25,6 +25,62 @@ pub struct CreateFeedForm {
     title: Option<String>,
 }
 
+/// Deserialize a form field that can be either a single value or multiple values into a Vec
+fn deserialize_id_list<'de, D>(deserializer: D) -> Result<Vec<i64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::{self, Visitor};
+    use std::fmt;
+
+    struct IdListVisitor;
+
+    impl<'de> Visitor<'de> for IdListVisitor {
+        type Value = Vec<i64>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a string, integer, or sequence of integers")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            value
+                .parse::<i64>()
+                .map(|id| vec![id])
+                .map_err(de::Error::custom)
+        }
+
+        fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(vec![value])
+        }
+
+        fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(vec![value as i64])
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: de::SeqAccess<'de>,
+        {
+            let mut ids = Vec::new();
+            while let Some(value) = seq.next_element::<String>()? {
+                ids.push(value.parse::<i64>().map_err(de::Error::custom)?);
+            }
+            Ok(ids)
+        }
+    }
+
+    deserializer.deserialize_any(IdListVisitor)
+}
+
 #[derive(Deserialize)]
 pub struct UpdateFeedForm {
     pub title: String,
@@ -32,8 +88,12 @@ pub struct UpdateFeedForm {
     pub description: Option<String>,
     pub fetch_frequency: String,
     pub color: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_id_list")]
     pub tag_ids: Vec<i64>,
+    /// Ignored field sent by the form for custom frequency input
+    #[allow(dead_code)]
+    #[serde(default)]
+    pub custom_hours: Option<String>,
 }
 
 pub async fn list_feeds(State(state): State<AppState>) -> Result<Html<String>, AppError> {
