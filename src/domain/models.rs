@@ -101,6 +101,7 @@ pub struct GroupNode {
 
 /// Represents an item in a flattened tree view (for template iteration)
 #[derive(Debug, Clone, Serialize)]
+#[allow(clippy::large_enum_variant)]
 pub enum FlatTreeItem {
     Group { group: Group, depth: usize },
     Feed { feed: Feed, depth: usize },

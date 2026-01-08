@@ -81,9 +81,9 @@ pub async fn show_feed(
 pub async fn delete_feed(
     State(state): State<AppState>,
     Path(feed_id): Path<i64>,
-) -> Result<StatusCode, AppError> {
+) -> Result<impl IntoResponse, AppError> {
     feed_service::delete_feed(&state.db_pool, feed_id).await?;
-    Ok(StatusCode::OK)
+    Ok((StatusCode::OK, [("HX-Redirect", "/feeds")]))
 }
 
 pub async fn fetch_feed(
