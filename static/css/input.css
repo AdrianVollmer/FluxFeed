@@ -68,20 +68,21 @@ header {
               0 0 20px -5px var(--shadow-glow) !important;
 }
 
-/* Floating gradient logo */
+/* Gradient logo with color shift */
 header h1 a {
   display: inline-block;
-  background: linear-gradient(135deg, var(--primary-from), var(--accent-cyan));
+  background: linear-gradient(135deg, var(--primary-from), var(--accent-cyan), var(--accent-purple), var(--primary-from));
+  background-size: 300% 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: float 3s ease-in-out infinite;
+  animation: logo-color-shift 6s ease-in-out infinite;
   transition: all 0.3s ease;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-5px); }
+@keyframes logo-color-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 header h1 a:hover {
