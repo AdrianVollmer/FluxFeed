@@ -3,6 +3,9 @@ name = "fluxfeed"
 version = "0.2.1"
 edition = "2021"
 
+[profile.release]
+strip = true
+
 [dependencies]
 # Web framework
 axum = "0.7"
