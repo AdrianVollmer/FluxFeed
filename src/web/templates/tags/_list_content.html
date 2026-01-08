@@ -13,7 +13,7 @@
 <div class="card">
     <div class="space-y-3">
         {% for tag in tags %}
-        <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+        <div class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <button
                 hx-get="/tags/{{ tag.id }}/edit"
                 hx-target="#tag-form-modal"

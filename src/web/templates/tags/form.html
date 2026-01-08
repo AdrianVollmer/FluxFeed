@@ -51,7 +51,7 @@
                 Style
             </label>
             <div class="grid grid-cols-3 gap-3 mt-2">
-                <label class="relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
+                <label class="relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
                     <input type="radio" name="style" value="solid" class="sr-only"
                         {% if tag.is_none() || tag.as_ref().unwrap().style == "solid" %}checked{% endif %}>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white mb-2"
@@ -61,7 +61,7 @@
                     <span class="text-sm text-gray-600 dark:text-gray-400">Solid</span>
                 </label>
 
-                <label class="relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
+                <label class="relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
                     <input type="radio" name="style" value="outline" class="sr-only"
                         {% if tag.is_some() && tag.as_ref().unwrap().style == "outline" %}checked{% endif %}>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 mb-2"
@@ -71,7 +71,7 @@
                     <span class="text-sm text-gray-600 dark:text-gray-400">Outline</span>
                 </label>
 
-                <label class="relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
+                <label class="relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
                     <input type="radio" name="style" value="striped" class="sr-only"
                         {% if tag.is_some() && tag.as_ref().unwrap().style == "striped" %}checked{% endif %}>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white mb-2"
