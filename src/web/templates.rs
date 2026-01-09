@@ -82,6 +82,7 @@ pub struct ArticlesListTemplate {
     pub date_from: Option<String>,
     pub date_to: Option<String>,
     pub all_tags: Vec<Tag>,
+    pub view_mode: String,
 }
 
 #[derive(Template)]
@@ -114,6 +115,19 @@ pub struct ArticleRowsTemplate {
 #[derive(Template)]
 #[template(path = "articles/_article_compact_rows.html")]
 pub struct ArticleCompactRowsTemplate {
+    pub articles: Vec<ArticleWithFeed>,
+}
+
+#[derive(Template)]
+#[template(path = "articles/article_fullscreen_row.html")]
+pub struct ArticleFullscreenRowTemplate {
+    pub item: ArticleWithFeed,
+}
+
+#[derive(Template)]
+#[template(path = "articles/_article_fullscreen_rows.html")]
+#[allow(dead_code)]
+pub struct ArticleFullscreenRowsTemplate {
     pub articles: Vec<ArticleWithFeed>,
 }
 
@@ -176,6 +190,16 @@ pub struct LoadMoreButtonLogsTemplate {
 #[derive(Template)]
 #[template(path = "reader/reader_mode.html")]
 pub struct ReaderModeTemplate {
+    pub article_url: String,
+    pub title: String,
+    pub content: String,
+    pub byline: Option<String>,
+    pub excerpt: Option<String>,
+}
+
+#[derive(Template)]
+#[template(path = "reader/reader_content.html")]
+pub struct ReaderContentTemplate {
     pub article_url: String,
     pub title: String,
     pub content: String,

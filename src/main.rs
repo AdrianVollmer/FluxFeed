@@ -146,10 +146,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             post(api::articles::toggle_starred_status_compact),
         )
         .route(
+            "/articles/:id/toggle-read-fullscreen",
+            post(api::articles::toggle_read_status_fullscreen),
+        )
+        .route(
+            "/articles/:id/toggle-starred-fullscreen",
+            post(api::articles::toggle_starred_status_fullscreen),
+        )
+        .route(
+            "/articles/:id/mark-read-fullscreen",
+            post(api::articles::mark_read_status_fullscreen),
+        )
+        .route(
             "/articles/mark-all-read",
             post(api::articles::mark_all_read),
         )
         .route("/articles/:id/reader", get(api::reader::show_reader_mode))
+        .route(
+            "/articles/:id/reader-content",
+            get(api::reader::get_reader_content),
+        )
         .route("/logs", get(api::logs::list_logs))
         .route("/api/fetch", post(api::manual_fetch::trigger_fetch))
         .nest_service("/static", ServeDir::new("static"))

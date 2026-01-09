@@ -2,9 +2,9 @@ use crate::api::feeds::AppState;
 use crate::domain::{article_service, feed_service, group_service};
 use crate::infrastructure::repository;
 use crate::web::templates::{
-    ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleListFooterTemplate,
-    ArticleRowTemplate, ArticleRowsTemplate, ArticleSearchTemplate, ArticleWithFeed,
-    ArticlesListTemplate, ErrorTemplate,
+    ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleFullscreenRowTemplate,
+    ArticleListFooterTemplate, ArticleRowTemplate, ArticleRowsTemplate, ArticleSearchTemplate,
+    ArticleWithFeed, ArticlesListTemplate, ErrorTemplate,
 };
 use askama::Template;
 use axum::{
@@ -46,6 +46,23 @@ fn parse_ids(ids_str: Option<&str>) -> Vec<i64> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+/// Extract a cookie value from the Cookie header
+fn get_cookie_value(headers: &HeaderMap, name: &str) -> Option<String> {
+    headers
+        .get(axum::http::header::COOKIE)?
+        .to_str()
+        .ok()?
+        .split(';')
+        .find_map(|cookie| {
+            let cookie = cookie.trim();
+            if cookie.starts_with(name) && cookie.chars().nth(name.len()) == Some('=') {
+                Some(cookie[name.len() + 1..].to_string())
+            } else {
+                None
+            }
+        })
 }
 
 /// Fetch tags for all unique feeds and attach to articles
@@ -209,6 +226,7 @@ pub async fn list_articles(
     // Render full page
     render_full_articles_page(
         &state,
+        &headers,
         articles_to_show,
         has_more,
         offset,
@@ -289,6 +307,7 @@ fn render_htmx_pagination(
 /// Render full articles page with filters and feed list
 async fn render_full_articles_page(
     state: &AppState,
+    headers: &HeaderMap,
     articles: Vec<ArticleWithFeed>,
     has_more: bool,
     offset: i64,
@@ -309,6 +328,9 @@ async fn render_full_articles_page(
     let filter_group_ids = parse_ids(params.group_ids.as_deref());
     let filter_tag_ids = parse_ids(params.tag_ids.as_deref());
 
+    // Get view mode from cookie (default to "cards")
+    let view_mode = get_cookie_value(headers, "articleView").unwrap_or_else(|| "cards".to_string());
+
     let template = ArticlesListTemplate {
         articles,
         feeds,
@@ -328,6 +350,7 @@ async fn render_full_articles_page(
         date_from: params.date_from.clone(),
         date_to: params.date_to.clone(),
         all_tags,
+        view_mode,
     };
 
     Ok(Html(template.render()?))
@@ -476,6 +499,57 @@ pub async fn mark_read_status_compact(
         .ok_or(article_service::ArticleServiceError::NotFound)?;
 
     let template = ArticleCompactRowTemplate {
+        item: article_with_feed,
+    };
+
+    Ok(Html(template.render()?))
+}
+
+pub async fn toggle_read_status_fullscreen(
+    State(state): State<AppState>,
+    Path(article_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    article_service::toggle_read_status(&state.db_pool, article_id).await?;
+
+    let article_with_feed = repository::get_article_with_feed_by_id(&state.db_pool, article_id)
+        .await?
+        .ok_or(article_service::ArticleServiceError::NotFound)?;
+
+    let template = ArticleFullscreenRowTemplate {
+        item: article_with_feed,
+    };
+
+    Ok(Html(template.render()?))
+}
+
+pub async fn toggle_starred_status_fullscreen(
+    State(state): State<AppState>,
+    Path(article_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    article_service::toggle_starred_status(&state.db_pool, article_id).await?;
+
+    let article_with_feed = repository::get_article_with_feed_by_id(&state.db_pool, article_id)
+        .await?
+        .ok_or(article_service::ArticleServiceError::NotFound)?;
+
+    let template = ArticleFullscreenRowTemplate {
+        item: article_with_feed,
+    };
+
+    Ok(Html(template.render()?))
+}
+
+pub async fn mark_read_status_fullscreen(
+    State(state): State<AppState>,
+    Path(article_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    article_service::mark_as_read(&state.db_pool, article_id).await?;
+
+    let article_with_feed = repository::get_article_with_feed_by_id(&state.db_pool, article_id)
+        .await?
+        .ok_or(article_service::ArticleServiceError::NotFound)?;
+
+    let template = ArticleFullscreenRowTemplate {
         item: article_with_feed,
     };
 

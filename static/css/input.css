@@ -481,3 +481,16 @@ button.rounded-full.border-2:hover {
 .empty-state-action {
   @apply mt-4;
 }
+
+/* Fullscreen view layout */
+.fullscreen-main {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
+
+.fullscreen-container {
+  width: 100%;
+  max-width: 100%;
+}

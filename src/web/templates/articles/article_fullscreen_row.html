@@ -1,0 +1,96 @@
+<!-- Fullscreen view article row - matches mobile compact layout style -->
+<div id="article-fullscreen-{{ item.article.id }}"
+     class="fullscreen-article-row {% if item.article.is_read %}opacity-60{% endif %} hover:bg-gray-100 dark:hover:bg-gray-700 transition-all cursor-pointer border-b border-gray-200 dark:border-gray-700 p-3 space-y-1.5"
+     data-fullscreen-article-id="{{ item.article.id }}"
+     onclick="loadArticleContent({{ item.article.id }})">
+
+    <!-- Row 1: Feed name + read indicator -->
+    <div class="flex items-center justify-between">
+        <div class="text-xs px-2 py-0.5 rounded truncate max-w-[80%]" style="background-color: {{ item.feed_color }}20; color: {{ item.feed_color }};" title="{{ item.feed_title }}">
+            {{ item.feed_title }}
+        </div>
+        <button
+            hx-post="/articles/{{ item.article.id }}/toggle-read-fullscreen"
+            hx-target="#article-fullscreen-{{ item.article.id }}"
+            hx-swap="outerHTML"
+            onclick="event.stopPropagation()"
+            class="w-3 h-3 rounded-full border-2 {% if item.article.is_read %}bg-gray-400 border-gray-400{% else %}bg-blue-600 border-blue-600{% endif %} hover:scale-125 transition-transform"
+            title="{% if item.article.is_read %}Mark as unread{% else %}Mark as read{% endif %}">
+        </button>
+    </div>
+
+    <!-- Row 2: Title -->
+    <div class="text-sm font-medium {% if item.article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %} line-clamp-2">
+        {{ item.article.title }}
+    </div>
+
+    <!-- Row 3: Date + actions -->
+    <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+        <div>
+            {% if item.article.published_at.is_some() %}
+            <span title="{{ item.article.published_at.as_ref().unwrap().format("%b %d, %Y %H:%M") }}">{{ item.article.published_at.as_ref().unwrap()|friendly_date }}</span>
+            {% endif %}
+        </div>
+        <div class="flex gap-1">
+            <button
+                onclick="event.stopPropagation(); toggleFullscreenExpand({{ item.article.id }})"
+                class="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors fullscreen-expand-btn"
+                title="Expand content">
+                {% include "icons/chevron-down.html" %}
+            </button>
+            <button
+                hx-post="/articles/{{ item.article.id }}/toggle-starred-fullscreen"
+                hx-target="#article-fullscreen-{{ item.article.id }}"
+                hx-swap="outerHTML"
+                onclick="event.stopPropagation()"
+                class="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                title="{% if item.article.is_starred %}Unstar{% else %}Star{% endif %}">
+                {% if item.article.is_starred %}
+                {% include "icons/star-filled.html" %}
+                {% else %}
+                {% include "icons/star-outline.html" %}
+                {% endif %}
+            </button>
+            {% if item.article.url.is_some() %}
+            <a href="{{ item.article.url.as_ref().unwrap() }}" target="_blank" rel="noopener noreferrer"
+               onclick="event.stopPropagation()"
+               class="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+               title="Open original article">
+                {% include "icons/external-link-sm.html" %}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Expanded content for fullscreen view -->
+<div id="article-fullscreen-{{ item.article.id }}-expanded" class="fullscreen-article-expanded hidden border-b border-gray-200 dark:border-gray-700">
+    <div class="px-3 py-3 bg-gray-50 dark:bg-gray-900">
+        {% if item.article.og_image.is_some() %}
+        <img
+            src="{{ item.article.og_image.as_ref().unwrap() }}"
+            alt="{{ item.article.title }}"
+            class="w-full h-32 object-cover rounded mb-3"
+            loading="lazy"
+            onerror="this.style.display='none'">
+        {% endif %}
+
+        {% if item.article.author.is_some() %}
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            By {{ item.article.author.as_ref().unwrap() }}
+        </div>
+        {% endif %}
+
+        <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300 text-xs">
+            {% if item.article.summary.is_some() %}
+            {{ item.article.summary.as_ref().unwrap()|safe }}
+            {% else if item.article.content.is_some() %}
+            {{ item.article.content.as_ref().unwrap()|safe }}
+            {% else if item.article.og_description.is_some() %}
+            {{ item.article.og_description.as_ref().unwrap() }}
+            {% else %}
+            <p class="text-gray-400 italic">No content available</p>
+            {% endif %}
+        </div>
+    </div>
+</div>

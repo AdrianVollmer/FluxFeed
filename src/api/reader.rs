@@ -1,6 +1,6 @@
 use crate::api::feeds::AppState;
 use crate::domain::reader_service;
-use crate::web::templates::{ErrorTemplate, ReaderModeTemplate};
+use crate::web::templates::{ErrorTemplate, ReaderContentTemplate, ReaderModeTemplate};
 use askama::Template;
 use axum::{
     extract::{Path, State},
@@ -15,6 +15,27 @@ pub async fn show_reader_mode(
     let reader_content = reader_service::get_reader_content(&state.db_pool, article_id).await?;
 
     let template = ReaderModeTemplate {
+        article_url: reader_content
+            .article
+            .url
+            .unwrap_or_else(|| String::from("#")),
+        title: reader_content.title,
+        content: reader_content.content,
+        byline: reader_content.byline,
+        excerpt: reader_content.excerpt,
+    };
+
+    Ok(Html(template.render()?))
+}
+
+/// Returns reader content as a fragment for fullscreen mode (HTMX)
+pub async fn get_reader_content(
+    State(state): State<AppState>,
+    Path(article_id): Path<i64>,
+) -> Result<Html<String>, AppError> {
+    let reader_content = reader_service::get_reader_content(&state.db_pool, article_id).await?;
+
+    let template = ReaderContentTemplate {
         article_url: reader_content
             .article
             .url
