@@ -129,6 +129,16 @@ function loadArticleContent(articleId: number): void {
   const contentPanel = document.getElementById('fullscreen-content');
   if (!contentPanel) return;
 
+  // Remove any existing expanded content section before the HTMX swap
+  // (the HTMX response will include a fresh one in hidden state)
+  const expandedEl = document.getElementById(`article-fullscreen-${articleId}-expanded`);
+  expandedEl?.remove();
+
+  // Reset the chevron rotation on the row if it was expanded
+  const rowEl = document.getElementById(`article-fullscreen-${articleId}`);
+  const expandBtn = rowEl?.querySelector('.fullscreen-expand-btn svg');
+  expandBtn?.classList.remove('rotate-180');
+
   // Show loading state
   contentPanel.innerHTML = `
     <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">

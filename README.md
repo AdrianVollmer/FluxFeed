@@ -7,6 +7,9 @@ A modern, resource-efficient RSS feed reader built with Rust.
   <a href="docs/articles-desktop-list-collage.png"><img src="docs/articles-desktop-list-collage.png" width="45%"></a>
 </p>
 <p align="center">
+  <a href="docs/articles-desktop-fullscreen-collage.png"><img src="docs/articles-desktop-fullscreen-collage.png" width="60%"></a>
+</p>
+<p align="center">
   <a href="docs/articles-mobile-collage.png"><img src="docs/articles-mobile-collage.png" width="20%"></a>
   <a href="docs/articles-mobile-list-collage.png"><img src="docs/articles-mobile-list-collage.png" width="20%"></a>
 </p>
