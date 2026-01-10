@@ -52,6 +52,7 @@ jobs:
         cache: 'npm'
 
     - name: Build frontend assets
+      shell: bash
       run: ./scripts/build.sh frontend
 
     - uses: dtolnay/rust-toolchain@1.91.0
