@@ -5,9 +5,16 @@
     hx-target="#articles-cards"
     hx-swap="beforeend"
     class="btn btn-primary">
-    Load More Articles
+    Show More Articles
 </button>
 {% endif %}
+
+<button
+    onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
+    class="btn btn-secondary flex items-center gap-2">
+    {% include "icons/arrow-up.html" %}
+    Scroll to Top
+</button>
 
 {% if show_mark_all_read %}
 <button
