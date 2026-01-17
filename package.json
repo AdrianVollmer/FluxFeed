@@ -1,6 +1,6 @@
 {
   "name": "fluxfeed",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "FluxFeed RSS Reader - Tailwind CSS build",
   "scripts": {
     "build:css": "tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --minify",
