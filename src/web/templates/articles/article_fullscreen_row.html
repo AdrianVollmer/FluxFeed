@@ -68,10 +68,9 @@
     <div class="px-3 py-3 bg-gray-50 dark:bg-gray-900">
         {% if item.article.og_image.is_some() %}
         <img
-            src="{{ item.article.og_image.as_ref().unwrap() }}"
+            data-src="{{ item.article.og_image.as_ref().unwrap() }}"
             alt="{{ item.article.title }}"
-            class="w-full h-32 object-cover rounded mb-3"
-            loading="lazy"
+            class="lazy-img w-full h-32 object-cover rounded mb-3 hidden"
             onerror="this.style.display='none'">
         {% endif %}
 

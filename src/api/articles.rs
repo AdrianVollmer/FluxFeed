@@ -3,8 +3,9 @@ use crate::domain::{article_service, feed_service, group_service};
 use crate::infrastructure::repository;
 use crate::web::templates::{
     ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleFullscreenRowTemplate,
-    ArticleListFooterTemplate, ArticleRowTemplate, ArticleRowsTemplate, ArticleSearchTemplate,
-    ArticleWithFeed, ArticlesListTemplate, ErrorTemplate,
+    ArticleFullscreenRowsTemplate, ArticleListFooterTemplate, ArticleRowTemplate,
+    ArticleRowsTemplate, ArticleSearchTemplate, ArticleWithFeed, ArticlesListTemplate,
+    ErrorTemplate,
 };
 use askama::Template;
 use axum::{
@@ -266,7 +267,35 @@ fn render_htmx_pagination(
 
     // Render article rows using the appropriate template based on view mode
     let view_mode = params.view.as_deref().unwrap_or("cards");
-    if view_mode == "compact" {
+    if view_mode == "fullscreen" {
+        // Fullscreen mode: render fullscreen rows
+        let rows_template = ArticleFullscreenRowsTemplate {
+            articles: articles.clone(),
+        };
+        html.push_str(&rows_template.render()?);
+
+        // Include metadata for JS to update the sentinel
+        let mut next_url = format!("/articles?offset={}&view=fullscreen", offset + limit);
+        if let Some(ref feed_ids) = params.feed_ids {
+            next_url.push_str(&format!("&feed_ids={}", feed_ids));
+        }
+        if let Some(ref group_ids) = params.group_ids {
+            next_url.push_str(&format!("&group_ids={}", group_ids));
+        }
+        if let Some(ref tag_ids) = params.tag_ids {
+            next_url.push_str(&format!("&tag_ids={}", tag_ids));
+        }
+        if let Some(is_read) = params.is_read {
+            next_url.push_str(&format!("&is_read={}", is_read));
+        }
+        if let Some(is_starred) = params.is_starred {
+            next_url.push_str(&format!("&is_starred={}", is_starred));
+        }
+        html.push_str(&format!(
+            r#"<template id="fullscreen-load-more-meta" data-has-more="{}" data-next-url="{}"></template>"#,
+            has_more, next_url
+        ));
+    } else if view_mode == "compact" {
         let rows_template = ArticleCompactRowsTemplate {
             articles: articles.clone(),
         };

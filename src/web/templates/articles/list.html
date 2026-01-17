@@ -252,6 +252,16 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                     <div id="fullscreen-article-list">
                         {% include "articles/_article_fullscreen_rows.html" %}
                     </div>
+                    <div
+                        id="fullscreen-load-more"
+                        {% if has_more %}data-load-url="/articles?offset={{ offset + limit }}&view=fullscreen{% if !filter_feed_ids.is_empty() %}&feed_ids={{ filter_feed_ids|join(",") }}{% endif %}{% if !filter_group_ids.is_empty() %}&group_ids={{ filter_group_ids|join(",") }}{% endif %}{% if !filter_tag_ids.is_empty() %}&tag_ids={{ filter_tag_ids|join(",") }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"{% endif %}
+                        class="{% if has_more %}flex{% else %}hidden{% endif %} items-center justify-center py-4 text-gray-500 dark:text-gray-400">
+                        <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-sm">Loading more...</span>
+                    </div>
                     {% endif %}
                 </div>
             </div>

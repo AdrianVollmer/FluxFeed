@@ -9,6 +9,92 @@
 
 // htmx is declared globally in htmx.d.ts
 
+// Fullscreen infinite scroll state
+let isLoadingMoreArticles = false;
+let scrollContainer: HTMLElement | null = null;
+let scrollHandler: (() => void) | null = null;
+
+// Setup infinite scroll for fullscreen mode using scroll events
+function setupInfiniteScroll(): void {
+  teardownInfiniteScroll();
+
+  const sentinel = document.getElementById('fullscreen-load-more');
+  if (!sentinel || !sentinel.dataset.loadUrl) {
+    return; // No more articles to load
+  }
+
+  // Find the scrollable container (the article list's parent with overflow-y-auto)
+  scrollContainer = sentinel.closest('.overflow-y-auto') as HTMLElement;
+  if (!scrollContainer) return;
+
+  scrollHandler = () => {
+    if (isLoadingMoreArticles) return;
+
+    const sentinel = document.getElementById('fullscreen-load-more');
+    if (!sentinel || !sentinel.dataset.loadUrl) return;
+
+    // Check if we've scrolled near the bottom (within 100px)
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer!;
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+    if (distanceFromBottom < 100) {
+      loadMoreFullscreenArticles(sentinel.dataset.loadUrl);
+    }
+  };
+
+  scrollContainer.addEventListener('scroll', scrollHandler, { passive: true });
+}
+
+// Cleanup scroll listener
+function teardownInfiniteScroll(): void {
+  if (scrollContainer && scrollHandler) {
+    scrollContainer.removeEventListener('scroll', scrollHandler);
+  }
+  scrollContainer = null;
+  scrollHandler = null;
+}
+
+// Load more articles in fullscreen mode
+function loadMoreFullscreenArticles(url: string): void {
+  if (isLoadingMoreArticles) return;
+  isLoadingMoreArticles = true;
+
+  if (typeof htmx !== 'undefined') {
+    htmx.ajax('GET', url, {
+      target: '#fullscreen-article-list',
+      swap: 'beforeend'
+    }).then(() => {
+      // Read metadata from the response and update sentinel
+      const meta = document.getElementById('fullscreen-load-more-meta');
+      const sentinel = document.getElementById('fullscreen-load-more');
+
+      if (meta && sentinel) {
+        const hasMore = meta.dataset.hasMore === 'true';
+        const nextUrl = meta.dataset.nextUrl;
+
+        if (hasMore && nextUrl) {
+          sentinel.dataset.loadUrl = nextUrl;
+          sentinel.classList.remove('hidden');
+          sentinel.classList.add('flex');
+        } else {
+          // No more articles - hide sentinel
+          delete sentinel.dataset.loadUrl;
+          sentinel.classList.add('hidden');
+          sentinel.classList.remove('flex');
+        }
+
+        // Remove the metadata element
+        meta.remove();
+      }
+
+      // Small delay before allowing next load
+      setTimeout(() => {
+        isLoadingMoreArticles = false;
+      }, 200);
+    });
+  }
+}
+
 // Cookie helper functions
 function getCookie(name: string): string | null {
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -99,7 +185,11 @@ function setView(view: string): void {
     mainElement?.classList.remove('container', 'max-w-7xl');
     mainElement?.classList.add('fullscreen-main');
     updateViewButtonState(allFullscreenBtns, true);
+    // Setup infinite scroll for fullscreen mode
+    setupInfiniteScroll();
   } else {
+    // Cleanup infinite scroll when leaving fullscreen
+    teardownInfiniteScroll();
     // Switch to normal layout
     normalLayout?.classList.remove('hidden');
     fullscreenLayout?.classList.add('hidden');
@@ -201,6 +291,10 @@ document.addEventListener('DOMContentLoaded', () => {
   setView(savedView);
   updateLoadMoreButton();
   checkCollapsibleContent();
+  // Setup infinite scroll if in fullscreen mode
+  if (savedView === 'fullscreen') {
+    setupInfiniteScroll();
+  }
 });
 
 // Re-apply load more button settings after any swap (handles both main and OOB swaps)
@@ -254,6 +348,18 @@ function toggleFullscreenExpand(articleId: number): void {
   if (expandedEl) {
     const isHidden = expandedEl.classList.contains('hidden');
     expandedEl.classList.toggle('hidden');
+
+    // Load lazy images when expanding
+    if (isHidden) {
+      const lazyImages = expandedEl.querySelectorAll('img.lazy-img[data-src]');
+      for (const img of lazyImages) {
+        const dataSrc = img.getAttribute('data-src');
+        if (dataSrc && !img.getAttribute('src')) {
+          img.setAttribute('src', dataSrc);
+          img.classList.remove('hidden');
+        }
+      }
+    }
 
     // Rotate the chevron icon
     if (expandBtn) {
