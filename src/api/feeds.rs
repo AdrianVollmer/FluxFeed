@@ -2,7 +2,8 @@ use crate::domain::feed_service;
 use crate::infrastructure::{repository, scheduler};
 use crate::web::templates::{
     ErrorTemplate, FeedDetailTemplate, FeedFormTemplate, FeedImportFormTemplate,
-    FeedImportResultsTemplate, FeedRowTemplate, FeedsListTemplate, ImportResult,
+    FeedImportProgressTemplate, FeedImportResultsTemplate, FeedRowTemplate, FeedsListTemplate,
+    ImportResult,
 };
 use askama::Template;
 use axum::{
@@ -13,10 +14,55 @@ use axum::{
 };
 use serde::Deserialize;
 use sqlx::SqlitePool;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+/// Status of an import job
+#[derive(Clone, Debug, PartialEq)]
+pub enum ImportJobStatus {
+    Processing,
+    Completed,
+}
+
+/// A single feed import result within a job
+#[derive(Clone, Debug)]
+pub struct ImportJobResult {
+    pub url: String,
+    pub title: Option<String>,
+    pub success: bool,
+    pub error: Option<String>,
+}
+
+/// An import job tracking the progress of a bulk feed import
+#[derive(Clone, Debug)]
+pub struct ImportJob {
+    pub status: ImportJobStatus,
+    pub total: usize,
+    pub processed: usize,
+    pub success_count: usize,
+    pub results: Vec<ImportJobResult>,
+}
+
+impl ImportJob {
+    pub fn new(total: usize) -> Self {
+        Self {
+            status: ImportJobStatus::Processing,
+            total,
+            processed: 0,
+            success_count: 0,
+            results: Vec::with_capacity(total),
+        }
+    }
+}
+
+/// Thread-safe store for import jobs
+pub type ImportJobStore = Arc<RwLock<HashMap<String, ImportJob>>>;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db_pool: SqlitePool,
+    pub import_jobs: ImportJobStore,
 }
 
 #[derive(Deserialize)]
@@ -256,74 +302,203 @@ pub struct ImportFeedsForm {
     feeds: String,
 }
 
+/// Parsed feed entry from the import form
+struct ParsedFeedEntry {
+    url: String,
+    title: Option<String>,
+}
+
+/// Parse the import form input into individual feed entries
+fn parse_import_input(input: &str) -> Vec<ParsedFeedEntry> {
+    input
+        .lines()
+        .filter_map(|line| {
+            let line = line.trim();
+            if line.is_empty() {
+                return None;
+            }
+            // Split by whitespace - first part is URL, rest is optional title
+            let parts: Vec<&str> = line.splitn(2, ' ').collect();
+            let url = parts[0].to_string();
+            let title = parts
+                .get(1)
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty());
+            Some(ParsedFeedEntry { url, title })
+        })
+        .collect()
+}
+
 pub async fn import_feeds(
     State(state): State<AppState>,
     Form(form): Form<ImportFeedsForm>,
 ) -> Result<Html<String>, AppError> {
-    let mut results = Vec::new();
-    let mut success_count = 0;
+    let entries = parse_import_input(&form.feeds);
 
-    // Parse each line
-    for line in form.feeds.lines() {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
+    if entries.is_empty() {
+        // No feeds to import, return empty results
+        let template = FeedImportResultsTemplate {
+            results: vec![],
+            success_count: 0,
+        };
+        return Ok(Html(template.render()?));
+    }
 
-        // Split by whitespace - first part is URL, rest is optional title
-        let parts: Vec<&str> = line.splitn(2, ' ').collect();
-        let url = parts[0].to_string();
-        let title = parts.get(1).map(|s| s.trim().to_string());
+    // Generate a unique job ID
+    let job_id = uuid::Uuid::new_v4().to_string();
+    let total = entries.len();
 
-        // Try to create the feed
-        match feed_service::create_feed(
-            &state.db_pool,
-            url.clone(),
-            title.clone().filter(|s| !s.is_empty()),
-        )
-        .await
-        {
-            Ok(feed) => {
-                success_count += 1;
-                results.push(ImportResult {
-                    url: feed.url.clone(),
-                    title: Some(feed.title.clone()),
+    // Create the job
+    let job = ImportJob::new(total);
+
+    // Store the job
+    {
+        let mut jobs = state.import_jobs.write().await;
+        jobs.insert(job_id.clone(), job);
+    }
+
+    // Spawn background task to process the import
+    let job_id_clone = job_id.clone();
+    let pool = state.db_pool.clone();
+    let import_jobs = state.import_jobs.clone();
+
+    tokio::spawn(async move {
+        process_import_job(job_id_clone, entries, pool, import_jobs).await;
+    });
+
+    // Return immediately with progress UI that will poll for updates
+    let template = FeedImportProgressTemplate {
+        job_id,
+        total,
+        processed: 0,
+    };
+    Ok(Html(template.render()?))
+}
+
+/// Background task to process a feed import job
+async fn process_import_job(
+    job_id: String,
+    entries: Vec<ParsedFeedEntry>,
+    pool: SqlitePool,
+    import_jobs: ImportJobStore,
+) {
+    tracing::info!(
+        "Starting background import job {} with {} feeds",
+        job_id,
+        entries.len()
+    );
+
+    for entry in entries {
+        let result =
+            match feed_service::create_feed_deferred(&pool, entry.url.clone(), entry.title.clone())
+                .await
+            {
+                Ok(feed) => ImportJobResult {
+                    url: feed.url,
+                    title: Some(feed.title),
                     success: true,
                     error: None,
-                });
-            }
-            Err(e) => {
-                let error_msg = match e {
-                    feed_service::FeedServiceError::DuplicateUrl => {
-                        "Feed URL already exists".to_string()
+                },
+                Err(e) => {
+                    let error_msg = match e {
+                        feed_service::FeedServiceError::DuplicateUrl => {
+                            "Feed URL already exists".to_string()
+                        }
+                        feed_service::FeedServiceError::InvalidUrl(msg) => msg,
+                        feed_service::FeedServiceError::FetchError(msg) => {
+                            format!("Failed to fetch feed: {}", msg)
+                        }
+                        feed_service::FeedServiceError::DatabaseError(err) => {
+                            format!("Database error: {}", err)
+                        }
+                        feed_service::FeedServiceError::SsrfBlocked => {
+                            "URL points to internal/private network (blocked for security)"
+                                .to_string()
+                        }
+                        _ => "Unknown error".to_string(),
+                    };
+                    ImportJobResult {
+                        url: entry.url,
+                        title: entry.title,
+                        success: false,
+                        error: Some(error_msg),
                     }
-                    feed_service::FeedServiceError::InvalidUrl(msg) => msg,
-                    feed_service::FeedServiceError::FetchError(msg) => {
-                        format!("Failed to fetch feed: {}", msg)
-                    }
-                    feed_service::FeedServiceError::DatabaseError(err) => {
-                        format!("Database error: {}", err)
-                    }
-                    feed_service::FeedServiceError::SsrfBlocked => {
-                        "URL points to internal/private network (blocked for security)".to_string()
-                    }
-                    _ => "Unknown error".to_string(),
-                };
-                results.push(ImportResult {
-                    url: url.clone(),
-                    title,
-                    success: false,
-                    error: Some(error_msg),
-                });
+                }
+            };
+
+        // Update job state
+        {
+            let mut jobs = import_jobs.write().await;
+            if let Some(job) = jobs.get_mut(&job_id) {
+                job.processed += 1;
+                if result.success {
+                    job.success_count += 1;
+                }
+                job.results.push(result);
             }
         }
     }
 
-    let template = FeedImportResultsTemplate {
-        results,
-        success_count,
+    // Mark job as completed
+    {
+        let mut jobs = import_jobs.write().await;
+        if let Some(job) = jobs.get_mut(&job_id) {
+            job.status = ImportJobStatus::Completed;
+        }
+    }
+
+    tracing::info!("Completed background import job {}", job_id);
+}
+
+/// Get the status of an import job (used for polling)
+pub async fn get_import_job_status(
+    State(state): State<AppState>,
+    Path(job_id): Path<String>,
+) -> Result<Response, AppError> {
+    let jobs = state.import_jobs.read().await;
+
+    let Some(job) = jobs.get(&job_id) else {
+        return Err(AppError::ServiceError(
+            feed_service::FeedServiceError::NotFound,
+        ));
     };
-    Ok(Html(template.render()?))
+
+    if job.status == ImportJobStatus::Completed {
+        // Job is done, return final results
+        let results: Vec<ImportResult> = job
+            .results
+            .iter()
+            .map(|r| ImportResult {
+                url: r.url.clone(),
+                title: r.title.clone(),
+                success: r.success,
+                error: r.error.clone(),
+            })
+            .collect();
+
+        let template = FeedImportResultsTemplate {
+            results,
+            success_count: job.success_count,
+        };
+
+        // Clean up the job after returning results (drop the read lock first)
+        drop(jobs);
+        {
+            let mut jobs = state.import_jobs.write().await;
+            jobs.remove(&job_id);
+        }
+
+        Ok(Html(template.render()?).into_response())
+    } else {
+        // Job still processing, return progress
+        let template = FeedImportProgressTemplate {
+            job_id: job_id.clone(),
+            total: job.total,
+            processed: job.processed,
+        };
+
+        Ok(Html(template.render()?).into_response())
+    }
 }
 
 // Error handling

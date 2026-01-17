@@ -85,6 +85,50 @@ pub async fn create_feed(
     Ok(updated_feed)
 }
 
+/// Create a feed without immediately fetching it.
+/// The feed will be fetched by the background scheduler.
+/// This is useful for bulk imports where we want instant feedback.
+pub async fn create_feed_deferred(
+    pool: &SqlitePool,
+    url: String,
+    title: Option<String>,
+) -> Result<Feed, FeedServiceError> {
+    // Basic URL validation
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(FeedServiceError::InvalidUrl(
+            "URL must start with http:// or https://".to_string(),
+        ));
+    }
+
+    // SSRF protection: validate URL doesn't point to internal networks
+    if let Err(e) = ssrf::validate_url(&url) {
+        tracing::warn!("SSRF validation failed for URL {}: {}", url, e);
+        return Err(FeedServiceError::SsrfBlocked);
+    }
+
+    // Use provided title or default to URL temporarily
+    // It will be updated from RSS feed metadata after fetching
+    let feed_title = title.unwrap_or_else(|| url.clone());
+
+    let create_feed = CreateFeed {
+        url,
+        title: feed_title,
+        description: None,
+    };
+
+    let feed = match repository::create_feed(pool, create_feed).await {
+        Ok(feed) => feed,
+        Err(sqlx::Error::Database(db_err)) if db_err.message().contains("UNIQUE constraint") => {
+            return Err(FeedServiceError::DuplicateUrl);
+        }
+        Err(e) => return Err(FeedServiceError::DatabaseError(e)),
+    };
+
+    tracing::info!("Created feed {} (deferred fetch): {}", feed.id, feed.url);
+
+    Ok(feed)
+}
+
 pub async fn list_all_feeds(pool: &SqlitePool) -> Result<Vec<Feed>, FeedServiceError> {
     Ok(repository::list_feeds(pool).await?)
 }

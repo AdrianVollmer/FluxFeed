@@ -67,5 +67,8 @@ http = "1.2"
 # URL parsing
 url = "2.5"
 
+# UUID generation
+uuid = { version = "1", features = ["v4"] }
+
 [dev-dependencies]
 axum-test = "16"

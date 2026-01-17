@@ -61,6 +61,14 @@ pub struct FeedImportResultsTemplate {
 }
 
 #[derive(Template)]
+#[template(path = "feeds/import_progress.html")]
+pub struct FeedImportProgressTemplate {
+    pub job_id: String,
+    pub total: usize,
+    pub processed: usize,
+}
+
+#[derive(Template)]
 #[template(path = "articles/list.html")]
 #[allow(dead_code)]
 pub struct ArticlesListTemplate {

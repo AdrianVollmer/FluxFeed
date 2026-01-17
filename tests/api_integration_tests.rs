@@ -2,6 +2,9 @@ use axum::{http::StatusCode, Router};
 use axum_test::TestServer;
 use fluxfeed::api::{articles, feeds, health};
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 async fn setup_test_app() -> (TestServer, SqlitePool) {
     let pool = SqlitePoolOptions::new()
@@ -18,6 +21,7 @@ async fn setup_test_app() -> (TestServer, SqlitePool) {
 
     let state = feeds::AppState {
         db_pool: pool.clone(),
+        import_jobs: Arc::new(RwLock::new(HashMap::new())),
     };
 
     let app = Router::new()
