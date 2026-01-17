@@ -163,7 +163,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
     </div>
 
     <!-- Fullscreen Layout (Three horizontal columns: Groups | Articles | Content) -->
-    <div id="fullscreen-layout" class="{% if view_mode != "fullscreen" %}hidden {% endif %}h-[calc(100vh-10rem)]">
+    <div id="fullscreen-layout" class="{% if view_mode != "fullscreen" %}hidden {% endif %}h-full">
         <div class="flex h-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
             <!-- Groups Column -->
             <div class="w-[15%] min-w-[180px] flex flex-col border-r border-gray-200 dark:border-gray-700">
