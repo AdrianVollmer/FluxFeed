@@ -58,9 +58,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create shared application state
     let state = AppState {
         db_pool: db_pool.clone(),
-        import_jobs: std::sync::Arc::new(tokio::sync::RwLock::new(
-            std::collections::HashMap::new(),
-        )),
+        import_jobs: std::sync::Arc::new(
+            tokio::sync::RwLock::new(std::collections::HashMap::new()),
+        ),
     };
 
     // Start background scheduler for RSS fetching

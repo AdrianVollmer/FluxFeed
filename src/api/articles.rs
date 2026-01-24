@@ -334,6 +334,7 @@ fn render_htmx_pagination(
 }
 
 /// Render full articles page with filters and feed list
+#[allow(clippy::too_many_arguments)]
 async fn render_full_articles_page(
     state: &AppState,
     headers: &HeaderMap,

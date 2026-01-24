@@ -540,6 +540,24 @@ pub struct ArticleCounts {
     pub starred: i64,
 }
 
+/// Get unread article counts per feed
+pub async fn get_feed_unread_counts(
+    pool: &SqlitePool,
+) -> Result<std::collections::HashMap<i64, i64>, SqlxError> {
+    let rows: Vec<(i64, i64)> = sqlx::query_as(
+        r#"
+        SELECT feed_id, COUNT(*) as unread_count
+        FROM articles
+        WHERE is_read = 0
+        GROUP BY feed_id
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows.into_iter().collect())
+}
+
 // Tag operations
 
 pub async fn list_tags(pool: &SqlitePool) -> Result<Vec<Tag>, SqlxError> {

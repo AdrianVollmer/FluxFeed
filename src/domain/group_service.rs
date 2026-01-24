@@ -1,4 +1,6 @@
-use crate::domain::models::{Feed, FlatTreeItem, Group, GroupNode};
+use crate::domain::models::{
+    Feed, FeedWithUnread, FlatTreeItem, Group, GroupNode, GroupNodeWithUnread,
+};
 use crate::infrastructure::repository;
 use sqlx::SqlitePool;
 use std::collections::HashMap;
@@ -108,6 +110,63 @@ pub fn flatten_group_tree(tree: &[GroupNode]) -> Vec<FlatTreeItem> {
     }
 
     items
+}
+
+/// Convert a group tree to include unread counts
+pub fn add_unread_counts_to_tree(
+    tree: Vec<GroupNode>,
+    unread_counts: &HashMap<i64, i64>,
+) -> Vec<GroupNodeWithUnread> {
+    fn convert_node(node: GroupNode, unread_counts: &HashMap<i64, i64>) -> GroupNodeWithUnread {
+        let feeds: Vec<FeedWithUnread> = node
+            .feeds
+            .into_iter()
+            .map(|feed| {
+                let unread = *unread_counts.get(&feed.id).unwrap_or(&0);
+                FeedWithUnread {
+                    feed,
+                    unread_count: unread,
+                }
+            })
+            .collect();
+
+        let children: Vec<GroupNodeWithUnread> = node
+            .children
+            .into_iter()
+            .map(|child| convert_node(child, unread_counts))
+            .collect();
+
+        let total_unread = feeds.iter().map(|f| f.unread_count).sum::<i64>()
+            + children.iter().map(|c| c.total_unread).sum::<i64>();
+
+        GroupNodeWithUnread {
+            group: node.group,
+            children,
+            feeds,
+            total_unread,
+        }
+    }
+
+    tree.into_iter()
+        .map(|node| convert_node(node, unread_counts))
+        .collect()
+}
+
+/// Convert feeds to FeedWithUnread
+pub fn add_unread_counts_to_feeds(
+    feeds: Vec<Feed>,
+    unread_counts: &HashMap<i64, i64>,
+) -> Vec<FeedWithUnread> {
+    feeds
+        .into_iter()
+        .map(|feed| {
+            let unread = *unread_counts.get(&feed.id).unwrap_or(&0);
+            FeedWithUnread {
+                feed,
+                unread_count: unread,
+            }
+        })
+        .collect()
 }
 
 /// Resolve selected groups and feeds to a list of feed IDs

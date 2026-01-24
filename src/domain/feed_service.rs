@@ -124,11 +124,7 @@ pub async fn create_feed_deferred(
         Err(e) => return Err(FeedServiceError::DatabaseError(e)),
     };
 
-    tracing::info!(
-        "Created feed {} (deferred fetch): {}",
-        feed.id,
-        feed.url
-    );
+    tracing::info!("Created feed {} (deferred fetch): {}", feed.id, feed.url);
 
     Ok(feed)
 }

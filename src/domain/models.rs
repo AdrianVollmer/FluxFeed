@@ -99,6 +99,22 @@ pub struct GroupNode {
     pub feeds: Vec<Feed>,
 }
 
+/// Feed with unread article count for display in filter modals
+#[derive(Debug, Clone, Serialize)]
+pub struct FeedWithUnread {
+    pub feed: Feed,
+    pub unread_count: i64,
+}
+
+/// Group node with unread counts for display in filter modals
+#[derive(Debug, Clone, Serialize)]
+pub struct GroupNodeWithUnread {
+    pub group: Group,
+    pub children: Vec<GroupNodeWithUnread>,
+    pub feeds: Vec<FeedWithUnread>,
+    pub total_unread: i64,
+}
+
 /// Represents an item in a flattened tree view (for template iteration)
 #[derive(Debug, Clone, Serialize)]
 #[allow(clippy::large_enum_variant)]

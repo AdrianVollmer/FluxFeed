@@ -1,4 +1,6 @@
-use crate::domain::models::{Article, Feed, GroupNode, LogWithFeed, Tag};
+use crate::domain::models::{
+    Article, Feed, FeedWithUnread, GroupNode, GroupNodeWithUnread, LogWithFeed, Tag,
+};
 use crate::infrastructure::repository::ArticleCounts;
 use crate::web::filters;
 use askama::Template;
@@ -219,8 +221,8 @@ pub struct ReaderContentTemplate {
 #[template(path = "articles/feed_filter_modal.html")]
 #[allow(dead_code)]
 pub struct FeedFilterModalTemplate {
-    pub group_tree: Vec<GroupNode>,
-    pub ungrouped_feeds: Vec<Feed>,
+    pub group_tree: Vec<GroupNodeWithUnread>,
+    pub ungrouped_feeds: Vec<FeedWithUnread>,
     pub selected_feed_ids: Vec<i64>,
     pub selected_group_ids: Vec<i64>,
     pub filter_read: Option<bool>,

@@ -38,12 +38,16 @@ pub async fn show_feed_filter_modal(
     State(state): State<AppState>,
     Query(params): Query<FilterModalParams>,
 ) -> Result<Html<String>, AppError> {
-    // Get all groups and feeds
+    // Get all groups, feeds, and unread counts
     let groups = repository::list_groups(&state.db_pool).await?;
     let feeds = repository::list_feeds(&state.db_pool).await?;
+    let unread_counts = repository::get_feed_unread_counts(&state.db_pool).await?;
 
-    // Build group tree
+    // Build group tree with unread counts
     let (group_tree, ungrouped_feeds) = group_service::build_group_tree(groups, feeds);
+    let group_tree = group_service::add_unread_counts_to_tree(group_tree, &unread_counts);
+    let ungrouped_feeds =
+        group_service::add_unread_counts_to_feeds(ungrouped_feeds, &unread_counts);
 
     // Parse currently selected IDs from query params
     let selected_feed_ids = parse_ids(params.feed_ids.as_deref());
