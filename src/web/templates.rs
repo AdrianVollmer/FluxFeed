@@ -51,6 +51,7 @@ pub struct FeedImportFormTemplate;
 pub struct FeedImportProgressTemplate {
     pub job_id: String,
     pub total: usize,
+    pub processed: usize,
 }
 
 pub struct ImportResult {
