@@ -46,6 +46,13 @@ pub struct FeedEditFormTemplate {
 #[template(path = "feeds/import_form.html")]
 pub struct FeedImportFormTemplate;
 
+#[derive(Template)]
+#[template(path = "feeds/import_progress.html")]
+pub struct FeedImportProgressTemplate {
+    pub job_id: String,
+    pub total: usize,
+}
+
 pub struct ImportResult {
     pub url: String,
     pub title: Option<String>,
@@ -58,14 +65,6 @@ pub struct ImportResult {
 pub struct FeedImportResultsTemplate {
     pub results: Vec<ImportResult>,
     pub success_count: usize,
-}
-
-#[derive(Template)]
-#[template(path = "feeds/import_progress.html")]
-pub struct FeedImportProgressTemplate {
-    pub job_id: String,
-    pub total: usize,
-    pub processed: usize,
 }
 
 #[derive(Template)]

@@ -136,14 +136,14 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                     hx-get="/articles?offset={{ offset + limit }}{% if !filter_feed_ids.is_empty() %}&feed_ids={{ filter_feed_ids|join(",") }}{% endif %}{% if !filter_group_ids.is_empty() %}&group_ids={{ filter_group_ids|join(",") }}{% endif %}{% if !filter_tag_ids.is_empty() %}&tag_ids={{ filter_tag_ids|join(",") }}{% endif %}{% if filter_read.is_some() %}&is_read={{ filter_read.unwrap() }}{% endif %}{% if filter_starred.is_some() %}&is_starred={{ filter_starred.unwrap() }}{% endif %}"
                     hx-target="#articles-cards"
                     hx-swap="beforeend"
-                    class="btn btn-primary">
+                    class="btn btn-primary w-full sm:w-auto flex items-center justify-center gap-2">
                     Show More Articles
                 </button>
                 {% endif %}
 
                 <button
                     onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
-                    class="btn btn-secondary flex items-center gap-2">
+                    class="btn btn-secondary w-full sm:w-auto flex items-center justify-center gap-2">
                     {% include "icons/arrow-up.html" %}
                     Scroll to Top
                 </button>
@@ -152,7 +152,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                 <button
                     hx-post="/articles/mark-all-read{% if !filter_feed_ids.is_empty() %}?feed_ids={{ filter_feed_ids|join(",") }}{% endif %}"
                     hx-confirm="Are you sure you want to mark all {% if !filter_feed_ids.is_empty() || !filter_group_ids.is_empty() %}filtered {% endif %}articles as read?"
-                    class="btn btn-secondary flex items-center gap-2">
+                    class="btn btn-secondary w-full sm:w-auto flex items-center justify-center gap-2">
                     {% include "icons/check-double.html" %}
                     Mark All as Read
                 </button>
