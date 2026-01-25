@@ -1,10 +1,10 @@
-<!-- Fullscreen view article row - matches mobile compact layout style -->
+{# Fullscreen view article row - matches mobile compact layout style #}
 <div id="article-fullscreen-{{ item.article.id }}"
      class="fullscreen-article-row {% if item.article.is_read %}opacity-60{% endif %} hover:bg-gray-100 dark:hover:bg-gray-700 transition-all cursor-pointer border-b border-gray-200 dark:border-gray-700 p-3 space-y-1.5"
      data-fullscreen-article-id="{{ item.article.id }}"
      onclick="loadArticleContent({{ item.article.id }})">
 
-    <!-- Row 1: Feed name + read indicator -->
+    {# Row 1: Feed name + read indicator #}
     <div class="flex items-center justify-between">
         <div class="text-xs px-2 py-0.5 rounded truncate max-w-[80%]" style="background-color: {{ item.feed_color }}20; color: {{ item.feed_color }};" title="{{ item.feed_title }}">
             {{ item.feed_title }}
@@ -19,12 +19,12 @@
         </button>
     </div>
 
-    <!-- Row 2: Title -->
+    {# Row 2: Title #}
     <div class="text-sm font-medium {% if item.article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %} line-clamp-2">
         {{ item.article.title }}
     </div>
 
-    <!-- Row 3: Date + actions -->
+    {# Row 3: Date + actions #}
     <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
         <div>
             {% if item.article.published_at.is_some() %}
@@ -63,7 +63,7 @@
     </div>
 </div>
 
-<!-- Expanded content for fullscreen view -->
+{# Expanded content for fullscreen view #}
 <div id="article-fullscreen-{{ item.article.id }}-expanded" class="fullscreen-article-expanded hidden border-b border-gray-200 dark:border-gray-700">
     <div class="px-3 py-3 bg-gray-50 dark:bg-gray-900">
         {% if item.article.og_image.is_some() %}

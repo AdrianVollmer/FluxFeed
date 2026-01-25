@@ -1,5 +1,5 @@
 <div class="group-container">
-    <!-- Group row with checkbox -->
+    {# Group row with checkbox #}
     <label class="flex items-center gap-2 py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer font-medium">
         <input type="checkbox" name="group_ids" value="{{ group_node.group.id }}"
                {% if group_node.group.id|in_list(selected_group_ids) %}checked{% endif %}
@@ -8,7 +8,7 @@
         <span class="text-sm text-gray-700 dark:text-gray-300 {% if group_node.total_unread > 0 %}font-semibold{% endif %}">{{ group_node.group.name }}{% if group_node.total_unread > 0 %} ({{ group_node.total_unread }}){% endif %}</span>
     </label>
 
-    <!-- Child feeds -->
+    {# Child feeds #}
     {% for item in group_node.feeds %}
     <label class="flex items-center gap-2 py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer ml-6">
         <input type="checkbox" name="feed_ids" value="{{ item.feed.id }}"
@@ -19,7 +19,7 @@
     </label>
     {% endfor %}
 
-    <!-- Child groups - flatten to single level for simplicity -->
+    {# Child groups - flatten to single level for simplicity #}
     {% for child_group in group_node.children %}
     <div class="ml-4">
         <label class="flex items-center gap-2 py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer font-medium">

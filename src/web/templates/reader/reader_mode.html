@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
-    <!-- Back navigation -->
+    {# Back navigation #}
     <div class="mb-6">
         <a href="/articles" class="text-blue-600 dark:text-blue-400 hover:underline flex items-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,7 +14,7 @@
         </a>
     </div>
 
-    <!-- Article header -->
+    {# Article header #}
     <article class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-6">
         <h1 class="text-4xl font-bold mb-4 text-gray-900 dark:text-gray-100">
             {{ title }}
@@ -32,7 +32,7 @@
         </div>
         {% endif %}
 
-        <!-- Original article link -->
+        {# Original article link #}
         <div class="mb-6 flex items-center gap-4">
             <a href="{{ article_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline">
                 View Original Article
@@ -42,13 +42,13 @@
             </a>
         </div>
 
-        <!-- Article content -->
+        {# Article content #}
         <div class="prose dark:prose-invert prose-lg max-w-none text-gray-900 dark:text-gray-100">
             {{ content|safe }}
         </div>
     </article>
 
-    <!-- Footer actions -->
+    {# Footer actions #}
     <div class="flex justify-between items-center py-4">
         <a href="/articles" class="text-blue-600 dark:text-blue-400 hover:underline">
             &larr; Back to Articles

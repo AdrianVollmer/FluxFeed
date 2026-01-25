@@ -1,13 +1,13 @@
-<!-- Group item for fullscreen menu -->
+{# Group item for fullscreen menu #}
 <div class="group-container">
-    <!-- Group row -->
+    {# Group row #}
     <a href="/articles?group_ids={{ group_node.group.id }}"
        class="flex items-center gap-2 py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded font-medium text-sm text-gray-700 dark:text-gray-300">
         {% include "icons/folder.html" %}
         <span class="truncate">{{ group_node.group.name }}</span>
     </a>
 
-    <!-- Child feeds -->
+    {# Child feeds #}
     {% for feed in group_node.feeds %}
     <a href="/articles?feed_ids={{ feed.id }}"
        class="flex items-center gap-2 py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm text-gray-700 dark:text-gray-300 ml-4 truncate">
@@ -16,7 +16,7 @@
     </a>
     {% endfor %}
 
-    <!-- Child groups -->
+    {# Child groups #}
     {% for child_group in group_node.children %}
     <div class="ml-3">
         <a href="/articles?group_ids={{ child_group.group.id }}"

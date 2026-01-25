@@ -1,9 +1,9 @@
-<!-- Mobile layout: stacked; Desktop (md+): horizontal row -->
+{# Mobile layout: stacked; Desktop (md+): horizontal row #}
 <div id="article-compact-{{ item.article.id }}" class="compact-article-row group {% if item.article.is_read %}opacity-60{% endif %} hover:bg-gray-50 dark:hover:bg-gray-700 transition-opacity cursor-pointer border-l-4 border-b border-gray-200 dark:border-gray-700" data-article-id="{{ item.article.id }}" style="border-left-color: {{ item.feed_color }}">
 
-    <!-- Mobile Layout (< md) -->
+    {# Mobile Layout (< md) #}
     <div class="md:hidden p-3 space-y-2">
-        <!-- Row 1: Feed name -->
+        {# Row 1: Feed name #}
         <div class="flex items-center justify-between">
             <div class="text-xs px-2 py-0.5 rounded truncate max-w-[70%]" style="background-color: {{ item.feed_color }}20; color: {{ item.feed_color }};" title="{{ item.feed_title }}">
                 {{ item.feed_title }}
@@ -20,7 +20,7 @@
             </div>
         </div>
 
-        <!-- Row 2: Title with expand icon -->
+        {# Row 2: Title with expand icon #}
         <div class="flex items-start gap-2">
             {% include "icons/chevron-right-mt.html" %}
             <div class="text-sm font-medium {% if item.article.is_read %}text-gray-600 dark:text-gray-400{% else %}text-gray-900 dark:text-gray-100{% endif %} min-w-0">
@@ -36,7 +36,7 @@
             </div>
         </div>
 
-        <!-- Row 3: Author, Date, Actions -->
+        {# Row 3: Author, Date, Actions #}
         <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pl-6">
             <div class="flex items-center gap-3 min-w-0 truncate">
                 {% if item.article.author.is_some() %}
@@ -54,9 +54,9 @@
         </div>
     </div>
 
-    <!-- Desktop Layout (>= md) -->
+    {# Desktop Layout (>= md) #}
     <div class="hidden md:grid md:grid-cols-[auto_1fr_160px_120px_115px_90px] md:items-center md:gap-2">
-        <!-- Read indicator -->
+        {# Read indicator #}
         <div class="px-3 py-4">
             <button
                 hx-post="/articles/{{ item.article.id }}/toggle-read-compact"
@@ -68,7 +68,7 @@
             </button>
         </div>
 
-        <!-- Title -->
+        {# Title #}
         <div class="px-4 py-4 min-w-0">
             <div class="flex items-center gap-2">
                 {% include "icons/chevron-right.html" %}
@@ -86,14 +86,14 @@
             </div>
         </div>
 
-        <!-- Feed -->
+        {# Feed #}
         <div class="px-4 py-4">
             <div class="text-xs px-2 py-1 rounded truncate" style="background-color: {{ item.feed_color }}20; color: {{ item.feed_color }};" title="{{ item.feed_title }}">
                 {{ item.feed_title }}
             </div>
         </div>
 
-        <!-- Author -->
+        {# Author #}
         <div class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 truncate">
             {% if item.article.author.is_some() %}
             {{ item.article.author.as_ref().unwrap() }}
@@ -102,7 +102,7 @@
             {% endif %}
         </div>
 
-        <!-- Date -->
+        {# Date #}
         <div class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
             {% if item.article.published_at.is_some() %}
             <span title="{{ item.article.published_at.as_ref().unwrap().format("%b %d, %Y %H:%M") }}">{{ item.article.published_at.as_ref().unwrap()|friendly_date }}</span>
@@ -111,7 +111,7 @@
             {% endif %}
         </div>
 
-        <!-- Actions -->
+        {# Actions #}
         <div class="px-3 py-4 flex-shrink-0">
             <div class="flex gap-1 justify-end">
                 {% set is_compact = true %}
@@ -121,11 +121,11 @@
     </div>
 </div>
 
-<!-- Expanded content (shared between mobile and desktop) -->
+{# Expanded content (shared between mobile and desktop) #}
 <div id="article-compact-{{ item.article.id }}-expanded" class="compact-article-expanded hidden border-b border-gray-200 dark:border-gray-700" data-article-id="{{ item.article.id }}">
     <div class="px-4 py-4 bg-gray-50 dark:bg-gray-900">
         <div class="flex gap-4 md:pl-8">
-            <!-- OpenGraph Image (if available) -->
+            {# OpenGraph Image (if available) #}
             {% if item.article.og_image.is_some() %}
             <div class="flex-shrink-0 hidden sm:block">
                 <img
@@ -138,7 +138,7 @@
             {% endif %}
 
             <div class="flex-1 min-w-0">
-                <!-- Article metadata -->
+                {# Article metadata #}
                 <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
                     <span class="flex items-center">
                         {% include "icons/calendar.html" %}
@@ -167,7 +167,7 @@
                     {% endfor %}
                 </div>
 
-                <!-- Article summary/content -->
+                {# Article summary/content #}
                 {% if item.article.summary.is_some() %}
                 <div class="prose dark:prose-invert prose-sm max-w-none text-gray-700 dark:text-gray-300">
                     {{ item.article.summary.as_ref().unwrap()|safe }}

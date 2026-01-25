@@ -18,18 +18,18 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
 </script>
 {% endif %}
 <div class="{% if view_mode == "fullscreen" %}fullscreen-container{% else %}max-w-6xl mx-auto{% endif %}" id="articles-container">
-    <!-- Normal Layout (Cards/Compact) -->
+    {# Normal Layout (Cards/Compact) #}
     <div id="normal-layout" class="{% if view_mode == "fullscreen" %}hidden {% endif %}flex gap-8">
-        <!-- Sidebar (desktop only) -->
+        {# Sidebar (desktop only) #}
         {% include "articles/_sidebar.html" %}
 
-        <!-- Main Content -->
+        {# Main Content #}
         <div class="flex-1 min-w-0">
-            <!-- Header with filter indicator (mobile) -->
+            {# Header with filter indicator (mobile) #}
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-3xl font-bold">Articles</h1>
 
-                <!-- Mobile: Current filter indicator -->
+                {# Mobile: Current filter indicator #}
                 <div class="lg:hidden text-sm text-gray-600 dark:text-gray-400">
                     {% if active_filter == "unread" %}
                         Unread ({{ article_counts.unread }})
@@ -43,13 +43,13 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                 </div>
             </div>
 
-            <!-- Modal container for feed filter -->
+            {# Modal container for feed filter #}
             <div id="feed-filter-modal"></div>
 
-            <!-- Modal container for tag filter -->
+            {# Modal container for tag filter #}
             <div id="tag-filter-modal"></div>
 
-            <!-- Article list - Cards View -->
+            {# Article list - Cards View #}
             <div id="articles-cards" class="{% if view_mode == "compact" %}hidden {% endif %}space-y-4">
                 {% if articles.len() == 0 %}
                 <div class="card empty-state">
@@ -82,7 +82,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                 {% endif %}
             </div>
 
-            <!-- Article list - Compact View -->
+            {# Article list - Compact View #}
             <div id="articles-compact" class="{% if view_mode != "compact" %}hidden{% endif %}">
                 {% if articles.len() == 0 %}
                 <div class="card empty-state">
@@ -111,7 +111,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                     </p>
                 </div>
                 {% else %}
-                <!-- Desktop header (hidden on mobile) -->
+                {# Desktop header (hidden on mobile) #}
                 <div class="hidden md:grid md:grid-cols-[auto_1fr_160px_120px_115px_90px] md:gap-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                     <div class="w-8 px-3 py-3"></div>
                     <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</div>
@@ -120,14 +120,14 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                     <div class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</div>
                     <div class="w-16 px-3 py-3"></div>
                 </div>
-                <!-- Compact article rows -->
+                {# Compact article rows #}
                 <div class="bg-white dark:bg-gray-800">
                     {% include "articles/_article_compact_rows.html" %}
                 </div>
                 {% endif %}
             </div>
 
-            <!-- Article list footer (Show more + Scroll to top + Mark all as read) -->
+            {# Article list footer (Show more + Scroll to top + Mark all as read) #}
             {% if articles.len() > 0 %}
             <div id="article-list-footer" class="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
                 {% if has_more %}
@@ -162,13 +162,13 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
         </div>
     </div>
 
-    <!-- Fullscreen Layout (Three horizontal columns: Groups | Articles | Content) -->
+    {# Fullscreen Layout (Three horizontal columns: Groups | Articles | Content) #}
     <div id="fullscreen-layout" class="{% if view_mode != "fullscreen" %}hidden {% endif %}h-full">
         <div class="flex h-full border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
-            <!-- Groups Column -->
+            {# Groups Column #}
             <div class="w-[15%] min-w-[180px] flex flex-col border-r border-gray-200 dark:border-gray-700">
                 <div class="p-3 border-b border-gray-200 dark:border-gray-700">
-                    <!-- View toggle header -->
+                    {# View toggle header #}
                     <div class="flex items-center justify-between mb-3">
                         <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">View</h3>
                     </div>
@@ -189,7 +189,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                 </div>
 
                 <div class="p-3 border-b border-gray-200 dark:border-gray-700">
-                    <!-- Show filter -->
+                    {# Show filter #}
                     <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Show</h3>
                     <div class="flex flex-col gap-1">
                         <a href="/articles?is_read=false"
@@ -210,7 +210,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                     </div>
                 </div>
 
-                <!-- Group tree -->
+                {# Group tree #}
                 <div class="flex-1 overflow-y-auto p-3">
                     <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Feeds</h3>
                     <div class="space-y-0.5">
@@ -218,7 +218,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                         {% include "articles/_fullscreen_group_item.html" %}
                         {% endfor %}
 
-                        <!-- Ungrouped feeds -->
+                        {# Ungrouped feeds #}
                         {% if !ungrouped_feeds.is_empty() %}
                         <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                             <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 px-2">Ungrouped</div>
@@ -235,7 +235,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                 </div>
             </div>
 
-            <!-- Articles Column -->
+            {# Articles Column #}
             <div class="w-[35%] flex flex-col border-r border-gray-200 dark:border-gray-700">
                 <div class="p-3 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Articles</h3>
@@ -266,7 +266,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                 </div>
             </div>
 
-            <!-- Content Column (50% width) -->
+            {# Content Column (50% width) #}
             <div class="w-1/2 overflow-hidden bg-gray-50 dark:bg-gray-900">
                 <div id="fullscreen-content" class="h-full overflow-y-auto">
                     <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">

@@ -24,11 +24,11 @@
         </div>
     </div>
 
-    <!-- Modal containers -->
+    {# Modal containers #}
     <div id="feed-form-modal"></div>
     <div id="feed-import-modal"></div>
 
-    <!-- Initializing indicator (shown while adding feed) -->
+    {# Initializing indicator (shown while adding feed) #}
     <div id="feed-initializing-indicator" class="hidden">
         <div class="card feed-initializing mb-4">
             <div class="flex justify-between items-start">
@@ -50,7 +50,7 @@
         </div>
     </div>
 
-    <!-- Feed list -->
+    {# Feed list #}
     <div id="feed-list" class="space-y-4">
         {% if feeds.is_empty() %}
         <div class="card empty-state">

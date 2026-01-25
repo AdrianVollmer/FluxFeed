@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}FluxFeed - RSS Reader{% endblock %}</title>
-    <!-- PWA Meta Tags -->
+    {# PWA Meta Tags #}
     <meta name="theme-color" content="#3b82f6">
     <meta name="description" content="A modern RSS feed reader">
     <link rel="manifest" href="/static/manifest.webmanifest">
-    <!-- Apple-specific meta tags for iOS -->
+    {# Apple-specific meta tags for iOS #}
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="FluxFeed">
     <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
-    <!-- Favicon -->
+    {# Favicon #}
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="stylesheet" href="/static/css/tailwind.css">
     <script src="/static/js/htmx.min.js"></script>
@@ -50,7 +50,7 @@
         </div>
     </footer>
 
-    <!-- Service Worker Registration -->
+    {# Service Worker Registration #}
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
@@ -65,7 +65,7 @@
         }
     </script>
 
-    <!-- Mobile swipe gesture for nav -->
+    {# Mobile swipe gesture for nav #}
     <script>
         (function() {
             let touchStartX = 0;

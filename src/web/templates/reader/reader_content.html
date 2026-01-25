@@ -1,4 +1,4 @@
-<!-- Reader content fragment for fullscreen mode -->
+{# Reader content fragment for fullscreen mode #}
 <div id="reader-content" class="h-full overflow-y-auto">
     <article class="p-6">
         <h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
@@ -17,7 +17,7 @@
         </div>
         {% endif %}
 
-        <!-- Original article link -->
+        {# Original article link #}
         <div class="mb-6">
             <a href="{{ article_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline">
                 View Original Article
@@ -27,7 +27,7 @@
             </a>
         </div>
 
-        <!-- Article content -->
+        {# Article content #}
         <div class="prose dark:prose-invert prose-sm max-w-none text-gray-900 dark:text-gray-100">
             {{ content|safe }}
         </div>

@@ -16,26 +16,26 @@
 </div>
 {% else %}
 
-<!-- Tree view of groups -->
+{# Tree view of groups #}
 <div class="card">
     {% for item in tree_items %}
     {% match item %}
     {% when crate::domain::models::FlatTreeItem::Group with { group, depth } %}
-    <!-- Group item -->
+    {# Group item #}
     <div class="group-tree-item rounded transition-colors"
          style="margin-left: {{ depth * 24 }}px;"
          data-drop-id="{{ group.id }}"
          data-drop-type="group">
         <div class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-            <!-- Drag handle (this is the only draggable part) -->
+            {# Drag handle (this is the only draggable part) #}
             <div class="drag-handle cursor-grab active:cursor-grabbing p-1 -m-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                  data-drag-type="group"
                  data-drag-id="{{ group.id }}">
                 {% include "icons/drag-handle.html" %}
             </div>
-            <!-- Folder icon -->
+            {# Folder icon #}
             {% include "icons/folder-filled.html" %}
-            <!-- Group name (clickable to edit) -->
+            {# Group name (clickable to edit) #}
             <button
                 hx-get="/groups/{{ group.id }}/edit"
                 hx-target="#group-form-modal"
@@ -47,10 +47,10 @@
     </div>
 
     {% when crate::domain::models::FlatTreeItem::Feed with { feed, depth } %}
-    <!-- Feed item -->
+    {# Feed item #}
     <div class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
          style="margin-left: {{ depth * 24 }}px;">
-        <!-- Drag handle -->
+        {# Drag handle #}
         <div class="drag-handle cursor-grab active:cursor-grabbing p-1 -m-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
              data-drag-type="feed"
              data-drag-id="{{ feed.id }}">
@@ -64,7 +64,7 @@
     {% endmatch %}
     {% endfor %}
 
-    <!-- Ungrouped section (drop target for removing from groups) -->
+    {# Ungrouped section (drop target for removing from groups) #}
     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
          data-drop-id=""
          data-drop-type="ungrouped">
@@ -75,7 +75,7 @@
         <div class="ml-6 space-y-0.5 mt-1">
             {% for feed in ungrouped_feeds %}
             <div class="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                <!-- Drag handle -->
+                {# Drag handle #}
                 <div class="drag-handle cursor-grab active:cursor-grabbing p-1 -m-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                      data-drag-type="feed"
                      data-drag-id="{{ feed.id }}">

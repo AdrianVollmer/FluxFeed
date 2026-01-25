@@ -1,7 +1,7 @@
-<!-- Article Filters for Mobile Nav (will be moved to #mobile-nav-extra via JS) -->
+{# Article Filters for Mobile Nav (will be moved to #mobile-nav-extra via JS) #}
 <template id="article-filters-template">
     <div class="border-t border-gray-200 dark:border-gray-700 p-4 space-y-4">
-        <!-- View Mode -->
+        {# View Mode #}
         <div>
             <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">View</h3>
             <div class="flex gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        <!-- Show Filter -->
+        {# Show Filter #}
         <div>
             <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Show</h3>
             <div class="space-y-1">
@@ -56,7 +56,7 @@
             </div>
         </div>
 
-        <!-- Feed Filter -->
+        {# Feed Filter #}
         {% if feeds.len() > 0 %}
         <div>
             <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">From</h3>
@@ -80,7 +80,7 @@
         </div>
         {% endif %}
 
-        <!-- Tag Filter -->
+        {# Tag Filter #}
         {% if !all_tags.is_empty() %}
         <div>
             <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Tags</h3>
@@ -104,7 +104,7 @@
         </div>
         {% endif %}
 
-        <!-- Mark All as Read -->
+        {# Mark All as Read #}
         {% if article_counts.unread > 0 %}
         <div class="pt-2">
             <button
