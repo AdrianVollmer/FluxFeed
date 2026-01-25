@@ -18,6 +18,7 @@ pub struct Feed {
     pub fetch_frequency: String,
     pub ttl_minutes: Option<i64>,
     pub consecutive_new_articles: i64,
+    pub ignore_pattern: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

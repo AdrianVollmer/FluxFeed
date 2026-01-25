@@ -103,6 +103,19 @@
             </div>
 
             <div class="form-group-lg">
+                <label for="ignore_pattern" class="form-label">
+                    Ignore Pattern
+                </label>
+                <input type="text" id="ignore_pattern" name="ignore_pattern"
+                       value="{% match feed.ignore_pattern %}{% when Some with (pattern) %}{{ pattern }}{% when None %}{% endmatch %}"
+                       class="form-input font-mono text-sm"
+                       placeholder="e\.g\. \[Sponsored\]|Advertisement">
+                <p class="form-help">
+                    Regular expression to filter articles. New articles with titles matching this pattern will be ignored.
+                </p>
+            </div>
+
+            <div class="form-group-lg">
                 <label class="form-label">
                     Tags
                 </label>

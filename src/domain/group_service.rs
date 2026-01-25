@@ -223,6 +223,7 @@ mod tests {
             fetch_frequency: "adaptive".to_string(),
             ttl_minutes: None,
             consecutive_new_articles: 0,
+            ignore_pattern: None,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         }

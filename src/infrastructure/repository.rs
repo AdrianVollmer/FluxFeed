@@ -1114,6 +1114,7 @@ pub async fn update_feed_properties(
     fetch_frequency: &str,
     fetch_interval_minutes: i64,
     color: &str,
+    ignore_pattern: Option<&str>,
 ) -> Result<(), SqlxError> {
     sqlx::query!(
         r#"
@@ -1124,6 +1125,7 @@ pub async fn update_feed_properties(
             fetch_frequency = ?,
             fetch_interval_minutes = ?,
             color = ?,
+            ignore_pattern = ?,
             updated_at = datetime('now')
         WHERE id = ?
         "#,
@@ -1133,6 +1135,7 @@ pub async fn update_feed_properties(
         fetch_frequency,
         fetch_interval_minutes,
         color,
+        ignore_pattern,
         feed_id
     )
     .execute(pool)

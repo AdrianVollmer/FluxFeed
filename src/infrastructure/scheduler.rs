@@ -116,8 +116,13 @@ async fn handle_feed_update(
     update_feed_metadata_from_rss(pool, feed, &parsed_feed, etag, last_modified).await?;
 
     // Insert articles and spawn OpenGraph fetching
-    let new_articles_count =
-        insert_articles_from_entries(pool, feed.id, parsed_feed.entries).await?;
+    let new_articles_count = insert_articles_from_entries(
+        pool,
+        feed.id,
+        parsed_feed.entries,
+        feed.ignore_pattern.as_deref(),
+    )
+    .await?;
 
     // Update adaptive fetch interval based on whether we got new articles
     update_adaptive_interval(pool, feed, new_articles_count).await?;
@@ -235,13 +240,29 @@ async fn insert_articles_from_entries(
     pool: &sqlx::SqlitePool,
     feed_id: i64,
     entries: Vec<feed_rs::model::Entry>,
+    ignore_pattern: Option<&str>,
 ) -> Result<usize, Box<dyn std::error::Error>> {
     let mut new_articles_count = 0;
     let mut article_ids_to_fetch = Vec::new();
 
+    // Compile the ignore pattern regex once if provided
+    let ignore_regex = ignore_pattern
+        .map(regex::Regex::new)
+        .transpose()
+        .map_err(|e| format!("Invalid ignore pattern regex: {}", e))?;
+
     for entry in entries {
         let guid = generate_guid(&entry);
         let title = extract_title(&entry);
+
+        // Skip articles matching the ignore pattern
+        if let Some(ref re) = ignore_regex {
+            if re.is_match(&title) {
+                tracing::debug!("Ignoring article matching pattern: {}", title);
+                continue;
+            }
+        }
+
         let url = extract_url(&entry);
         let content = extract_content(&entry);
         let summary = extract_summary(&entry);

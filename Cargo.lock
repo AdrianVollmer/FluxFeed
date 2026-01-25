@@ -817,6 +817,7 @@ dependencies = [
  "http 1.4.0",
  "quick-xml",
  "rand",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",

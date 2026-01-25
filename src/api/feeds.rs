@@ -134,6 +134,7 @@ pub struct UpdateFeedForm {
     pub description: Option<String>,
     pub fetch_frequency: String,
     pub color: String,
+    pub ignore_pattern: Option<String>,
     #[serde(default, deserialize_with = "deserialize_id_list")]
     pub tag_ids: Vec<i64>,
     /// Ignored field sent by the form for custom frequency input
@@ -269,6 +270,17 @@ pub async fn update_feed(
     // Convert empty description to None
     let description = form.description.filter(|s| !s.trim().is_empty());
 
+    // Convert empty ignore_pattern to None and validate regex
+    let ignore_pattern = form.ignore_pattern.filter(|s| !s.trim().is_empty());
+    if let Some(ref pattern) = ignore_pattern {
+        regex::Regex::new(pattern).map_err(|e| {
+            AppError::ServiceError(feed_service::FeedServiceError::InvalidUrl(format!(
+                "Invalid regex pattern: {}",
+                e
+            )))
+        })?;
+    }
+
     // Update in database
     repository::update_feed_properties(
         &state.db_pool,
@@ -279,6 +291,7 @@ pub async fn update_feed(
         &form.fetch_frequency,
         fetch_interval_minutes,
         &form.color,
+        ignore_pattern.as_deref(),
     )
     .await?;
 
