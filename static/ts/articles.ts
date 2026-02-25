@@ -87,6 +87,9 @@ function loadMoreFullscreenArticles(url: string): void {
         meta.remove();
       }
 
+      // Update pagination state in URL
+      updatePaginationState();
+
       // Small delay before allowing next load
       setTimeout(() => {
         isLoadingMoreArticles = false;
@@ -297,10 +300,79 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Sync expansion state for a swapped element
+// After HTMX replaces a row, the expanded content (a sibling) keeps its state
+// but the row loses its visual state (expanded class, chevron rotation)
+function syncExpansionStateForElement(element: HTMLElement): void {
+  // Check if this is a compact row
+  if (element.classList.contains('compact-article-row')) {
+    const articleId = element.dataset.articleId;
+    if (articleId) {
+      const expandedEl = document.getElementById(`article-compact-${articleId}-expanded`);
+      if (expandedEl) {
+        const isExpanded = !expandedEl.classList.contains('hidden');
+        if (isExpanded) {
+          element.classList.add('expanded');
+        } else {
+          element.classList.remove('expanded');
+        }
+      }
+    }
+  }
+
+  // Check if this is a fullscreen row
+  if (element.classList.contains('fullscreen-article-row')) {
+    const articleId = (element as HTMLElement).dataset.fullscreenArticleId;
+    if (articleId) {
+      const expandedEl = document.getElementById(`article-fullscreen-${articleId}-expanded`);
+      const expandBtn = element.querySelector('.fullscreen-expand-btn svg');
+      if (expandedEl && expandBtn) {
+        const isExpanded = !expandedEl.classList.contains('hidden');
+        if (isExpanded) {
+          expandBtn.classList.add('rotate-180');
+        } else {
+          expandBtn.classList.remove('rotate-180');
+        }
+      }
+    }
+  }
+}
+
+// Update URL with current loaded article count for pagination state preservation
+// This allows restoring the article list when navigating back to the page
+function updatePaginationState(): void {
+  // Count articles in all views (only one will be active)
+  const cardsCount = document.querySelectorAll('#articles-cards .article-card').length;
+  const compactCount = document.querySelectorAll('#articles-compact .compact-article-row').length;
+  const fullscreenCount = document.querySelectorAll('#fullscreen-article-list .fullscreen-article-row').length;
+
+  const totalLoaded = Math.max(cardsCount, compactCount, fullscreenCount);
+
+  // Only update if we have loaded more than the default (20)
+  if (totalLoaded > 20) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('loaded', String(totalLoaded));
+    history.replaceState(null, '', url.toString());
+  }
+}
+
 // Re-apply load more button settings after any swap (handles both main and OOB swaps)
-document.body.addEventListener('htmx:afterSwap', () => {
+document.body.addEventListener('htmx:afterSwap', (event) => {
   updateLoadMoreButton();
   checkCollapsibleContent();
+
+  // Sync expansion state for the swapped element
+  const detail = (event as CustomEvent).detail;
+  if (detail?.target) {
+    syncExpansionStateForElement(detail.target as HTMLElement);
+  }
+
+  // Update URL with current loaded count for pagination state preservation
+  // Check if this was a pagination-related swap (articles-cards, articles-compact, or fullscreen)
+  const targetId = detail?.target?.id;
+  if (targetId === 'articles-cards' || targetId === 'articles-compact' || targetId === 'fullscreen-article-list') {
+    updatePaginationState();
+  }
 });
 
 // Content expand/collapse toggle (event delegation for dynamic content)
@@ -331,10 +403,19 @@ document.addEventListener('click', (e: MouseEvent) => {
     const expandedRow = document.getElementById(`article-compact-${articleId}-expanded`);
 
     if (expandedRow) {
-      // Toggle visibility
-      expandedRow.classList.toggle('hidden');
-      // Toggle expanded class on main row for icon rotation
-      row.classList.toggle('expanded');
+      // Check actual state based on expanded content visibility (source of truth)
+      // This prevents state desync after HTMX swaps which replace the row but not the expanded content
+      const isCurrentlyExpanded = !expandedRow.classList.contains('hidden');
+
+      if (isCurrentlyExpanded) {
+        // Collapse: hide content and remove expanded state from row
+        expandedRow.classList.add('hidden');
+        row.classList.remove('expanded');
+      } else {
+        // Expand: show content and add expanded state to row
+        expandedRow.classList.remove('hidden');
+        row.classList.add('expanded');
+      }
     }
   }
 });

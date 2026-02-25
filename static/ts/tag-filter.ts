@@ -31,6 +31,7 @@ function applyTagFilter(): void {
   // Clear existing tag filter and reset pagination
   params.delete('tag_ids');
   params.delete('offset');
+  params.delete('loaded');
 
   if (tagIds.length > 0) {
     params.set('tag_ids', tagIds.join(','));

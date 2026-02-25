@@ -31,10 +31,11 @@ function applyFeedFilter(): void {
 
   const params = new URLSearchParams(window.location.search);
 
-  // Clear existing filter params
+  // Clear existing filter params and pagination state
   params.delete('feed_ids');
   params.delete('group_ids');
   params.delete('offset'); // Reset pagination when filter changes
+  params.delete('loaded'); // Reset loaded count when filter changes
 
   if (feedIds.length > 0) {
     params.set('feed_ids', feedIds.join(','));

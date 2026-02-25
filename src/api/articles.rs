@@ -31,6 +31,7 @@ pub struct ArticleListParams {
     pub date_from: Option<String>,
     pub date_to: Option<String>,
     pub show: Option<String>, // "all" to override smart default
+    pub loaded: Option<i64>,  // Total articles to load (for restoring pagination state)
 }
 
 #[derive(Deserialize)]
@@ -102,7 +103,10 @@ pub async fn list_articles(
     headers: HeaderMap,
     Query(params): Query<ArticleListParams>,
 ) -> Result<Html<String>, AppError> {
-    let limit = params.limit.unwrap_or(20);
+    // If `loaded` param is set (from returning to page), use it as the initial limit
+    // This allows restoring pagination state when navigating back
+    let default_limit = 20;
+    let limit = params.loaded.unwrap_or_else(|| params.limit.unwrap_or(default_limit));
     let offset = params.offset.unwrap_or(0);
 
     // Parse date parameters
@@ -682,7 +686,9 @@ pub async fn search_articles(
     headers: HeaderMap,
     Query(params): Query<ArticleListParams>,
 ) -> Result<Html<String>, AppError> {
-    let limit = params.limit.unwrap_or(20);
+    // If `loaded` param is set (from returning to page), use it as the initial limit
+    let default_limit = 20;
+    let limit = params.loaded.unwrap_or_else(|| params.limit.unwrap_or(default_limit));
     let offset = params.offset.unwrap_or(0);
 
     // Parse date parameters
