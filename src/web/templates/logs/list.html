@@ -164,7 +164,7 @@
     {% if has_more %}
     <div id="load-more-container" class="mt-8 text-center">
         <button
-            hx-get="/logs?offset={{ offset + limit }}{% if filter_feed.is_some() %}&feed_id={{ filter_feed.unwrap() }}{% endif %}{% if filter_feed_name.is_some() %}&feed_name={{ filter_feed_name.as_ref().unwrap()|urlencode }}{% endif %}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
+            hx-get="/logs?offset={{ offset + limit }}{% if filter_feed.is_some() %}&feed_ids={{ filter_feed.unwrap() }}{% endif %}{% if filter_feed_name.is_some() %}&feed_name={{ filter_feed_name.as_ref().unwrap()|urlencode }}{% endif %}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
             hx-target="tbody"
             hx-swap="beforeend"
             class="btn btn-primary">
