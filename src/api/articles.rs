@@ -1,6 +1,7 @@
 use crate::api::feeds::AppState;
 use crate::domain::{article_service, feed_service, group_service};
 use crate::infrastructure::repository;
+use crate::web::url_builders::ArticleFilters;
 use crate::web::templates::{
     ArticleCompactRowTemplate, ArticleCompactRowsTemplate, ArticleFullscreenRowTemplate,
     ArticleFullscreenRowsTemplate, ArticleListFooterTemplate, ArticleRowTemplate,
@@ -269,6 +270,18 @@ fn render_htmx_pagination(
 ) -> Result<Html<String>, AppError> {
     let mut html = String::new();
 
+    let filters = ArticleFilters {
+        feed_ids: parse_ids(params.feed_ids.as_deref()),
+        group_ids: parse_ids(params.group_ids.as_deref()),
+        tag_ids: parse_ids(params.tag_ids.as_deref()),
+        is_read: params.is_read,
+        is_starred: params.is_starred,
+        search_query: params.q.clone(),
+        date_from: params.date_from.clone(),
+        date_to: params.date_to.clone(),
+    };
+    let next_url = filters.articles_fullscreen_url(offset + limit);
+
     // Render article rows using the appropriate template based on view mode
     let view_mode = params.view.as_deref().unwrap_or("cards");
     if view_mode == "fullscreen" {
@@ -279,22 +292,6 @@ fn render_htmx_pagination(
         html.push_str(&rows_template.render()?);
 
         // Include metadata for JS to update the sentinel
-        let mut next_url = format!("/articles?offset={}&view=fullscreen", offset + limit);
-        if let Some(ref feed_ids) = params.feed_ids {
-            next_url.push_str(&format!("&feed_ids={}", feed_ids));
-        }
-        if let Some(ref group_ids) = params.group_ids {
-            next_url.push_str(&format!("&group_ids={}", group_ids));
-        }
-        if let Some(ref tag_ids) = params.tag_ids {
-            next_url.push_str(&format!("&tag_ids={}", tag_ids));
-        }
-        if let Some(is_read) = params.is_read {
-            next_url.push_str(&format!("&is_read={}", is_read));
-        }
-        if let Some(is_starred) = params.is_starred {
-            next_url.push_str(&format!("&is_starred={}", is_starred));
-        }
         html.push_str(&format!(
             r#"<template id="fullscreen-load-more-meta" data-has-more="{}" data-next-url="{}"></template>"#,
             has_more, next_url
@@ -319,14 +316,7 @@ fn render_htmx_pagination(
         has_more,
         show_mark_all_read,
         next_offset: offset + limit,
-        filter_feed_ids: params.feed_ids.clone(),
-        filter_group_ids: params.group_ids.clone(),
-        filter_tag_ids: params.tag_ids.clone(),
-        filter_read: params.is_read,
-        filter_starred: params.is_starred,
-        search_query: params.q.clone(),
-        date_from: params.date_from.clone(),
-        date_to: params.date_to.clone(),
+        filters,
     };
     html.push_str(
         r#"<div id="article-list-footer" hx-swap-oob="true" class="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">"#,
@@ -357,13 +347,19 @@ async fn render_full_articles_page(
     // Build group tree for the filter modal
     let (group_tree, ungrouped_feeds) = group_service::build_group_tree(groups, feeds.clone());
 
-    // Parse selected IDs for highlighting in the UI
-    let filter_feed_ids = parse_ids(params.feed_ids.as_deref());
-    let filter_group_ids = parse_ids(params.group_ids.as_deref());
-    let filter_tag_ids = parse_ids(params.tag_ids.as_deref());
-
     // Get view mode from cookie (default to "cards")
     let view_mode = get_cookie_value(headers, "articleView").unwrap_or_else(|| "cards".to_string());
+
+    let filters = ArticleFilters {
+        feed_ids: parse_ids(params.feed_ids.as_deref()),
+        group_ids: parse_ids(params.group_ids.as_deref()),
+        tag_ids: parse_ids(params.tag_ids.as_deref()),
+        is_read: effective_filter.is_read,
+        is_starred: params.is_starred,
+        search_query: params.q.clone(),
+        date_from: params.date_from.clone(),
+        date_to: params.date_to.clone(),
+    };
 
     let template = ArticlesListTemplate {
         articles,
@@ -373,16 +369,9 @@ async fn render_full_articles_page(
         offset,
         limit,
         has_more,
-        filter_feed_ids,
-        filter_group_ids,
-        filter_tag_ids,
-        filter_read: effective_filter.is_read,
-        filter_starred: params.is_starred,
+        filters,
         article_counts: effective_filter.counts,
         active_filter: effective_filter.active_filter,
-        search_query: params.q.clone(),
-        date_from: params.date_from.clone(),
-        date_to: params.date_to.clone(),
         all_tags,
         view_mode,
     };

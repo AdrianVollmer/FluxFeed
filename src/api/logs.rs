@@ -1,5 +1,6 @@
 use crate::api::feeds::AppState;
 use crate::infrastructure::repository;
+use crate::web::url_builders::LogFilters;
 use crate::web::templates::{
     ErrorTemplate, LoadMoreButtonLogsTemplate, LogRowsTemplate, LogsListTemplate,
 };
@@ -27,6 +28,12 @@ pub async fn list_logs(
 ) -> Result<Html<String>, AppError> {
     let limit = params.limit.unwrap_or(50);
     let offset = params.offset.unwrap_or(0);
+
+    let filters = LogFilters {
+        feed_id: params.feed_id,
+        feed_name: params.feed_name.clone(),
+        log_type: params.log_type.clone(),
+    };
 
     // Get logs with feed info
     let logs = repository::list_logs_with_feeds(
@@ -57,9 +64,7 @@ pub async fn list_logs(
         if has_more {
             let button_template = LoadMoreButtonLogsTemplate {
                 next_offset: offset + limit,
-                filter_feed: params.feed_id,
-                filter_feed_name: params.feed_name.clone(),
-                filter_log_type: params.log_type.clone(),
+                filters: filters.clone(),
             };
             html.push_str(
                 r#"<div id="load-more-container" hx-swap-oob="true" class="mt-8 text-center">"#,
@@ -83,9 +88,7 @@ pub async fn list_logs(
         offset,
         limit,
         has_more,
-        filter_feed: params.feed_id,
-        filter_feed_name: params.feed_name,
-        filter_log_type: params.log_type,
+        filters,
     };
 
     Ok(Html(template.render()?))

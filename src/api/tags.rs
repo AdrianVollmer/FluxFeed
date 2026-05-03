@@ -1,6 +1,7 @@
 use crate::api::articles::AppError;
 use crate::api::feeds::AppState;
 use crate::infrastructure::repository;
+use crate::web::url_builders::ArticleFilters;
 use crate::web::templates::{
     TagFilterModalTemplate, TagFormTemplate, TagListContentTemplate, TagsListTemplate,
 };
@@ -160,11 +161,16 @@ pub async fn show_tag_filter_modal(
 
     let template = TagFilterModalTemplate {
         tags,
-        selected_tag_ids,
-        filter_read: params.is_read,
-        filter_starred: params.is_starred,
-        filter_feed_ids,
-        filter_group_ids,
+        filters: ArticleFilters {
+            feed_ids: filter_feed_ids,
+            group_ids: filter_group_ids,
+            tag_ids: selected_tag_ids,
+            is_read: params.is_read,
+            is_starred: params.is_starred,
+            search_query: None,
+            date_from: None,
+            date_to: None,
+        },
     };
 
     Ok(Html(template.render()?))

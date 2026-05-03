@@ -2,6 +2,7 @@ use crate::api::articles::AppError;
 use crate::api::feeds::AppState;
 use crate::domain::group_service;
 use crate::infrastructure::repository;
+use crate::web::url_builders::ArticleFilters;
 use crate::web::templates::{
     AssignFeedTemplate, FeedFilterModalTemplate, GroupFormTemplate, GroupListContentTemplate,
     GroupsListTemplate,
@@ -56,10 +57,16 @@ pub async fn show_feed_filter_modal(
     let template = FeedFilterModalTemplate {
         group_tree,
         ungrouped_feeds,
-        selected_feed_ids,
-        selected_group_ids,
-        filter_read: params.is_read,
-        filter_starred: params.is_starred,
+        filters: ArticleFilters {
+            feed_ids: selected_feed_ids,
+            group_ids: selected_group_ids,
+            tag_ids: vec![],
+            is_read: params.is_read,
+            is_starred: params.is_starred,
+            search_query: None,
+            date_from: None,
+            date_to: None,
+        },
     };
 
     Ok(Html(template.render()?))
