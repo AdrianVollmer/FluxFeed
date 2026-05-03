@@ -23,7 +23,7 @@
                     {% for tag in tags %}
                     <label class="flex items-center gap-3 py-2 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
                         <input type="checkbox" name="tag_ids" value="{{ tag.id }}"
-                               {% if tag.id|in_list(selected_tag_ids) %}checked{% endif %}
+                               {% if tag.id|in_list(filters.tag_ids) %}checked{% endif %}
                                class="tag-checkbox rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500">
                         {% include "components/_tag_pill.html" %}
                     </label>

@@ -2,7 +2,7 @@
     {# Group row with checkbox #}
     <label class="flex items-center gap-2 py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer font-medium">
         <input type="checkbox" name="group_ids" value="{{ group_node.group.id }}"
-               {% if group_node.group.id|in_list(selected_group_ids) %}checked{% endif %}
+               {% if group_node.group.id|in_list(filters.group_ids) %}checked{% endif %}
                class="group-checkbox rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500">
         {% include "icons/folder.html" %}
         <span class="text-sm text-gray-700 dark:text-gray-300 {% if group_node.total_unread > 0 %}font-semibold{% endif %}">{{ group_node.group.name }}{% if group_node.total_unread > 0 %} ({{ group_node.total_unread }}){% endif %}</span>
@@ -12,7 +12,7 @@
     {% for item in group_node.feeds %}
     <label class="flex items-center gap-2 py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer ml-6">
         <input type="checkbox" name="feed_ids" value="{{ item.feed.id }}"
-               {% if item.feed.id|in_list(selected_feed_ids) %}checked{% endif %}
+               {% if item.feed.id|in_list(filters.feed_ids) %}checked{% endif %}
                class="feed-checkbox rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500">
         <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ item.feed.color }}"></span>
         <span class="text-sm text-gray-700 dark:text-gray-300 truncate {% if item.unread_count > 0 %}font-semibold{% endif %}">{{ item.feed.title }}{% if item.unread_count > 0 %} ({{ item.unread_count }}){% endif %}</span>
@@ -24,7 +24,7 @@
     <div class="ml-4">
         <label class="flex items-center gap-2 py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer font-medium">
             <input type="checkbox" name="group_ids" value="{{ child_group.group.id }}"
-                   {% if child_group.group.id|in_list(selected_group_ids) %}checked{% endif %}
+                   {% if child_group.group.id|in_list(filters.group_ids) %}checked{% endif %}
                    class="group-checkbox rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500">
             {% include "icons/folder.html" %}
             <span class="text-sm text-gray-700 dark:text-gray-300 {% if child_group.total_unread > 0 %}font-semibold{% endif %}">{{ child_group.group.name }}{% if child_group.total_unread > 0 %} ({{ child_group.total_unread }}){% endif %}</span>
@@ -33,7 +33,7 @@
         {% for item in child_group.feeds %}
         <label class="flex items-center gap-2 py-1 px-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer ml-6">
             <input type="checkbox" name="feed_ids" value="{{ item.feed.id }}"
-                   {% if item.feed.id|in_list(selected_feed_ids) %}checked{% endif %}
+                   {% if item.feed.id|in_list(filters.feed_ids) %}checked{% endif %}
                    class="feed-checkbox rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500">
             <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ item.feed.color }}"></span>
             <span class="text-sm text-gray-700 dark:text-gray-300 truncate {% if item.unread_count > 0 %}font-semibold{% endif %}">{{ item.feed.title }}{% if item.unread_count > 0 %} ({{ item.unread_count }}){% endif %}</span>
