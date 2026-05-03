@@ -73,7 +73,7 @@ impl ArticleFilters {
         p
     }
 
-    pub fn articles_url(&self, offset: i64) -> String {
+    pub fn articles_url(&self, offset: &i64) -> String {
         let p = self.filter_params();
         if p.is_empty() {
             format!("/articles?offset={}", offset)
@@ -82,7 +82,7 @@ impl ArticleFilters {
         }
     }
 
-    pub fn articles_fullscreen_url(&self, offset: i64) -> String {
+    pub fn articles_fullscreen_url(&self, offset: &i64) -> String {
         let p = self.filter_params();
         if p.is_empty() {
             format!("/articles?offset={}&view=fullscreen", offset)
@@ -161,7 +161,7 @@ impl ArticleFilters {
 }
 
 impl LogFilters {
-    pub fn logs_url(&self, offset: i64) -> String {
+    pub fn logs_url(&self, offset: &i64) -> String {
         let mut url = format!("/logs?offset={}", offset);
         if let Some(id) = self.feed_id {
             url.push_str(&format!("&feed_id={}", id));
@@ -196,13 +196,13 @@ mod tests {
     #[test]
     fn articles_url_no_filters() {
         let f = empty_filters();
-        assert_eq!(f.articles_url(0), "/articles?offset=0");
+        assert_eq!(f.articles_url(&0), "/articles?offset=0");
     }
 
     #[test]
     fn articles_url_with_offset_and_feed_ids() {
         let f = ArticleFilters { feed_ids: vec![1, 2], ..empty_filters() };
-        assert_eq!(f.articles_url(20), "/articles?offset=20&feed_ids=1,2");
+        assert_eq!(f.articles_url(&20), "/articles?offset=20&feed_ids=1,2");
     }
 
     #[test]
@@ -217,7 +217,7 @@ mod tests {
             date_from: Some("2024-01-01".to_string()),
             date_to: Some("2024-12-31".to_string()),
         };
-        let url = f.articles_url(0);
+        let url = f.articles_url(&0);
         assert!(url.contains("feed_ids=3"));
         assert!(url.contains("group_ids=4"));
         assert!(url.contains("tag_ids=5"));
@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn articles_fullscreen_url_includes_view() {
         let f = ArticleFilters { feed_ids: vec![1], ..empty_filters() };
-        let url = f.articles_fullscreen_url(40);
+        let url = f.articles_fullscreen_url(&40);
         assert!(url.contains("view=fullscreen"));
         assert!(url.contains("offset=40"));
         assert!(url.contains("feed_ids=1"));
@@ -324,7 +324,7 @@ mod tests {
     #[test]
     fn articles_fullscreen_url_no_filters() {
         let f = empty_filters();
-        assert_eq!(f.articles_fullscreen_url(0), "/articles?offset=0&view=fullscreen");
+        assert_eq!(f.articles_fullscreen_url(&0), "/articles?offset=0&view=fullscreen");
     }
 
     #[test]
@@ -344,7 +344,7 @@ mod tests {
     #[test]
     fn log_filters_url_no_filters() {
         let f = LogFilters { feed_id: None, feed_name: None, log_type: None };
-        assert_eq!(f.logs_url(0), "/logs?offset=0");
+        assert_eq!(f.logs_url(&0), "/logs?offset=0");
     }
 
     #[test]
@@ -354,7 +354,7 @@ mod tests {
             feed_name: Some("My Feed".to_string()),
             log_type: Some("error".to_string()),
         };
-        let url = f.logs_url(50);
+        let url = f.logs_url(&50);
         assert!(url.contains("offset=50"));
         assert!(url.contains("feed_id=42"));
         assert!(url.contains("feed_name=My+Feed") || url.contains("feed_name=My%20Feed"));

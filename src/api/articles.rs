@@ -280,7 +280,7 @@ fn render_htmx_pagination(
         date_from: params.date_from.clone(),
         date_to: params.date_to.clone(),
     };
-    let next_url = filters.articles_fullscreen_url(offset + limit);
+    let next_url = filters.articles_fullscreen_url(&(offset + limit));
 
     // Render article rows using the appropriate template based on view mode
     let view_mode = params.view.as_deref().unwrap_or("cards");

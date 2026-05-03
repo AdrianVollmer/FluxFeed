@@ -25,19 +25,19 @@
         <div>
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Status:</label>
             <div class="flex flex-wrap gap-2">
-                <a href="/logs" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                <a href="/logs" class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
                     All
                 </a>
-                <a href="/logs?log_type=success" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "success" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                <a href="/logs?log_type=success" class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_some() && filters.log_type.as_ref().unwrap() == "success" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
                     Success
                 </a>
-                <a href="/logs?log_type=not_modified" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "not_modified" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                <a href="/logs?log_type=not_modified" class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_some() && filters.log_type.as_ref().unwrap() == "not_modified" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
                     Not Modified
                 </a>
-                <a href="/logs?log_type=error" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "error" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                <a href="/logs?log_type=error" class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_some() && filters.log_type.as_ref().unwrap() == "error" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
                     Errors
                 </a>
-                <a href="/logs?log_type=rate_limited" class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "rate_limited" %}bg-red-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
+                <a href="/logs?log_type=rate_limited" class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_some() && filters.log_type.as_ref().unwrap() == "rate_limited" %}bg-red-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600{% endif %}">
                     Rate Limited (429)
                 </a>
             </div>
@@ -47,19 +47,19 @@
         <div>
             <label for="feed-filter-desktop" class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Filter by Feed:</label>
             <form action="/logs" method="get" class="flex gap-2 items-center">
-                {% if filter_log_type.is_some() %}
-                <input type="hidden" name="log_type" value="{{ filter_log_type.as_ref().unwrap() }}">
+                {% if filters.log_type.is_some() %}
+                <input type="hidden" name="log_type" value="{{ filters.log_type.as_ref().unwrap() }}">
                 {% endif %}
                 <input
                     type="text"
                     id="feed-filter-desktop"
                     name="feed_name"
-                    value="{% if filter_feed_name.is_some() %}{{ filter_feed_name.as_ref().unwrap() }}{% endif %}"
+                    value="{% if filters.feed_name.is_some() %}{{ filters.feed_name.as_ref().unwrap() }}{% endif %}"
                     placeholder="Search feeds..."
                     class="form-input max-w-xs">
                 <button type="submit" class="btn btn-primary">Filter</button>
-                {% if filter_feed_name.is_some() %}
-                <a href="/logs{% if filter_log_type.is_some() %}?log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}" class="btn btn-secondary">Clear</a>
+                {% if filters.feed_name.is_some() %}
+                <a href="/logs{% if filters.log_type.is_some() %}?log_type={{ filters.log_type.as_ref().unwrap() }}{% endif %}" class="btn btn-secondary">Clear</a>
                 {% endif %}
             </form>
         </div>
@@ -75,27 +75,27 @@
                 <div class="flex flex-wrap gap-2">
                     <a href="/logs"
                        onclick="document.getElementById('log-controls-toggle').checked = false"
-                       class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+                       class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_none() %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
                         All
                     </a>
                     <a href="/logs?log_type=success"
                        onclick="document.getElementById('log-controls-toggle').checked = false"
-                       class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "success" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+                       class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_some() && filters.log_type.as_ref().unwrap() == "success" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
                         Success
                     </a>
                     <a href="/logs?log_type=not_modified"
                        onclick="document.getElementById('log-controls-toggle').checked = false"
-                       class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "not_modified" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+                       class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_some() && filters.log_type.as_ref().unwrap() == "not_modified" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
                         Not Modified
                     </a>
                     <a href="/logs?log_type=error"
                        onclick="document.getElementById('log-controls-toggle').checked = false"
-                       class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "error" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+                       class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_some() && filters.log_type.as_ref().unwrap() == "error" %}bg-blue-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
                         Errors
                     </a>
                     <a href="/logs?log_type=rate_limited"
                        onclick="document.getElementById('log-controls-toggle').checked = false"
-                       class="px-4 py-2 rounded text-sm transition {% if filter_log_type.is_some() && filter_log_type.as_ref().unwrap() == "rate_limited" %}bg-red-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
+                       class="px-4 py-2 rounded text-sm transition {% if filters.log_type.is_some() && filters.log_type.as_ref().unwrap() == "rate_limited" %}bg-red-600 text-white{% else %}bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200{% endif %}">
                         Rate Limited (429)
                     </a>
                 </div>
@@ -105,19 +105,19 @@
             <div>
                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filter by Feed</h3>
                 <form action="/logs" method="get" class="flex gap-2 items-center">
-                    {% if filter_log_type.is_some() %}
-                    <input type="hidden" name="log_type" value="{{ filter_log_type.as_ref().unwrap() }}">
+                    {% if filters.log_type.is_some() %}
+                    <input type="hidden" name="log_type" value="{{ filters.log_type.as_ref().unwrap() }}">
                     {% endif %}
                     <input
                         type="text"
                         name="feed_name"
-                        value="{% if filter_feed_name.is_some() %}{{ filter_feed_name.as_ref().unwrap() }}{% endif %}"
+                        value="{% if filters.feed_name.is_some() %}{{ filters.feed_name.as_ref().unwrap() }}{% endif %}"
                         placeholder="Search feeds..."
                         class="form-input flex-1">
                     <button type="submit" class="btn btn-primary" onclick="document.getElementById('log-controls-toggle').checked = false">Filter</button>
                 </form>
-                {% if filter_feed_name.is_some() %}
-                <a href="/logs{% if filter_log_type.is_some() %}?log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
+                {% if filters.feed_name.is_some() %}
+                <a href="/logs{% if filters.log_type.is_some() %}?log_type={{ filters.log_type.as_ref().unwrap() }}{% endif %}"
                    onclick="document.getElementById('log-controls-toggle').checked = false"
                    class="btn btn-secondary mt-2 w-full text-center">Clear Filter</a>
                 {% endif %}
@@ -164,7 +164,7 @@
     {% if has_more %}
     <div id="load-more-container" class="mt-8 text-center">
         <button
-            hx-get="/logs?offset={{ offset + limit }}{% if filter_feed.is_some() %}&feed_ids={{ filter_feed.unwrap() }}{% endif %}{% if filter_feed_name.is_some() %}&feed_name={{ filter_feed_name.as_ref().unwrap()|urlencode }}{% endif %}{% if filter_log_type.is_some() %}&log_type={{ filter_log_type.as_ref().unwrap() }}{% endif %}"
+            hx-get="{{ filters.logs_url(offset + limit) }}"
             hx-target="tbody"
             hx-swap="beforeend"
             class="btn btn-primary">
