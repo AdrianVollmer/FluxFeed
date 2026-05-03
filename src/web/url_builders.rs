@@ -40,6 +40,15 @@ fn append_param(buf: &mut String, kv: &str) {
 }
 
 impl ArticleFilters {
+    fn append_read_starred_params(&self, p: &mut String) {
+        if let Some(v) = self.is_read {
+            append_param(p, &format!("is_read={}", v));
+        }
+        if let Some(v) = self.is_starred {
+            append_param(p, &format!("is_starred={}", v));
+        }
+    }
+
     fn filter_params(&self) -> String {
         let mut p = String::new();
         if !self.feed_ids.is_empty() {
@@ -51,20 +60,15 @@ impl ArticleFilters {
         if !self.tag_ids.is_empty() {
             append_param(&mut p, &format!("tag_ids={}", ids_to_csv(&self.tag_ids)));
         }
-        if let Some(v) = self.is_read {
-            append_param(&mut p, &format!("is_read={}", v));
-        }
-        if let Some(v) = self.is_starred {
-            append_param(&mut p, &format!("is_starred={}", v));
-        }
+        self.append_read_starred_params(&mut p);
         if let Some(ref q) = self.search_query {
             append_param(&mut p, &format!("q={}", url_encode(q)));
         }
         if let Some(ref v) = self.date_from {
-            append_param(&mut p, &format!("date_from={}", v));
+            append_param(&mut p, &format!("date_from={}", url_encode(v)));
         }
         if let Some(ref v) = self.date_to {
-            append_param(&mut p, &format!("date_to={}", v));
+            append_param(&mut p, &format!("date_to={}", url_encode(v)));
         }
         p
     }
@@ -101,11 +105,11 @@ impl ArticleFilters {
             ids_to_csv(&self.feed_ids),
             ids_to_csv(&self.group_ids),
         );
-        if let Some(v) = self.is_read {
-            url.push_str(&format!("&is_read={}", v));
-        }
-        if let Some(v) = self.is_starred {
-            url.push_str(&format!("&is_starred={}", v));
+        let mut p = String::new();
+        self.append_read_starred_params(&mut p);
+        if !p.is_empty() {
+            url.push('&');
+            url.push_str(&p);
         }
         url
     }
@@ -117,23 +121,18 @@ impl ArticleFilters {
             ids_to_csv(&self.feed_ids),
             ids_to_csv(&self.group_ids),
         );
-        if let Some(v) = self.is_read {
-            url.push_str(&format!("&is_read={}", v));
-        }
-        if let Some(v) = self.is_starred {
-            url.push_str(&format!("&is_starred={}", v));
+        let mut p = String::new();
+        self.append_read_starred_params(&mut p);
+        if !p.is_empty() {
+            url.push('&');
+            url.push_str(&p);
         }
         url
     }
 
     pub fn clear_feed_filter_url(&self) -> String {
         let mut p = String::new();
-        if let Some(v) = self.is_read {
-            append_param(&mut p, &format!("is_read={}", v));
-        }
-        if let Some(v) = self.is_starred {
-            append_param(&mut p, &format!("is_starred={}", v));
-        }
+        self.append_read_starred_params(&mut p);
         if !self.tag_ids.is_empty() {
             append_param(&mut p, &format!("tag_ids={}", ids_to_csv(&self.tag_ids)));
         }
@@ -146,12 +145,7 @@ impl ArticleFilters {
 
     pub fn clear_tag_filter_url(&self) -> String {
         let mut p = String::new();
-        if let Some(v) = self.is_read {
-            append_param(&mut p, &format!("is_read={}", v));
-        }
-        if let Some(v) = self.is_starred {
-            append_param(&mut p, &format!("is_starred={}", v));
-        }
+        self.append_read_starred_params(&mut p);
         if !self.feed_ids.is_empty() {
             append_param(&mut p, &format!("feed_ids={}", ids_to_csv(&self.feed_ids)));
         }
@@ -176,7 +170,7 @@ impl LogFilters {
             url.push_str(&format!("&feed_name={}", url_encode(name)));
         }
         if let Some(ref t) = self.log_type {
-            url.push_str(&format!("&log_type={}", t));
+            url.push_str(&format!("&log_type={}", url_encode(t)));
         }
         url
     }
@@ -324,6 +318,26 @@ mod tests {
         assert!(url.contains("tag_ids=3"));
         assert!(url.contains("feed_ids=1"));
         assert!(url.contains("group_ids=2"));
+        assert!(url.contains("is_starred=true"));
+    }
+
+    #[test]
+    fn articles_fullscreen_url_no_filters() {
+        let f = empty_filters();
+        assert_eq!(f.articles_fullscreen_url(0), "/articles?offset=0&view=fullscreen");
+    }
+
+    #[test]
+    fn clear_feed_filter_url_with_both_read_and_starred() {
+        let f = ArticleFilters {
+            feed_ids: vec![1],
+            is_read: Some(false),
+            is_starred: Some(true),
+            ..empty_filters()
+        };
+        let url = f.clear_feed_filter_url();
+        assert!(!url.contains("feed_ids"));
+        assert!(url.contains("is_read=false"));
         assert!(url.contains("is_starred=true"));
     }
 
