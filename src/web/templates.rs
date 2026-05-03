@@ -3,6 +3,7 @@ use crate::domain::models::{
 };
 use crate::infrastructure::repository::ArticleCounts;
 use crate::web::filters;
+use crate::web::url_builders::{ArticleFilters, LogFilters};
 use askama::Template;
 
 #[derive(Template)]
@@ -81,16 +82,9 @@ pub struct ArticlesListTemplate {
     pub offset: i64,
     pub limit: i64,
     pub has_more: bool,
-    pub filter_feed_ids: Vec<i64>,
-    pub filter_group_ids: Vec<i64>,
-    pub filter_tag_ids: Vec<i64>,
-    pub filter_read: Option<bool>,
-    pub filter_starred: Option<bool>,
+    pub filters: ArticleFilters,
     pub article_counts: ArticleCounts,
     pub active_filter: String,
-    pub search_query: Option<String>,
-    pub date_from: Option<String>,
-    pub date_to: Option<String>,
     pub all_tags: Vec<Tag>,
     pub view_mode: String,
 }
@@ -147,14 +141,7 @@ pub struct ArticleListFooterTemplate {
     pub has_more: bool,
     pub show_mark_all_read: bool,
     pub next_offset: i64,
-    pub filter_feed_ids: Option<String>,
-    pub filter_group_ids: Option<String>,
-    pub filter_tag_ids: Option<String>,
-    pub filter_read: Option<bool>,
-    pub filter_starred: Option<bool>,
-    pub search_query: Option<String>,
-    pub date_from: Option<String>,
-    pub date_to: Option<String>,
+    pub filters: ArticleFilters,
 }
 
 #[derive(Template)]
@@ -177,9 +164,7 @@ pub struct LogsListTemplate {
     pub offset: i64,
     pub limit: i64,
     pub has_more: bool,
-    pub filter_feed: Option<i64>,
-    pub filter_feed_name: Option<String>,
-    pub filter_log_type: Option<String>,
+    pub filters: LogFilters,
 }
 
 #[derive(Template)]
@@ -192,9 +177,7 @@ pub struct LogRowsTemplate {
 #[template(path = "logs/_load_more_button.html")]
 pub struct LoadMoreButtonLogsTemplate {
     pub next_offset: i64,
-    pub filter_feed: Option<i64>,
-    pub filter_feed_name: Option<String>,
-    pub filter_log_type: Option<String>,
+    pub filters: LogFilters,
 }
 
 #[derive(Template)]
@@ -223,10 +206,7 @@ pub struct ReaderContentTemplate {
 pub struct FeedFilterModalTemplate {
     pub group_tree: Vec<GroupNodeWithUnread>,
     pub ungrouped_feeds: Vec<FeedWithUnread>,
-    pub selected_feed_ids: Vec<i64>,
-    pub selected_group_ids: Vec<i64>,
-    pub filter_read: Option<bool>,
-    pub filter_starred: Option<bool>,
+    pub filters: ArticleFilters,
 }
 
 #[derive(Template)]
@@ -234,11 +214,7 @@ pub struct FeedFilterModalTemplate {
 #[allow(dead_code)]
 pub struct TagFilterModalTemplate {
     pub tags: Vec<Tag>,
-    pub selected_tag_ids: Vec<i64>,
-    pub filter_read: Option<bool>,
-    pub filter_starred: Option<bool>,
-    pub filter_feed_ids: Vec<i64>,
-    pub filter_group_ids: Vec<i64>,
+    pub filters: ArticleFilters,
 }
 
 // Group templates
