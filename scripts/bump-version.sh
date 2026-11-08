@@ -56,7 +56,7 @@ cargo check --quiet
 if ! git diff --quiet Cargo.toml package.json package-lock.json Cargo.lock; then
     echo "Creating git commit and tag..."
     git add Cargo.toml package.json package-lock.json Cargo.lock
-    git -c user.name="Claude Code" -c user.email="noreply@anthropic.com" commit -m "$(cat <<EOF
+    git commit -m "$(cat <<EOF
 Bump version to $NEW_VERSION
 
 Updated version number across:
@@ -64,10 +64,6 @@ Updated version number across:
 - package.json
 - package-lock.json
 - Cargo.lock
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 EOF
 )"
 
