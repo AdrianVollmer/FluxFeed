@@ -65,6 +65,20 @@
         }
     </script>
 
+    {# "Back" links: when the page was reached by following a link within the app,
+       behave exactly like the browser's own back button (same history entry, same
+       scroll position, same filters) instead of navigating to a fixed fallback URL. #}
+    <script>
+        function smartBack(event) {
+            if (window.history.length > 1 &&
+                document.referrer &&
+                document.referrer.indexOf(window.location.origin + '/') === 0) {
+                event.preventDefault();
+                window.history.back();
+            }
+        }
+    </script>
+
     {# Mobile swipe gesture for nav #}
     <script>
         (function() {
