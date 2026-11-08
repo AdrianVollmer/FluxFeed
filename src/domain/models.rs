@@ -116,6 +116,20 @@ pub struct GroupNodeWithUnread {
     pub total_unread: i64,
 }
 
+/// Aggregated publish stats for a feed, used to rank the "smart" feed pills shown
+/// under the articles header: feeds that publish rarely but have unread articles
+/// are easy to miss among high-frequency feeds, so they are surfaced first.
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct FeedPublishStats {
+    pub feed_id: i64,
+    pub title: String,
+    pub color: String,
+    pub unread_count: i64,
+    pub article_count: i64,
+    pub first_published_at: Option<DateTime<Utc>>,
+    pub last_published_at: Option<DateTime<Utc>>,
+}
+
 /// Represents an item in a flattened tree view (for template iteration)
 #[derive(Debug, Clone, Serialize)]
 #[allow(clippy::large_enum_variant)]

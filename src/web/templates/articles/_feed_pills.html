@@ -1,0 +1,47 @@
+{# Smart feed pills: quick filters for feeds with unread articles, rarest publishers
+   first so they don't get drowned out by high-frequency feeds. #}
+{% if feeds.len() > 0 %}
+<div class="flex flex-wrap items-center gap-2 mb-6">
+    <a href="{{ filters.clear_feed_filter_url() }}"
+       class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition
+              {% if filters.feed_ids.is_empty() && filters.group_ids.is_empty() %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600{% endif %}">
+        All
+        {% if article_counts.unread > 0 %}
+        <span class="px-1.5 py-0.5 rounded-full text-xs leading-none
+                      {% if filters.feed_ids.is_empty() && filters.group_ids.is_empty() %}bg-blue-700 text-white{% else %}bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200{% endif %}">
+            {{ article_counts.unread }}
+        </span>
+        {% endif %}
+    </a>
+
+    {% for pill in smart_feed_pills %}
+    <a href="{{ filters.feed_pill_url(pill.feed_id) }}"
+       title="{{ pill.title }}"
+       class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition overflow-hidden max-w-[120px]
+              {% if filters.is_feed_pill_active(pill.feed_id) %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600{% endif %}">
+        <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {{ pill.color }}"></span>
+        <span class="min-w-0 overflow-hidden whitespace-nowrap [mask-image:linear-gradient(to_right,black_85%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_85%,transparent_100%)]">{{ pill.title }}</span>
+        <span class="px-1.5 py-0.5 rounded-full text-xs leading-none flex-shrink-0
+                      {% if filters.is_feed_pill_active(pill.feed_id) %}bg-blue-700 text-white{% else %}bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200{% endif %}">
+            {{ pill.unread_count }}
+        </span>
+    </a>
+    {% endfor %}
+
+    <button
+        hx-get="{{ filters.feed_filter_modal_url() }}"
+        hx-target="#feed-filter-modal"
+        hx-swap="innerHTML"
+        title="Filter by feeds"
+        class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition
+               {% if !filters.feed_ids.is_empty() || !filters.group_ids.is_empty() %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600{% endif %}">
+        {% include "icons/filter.html" %}
+        More
+        {% if other_unread_count > 0 %}
+        <span class="px-1.5 py-0.5 rounded-full text-xs leading-none bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200">
+            {{ other_unread_count }}
+        </span>
+        {% endif %}
+    </button>
+</div>
+{% endif %}

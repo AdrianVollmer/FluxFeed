@@ -1,5 +1,6 @@
 use crate::domain::models::{
-    Article, Feed, FeedWithUnread, GroupNode, GroupNodeWithUnread, LogWithFeed, Tag,
+    Article, Feed, FeedPublishStats, FeedWithUnread, GroupNode, GroupNodeWithUnread, LogWithFeed,
+    Tag,
 };
 use crate::infrastructure::repository::ArticleCounts;
 use crate::web::filters;
@@ -87,6 +88,8 @@ pub struct ArticlesListTemplate {
     pub active_filter: String,
     pub all_tags: Vec<Tag>,
     pub view_mode: String,
+    pub smart_feed_pills: Vec<FeedPublishStats>,
+    pub other_unread_count: i64,
 }
 
 #[derive(Template)]

@@ -99,6 +99,19 @@ impl ArticleFilters {
         }
     }
 
+    /// URL for a smart feed pill: filters to just that one feed, keeping the
+    /// current read/starred state but dropping any other feed/group/tag filter.
+    pub fn feed_pill_url(&self, feed_id: &i64) -> String {
+        let mut p = format!("feed_ids={}", feed_id);
+        self.append_read_starred_params(&mut p);
+        format!("/articles?{}", p)
+    }
+
+    /// Whether a smart feed pill for `feed_id` represents the currently active filter.
+    pub fn is_feed_pill_active(&self, feed_id: &i64) -> bool {
+        self.feed_ids == [*feed_id] && self.group_ids.is_empty() && self.tag_ids.is_empty()
+    }
+
     pub fn feed_filter_modal_url(&self) -> String {
         let mut url = format!(
             "/articles/filter-modal?feed_ids={}&group_ids={}",
@@ -339,6 +352,32 @@ mod tests {
         assert!(!url.contains("feed_ids"));
         assert!(url.contains("is_read=false"));
         assert!(url.contains("is_starred=true"));
+    }
+
+    #[test]
+    fn feed_pill_url_includes_only_that_feed() {
+        let f = ArticleFilters {
+            feed_ids: vec![9],
+            group_ids: vec![4],
+            tag_ids: vec![5],
+            is_read: Some(false),
+            ..empty_filters()
+        };
+        let url = f.feed_pill_url(&7);
+        assert_eq!(url, "/articles?feed_ids=7&is_read=false");
+    }
+
+    #[test]
+    fn is_feed_pill_active_matches_single_selected_feed() {
+        let f = ArticleFilters { feed_ids: vec![7], ..empty_filters() };
+        assert!(f.is_feed_pill_active(&7));
+        assert!(!f.is_feed_pill_active(&8));
+    }
+
+    #[test]
+    fn is_feed_pill_active_false_when_group_also_selected() {
+        let f = ArticleFilters { feed_ids: vec![7], group_ids: vec![1], ..empty_filters() };
+        assert!(!f.is_feed_pill_active(&7));
     }
 
     #[test]

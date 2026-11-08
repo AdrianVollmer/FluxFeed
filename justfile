@@ -62,9 +62,20 @@ fmt:
 lint:
     cargo clippy --all-targets -- -D warnings
 
-# Run the Rust test suite
+# Run the Rust test suite (uses the committed .sqlx cache, no live DB needed)
 test:
-    cargo test
+    SQLX_OFFLINE=true cargo test
+
+# Regenerate the .sqlx offline query cache against a scratch database
+sqlx-prepare:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    db=$(mktemp -u /tmp/fluxfeed-sqlx-prepare-XXXXXX.db)
+    trap 'rm -f "$db"' EXIT
+    export DATABASE_URL="sqlite://$db"
+    sqlx database create
+    sqlx migrate run
+    cargo sqlx prepare -- --tests
 
 # Bump the project version, commit, and tag (e.g. `just bump-version 0.2.7`)
 bump-version version:

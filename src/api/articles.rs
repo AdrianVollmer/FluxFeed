@@ -347,6 +347,16 @@ async fn render_full_articles_page(
     // Build group tree for the filter modal
     let (group_tree, ungrouped_feeds) = group_service::build_group_tree(groups, feeds.clone());
 
+    // Smart feed pills: feeds with unread articles that publish rarely, surfaced so they
+    // don't get drowned out by high-frequency feeds.
+    let smart_feed_pills = article_service::get_smart_feed_pills(
+        &state.db_pool,
+        article_service::SMART_FEED_PILL_LIMIT,
+    )
+    .await?;
+    let other_unread_count = effective_filter.counts.unread
+        - smart_feed_pills.iter().map(|p| p.unread_count).sum::<i64>();
+
     // Get view mode from cookie (default to "cards")
     let view_mode = get_cookie_value(headers, "articleView").unwrap_or_else(|| "cards".to_string());
 
@@ -374,6 +384,8 @@ async fn render_full_articles_page(
         active_filter: effective_filter.active_filter,
         all_tags,
         view_mode,
+        smart_feed_pills,
+        other_unread_count,
     };
 
     Ok(Html(template.render()?))

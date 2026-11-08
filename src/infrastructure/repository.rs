@@ -1,4 +1,6 @@
-use crate::domain::models::{Article, CreateFeed, Feed, Group, Log, LogWithFeed, NewArticle, Tag};
+use crate::domain::models::{
+    Article, CreateFeed, Feed, FeedPublishStats, Group, Log, LogWithFeed, NewArticle, Tag,
+};
 use crate::web::templates::ArticleWithFeed;
 use chrono::Utc;
 use sqlx::{Error as SqlxError, Row, SqlitePool};
@@ -556,6 +558,33 @@ pub async fn get_feed_unread_counts(
     .await?;
 
     Ok(rows.into_iter().collect())
+}
+
+/// Publish stats for every feed that currently has at least one unread article,
+/// used to rank the "smart" feed pills on the articles page.
+pub async fn get_feed_publish_stats_for_unread(
+    pool: &SqlitePool,
+) -> Result<Vec<FeedPublishStats>, SqlxError> {
+    let stats = sqlx::query_as::<_, FeedPublishStats>(
+        r#"
+        SELECT
+            f.id as feed_id,
+            f.title as title,
+            f.color as color,
+            SUM(CASE WHEN a.is_read = 0 THEN 1 ELSE 0 END) as unread_count,
+            COUNT(a.id) as article_count,
+            MIN(a.published_at) as first_published_at,
+            MAX(a.published_at) as last_published_at
+        FROM feeds f
+        INNER JOIN articles a ON a.feed_id = f.id
+        GROUP BY f.id
+        HAVING unread_count > 0
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(stats)
 }
 
 // Tag operations
