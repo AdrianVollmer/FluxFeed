@@ -1,4 +1,5 @@
 use crate::domain::feed_service;
+use crate::domain::models::FeedWithCounts;
 use crate::infrastructure::{repository, scheduler};
 use crate::web::templates::{
     ErrorTemplate, FeedDetailTemplate, FeedFormTemplate, FeedImportFormTemplate,
@@ -145,6 +146,15 @@ pub struct UpdateFeedForm {
 
 pub async fn list_feeds(State(state): State<AppState>) -> Result<Html<String>, AppError> {
     let feeds = feed_service::list_all_feeds(&state.db_pool).await?;
+    let counts = repository::get_feed_read_total_counts(&state.db_pool).await?;
+
+    let feeds = feeds
+        .into_iter()
+        .map(|feed| {
+            let (read, total) = counts.get(&feed.id).copied().unwrap_or((0, 0));
+            FeedWithCounts { feed, read, total }
+        })
+        .collect();
 
     let template = FeedsListTemplate { feeds };
     Ok(Html(template.render()?))
@@ -166,7 +176,9 @@ pub async fn create_feed(
     )
     .await?;
 
-    let template = FeedRowTemplate { feed };
+    let template = FeedRowTemplate {
+        item: FeedWithCounts { feed, read: 0, total: 0 },
+    };
     Ok(Html(template.render()?))
 }
 

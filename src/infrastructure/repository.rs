@@ -560,6 +560,29 @@ pub async fn get_feed_unread_counts(
     Ok(rows.into_iter().collect())
 }
 
+/// Get read and total article counts per feed, for the feed list's read/total badge.
+pub async fn get_feed_read_total_counts(
+    pool: &SqlitePool,
+) -> Result<std::collections::HashMap<i64, (i64, i64)>, SqlxError> {
+    let rows: Vec<(i64, i64, i64)> = sqlx::query_as(
+        r#"
+        SELECT
+            feed_id,
+            SUM(CASE WHEN is_read = 1 THEN 1 ELSE 0 END) as read_count,
+            COUNT(*) as total_count
+        FROM articles
+        GROUP BY feed_id
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|(feed_id, read, total)| (feed_id, (read, total)))
+        .collect())
+}
+
 /// Publish stats for every feed that currently has at least one unread article,
 /// used to rank the "smart" feed pills on the articles page.
 pub async fn get_feed_publish_stats_for_unread(

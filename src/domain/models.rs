@@ -107,6 +107,14 @@ pub struct FeedWithUnread {
     pub unread_count: i64,
 }
 
+/// Feed with its read/total article counts, for display in the feed list.
+#[derive(Debug, Clone, Serialize)]
+pub struct FeedWithCounts {
+    pub feed: Feed,
+    pub read: i64,
+    pub total: i64,
+}
+
 /// Group node with unread counts for display in filter modals
 #[derive(Debug, Clone, Serialize)]
 pub struct GroupNodeWithUnread {

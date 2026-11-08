@@ -1,50 +1,59 @@
-<div class="card hover:shadow-lg transition max-w-full" id="feed-{{ feed.id }}">
+<div class="card hover:shadow-lg transition max-w-full cursor-pointer"
+     id="feed-{{ item.feed.id }}"
+     onclick="window.location.href = '/articles?feed_ids={{ item.feed.id }}'">
     <div class="flex justify-between items-start gap-2">
         <div class="flex-1 min-w-0">
-            <h3 class="text-xl font-semibold mb-2">
-                <a href="/feeds/{{ feed.id }}"
-                   class="block overflow-hidden whitespace-nowrap hover:text-blue-600 dark:hover:text-blue-400 [mask-image:linear-gradient(to_right,black_90%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_90%,transparent_100%)]">
-                    {{ feed.title }}
-                </a>
+            <h3 class="relative overflow-hidden text-xl font-semibold mb-2">
+                <span class="block whitespace-nowrap pr-6">{{ item.feed.title }}</span>
+                {# Fade-out overlay instead of text-overflow, so long titles trail off
+                   smoothly; uses a plain background gradient rather than CSS masks,
+                   which some mobile browsers (e.g. Firefox for Android) don't render. #}
+                <span class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-r from-transparent to-white dark:to-gray-800"></span>
             </h3>
 
-            {% if feed.description.is_some() %}
+            {% if item.feed.description.is_some() %}
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                {{ feed.description.as_ref().unwrap() }}
+                {{ item.feed.description.as_ref().unwrap() }}
             </p>
             {% endif %}
 
             <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-500 min-w-0">
-                <span class="flex items-center min-w-0">
-                    {% include "icons/link.html" %}
-                    <a href="{{ feed.url }}" target="_blank" class="hover:underline truncate min-w-0">
-                        {{ feed.url }}
-                    </a>
-                </span>
-
-                {% if feed.site_url.is_some() %}
-                <span class="flex items-center flex-shrink-0">
+                {% if item.feed.site_url.is_some() %}
+                <span class="flex items-center flex-shrink-0" onclick="event.stopPropagation()">
                     {% include "icons/globe.html" %}
-                    <a href="{{ feed.site_url.as_ref().unwrap() }}" target="_blank" class="hover:underline">
+                    <a href="{{ item.feed.site_url.as_ref().unwrap() }}" target="_blank" class="hover:underline">
                         Site
                     </a>
                 </span>
                 {% endif %}
+
+                <span class="flex-shrink-0 font-medium" title="Read / total articles">
+                    {{ item.read }}/{{ item.total }}
+                </span>
+
+                <span class="flex items-center min-w-0" onclick="event.stopPropagation()">
+                    {% include "icons/link.html" %}
+                    <a href="{{ item.feed.url }}" target="_blank" class="hover:underline truncate min-w-0">
+                        {{ item.feed.url }}
+                    </a>
+                </span>
             </div>
         </div>
 
         <div class="flex items-center gap-3 flex-shrink-0 ml-4">
-            <a href="/articles?feed_ids={{ feed.id }}"
-               title="View articles"
+            <a href="/feeds/{{ item.feed.id }}/edit"
+               title="Edit feed"
+               onclick="event.stopPropagation()"
                class="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
-                {% include "icons/eye.html" %}
+                {% include "icons/edit.html" %}
             </a>
             <button
-                hx-delete="/feeds/{{ feed.id }}"
+                hx-delete="/feeds/{{ item.feed.id }}"
                 hx-confirm="Are you sure you want to delete this feed and all its articles?"
-                hx-target="#feed-{{ feed.id }}"
+                hx-target="#feed-{{ item.feed.id }}"
                 hx-swap="outerHTML swap:1s"
                 title="Delete feed"
+                onclick="event.stopPropagation()"
                 class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
                 {% include "icons/trash.html" %}
             </button>

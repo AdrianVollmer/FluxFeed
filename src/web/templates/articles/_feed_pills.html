@@ -20,7 +20,13 @@
        class="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition overflow-hidden max-w-[120px]
               {% if filters.is_feed_pill_active(pill.feed_id) %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600{% endif %}">
         <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {{ pill.color }}"></span>
-        <span class="min-w-0 overflow-hidden whitespace-nowrap [mask-image:linear-gradient(to_right,black_85%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_85%,transparent_100%)]">{{ pill.title }}</span>
+        {# Fade-out overlay instead of text-overflow: a plain background gradient
+           (not a CSS mask, which some mobile browsers render inconsistently). #}
+        <span class="relative overflow-hidden min-w-0 flex-1">
+            <span class="block whitespace-nowrap">{{ pill.title }}</span>
+            <span class="pointer-events-none absolute inset-y-0 right-0 w-4 bg-gradient-to-r from-transparent
+                          {% if filters.is_feed_pill_active(pill.feed_id) %}to-blue-600{% else %}to-gray-100 dark:to-gray-700{% endif %}"></span>
+        </span>
         <span class="px-1.5 py-0.5 rounded-full text-xs leading-none flex-shrink-0
                       {% if filters.is_feed_pill_active(pill.feed_id) %}bg-blue-700 text-white{% else %}bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200{% endif %}">
             {{ pill.unread_count }}

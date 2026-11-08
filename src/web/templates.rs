@@ -1,6 +1,6 @@
 use crate::domain::models::{
-    Article, Feed, FeedPublishStats, FeedWithUnread, GroupNode, GroupNodeWithUnread, LogWithFeed,
-    Tag,
+    Article, Feed, FeedPublishStats, FeedWithCounts, FeedWithUnread, GroupNode,
+    GroupNodeWithUnread, LogWithFeed, Tag,
 };
 use crate::infrastructure::repository::ArticleCounts;
 use crate::web::filters;
@@ -18,13 +18,13 @@ pub struct ErrorTemplate {
 #[derive(Template)]
 #[template(path = "feeds/list.html")]
 pub struct FeedsListTemplate {
-    pub feeds: Vec<Feed>,
+    pub feeds: Vec<FeedWithCounts>,
 }
 
 #[derive(Template)]
 #[template(path = "feeds/feed_row.html")]
 pub struct FeedRowTemplate {
-    pub feed: Feed,
+    pub item: FeedWithCounts,
 }
 
 #[derive(Template)]
