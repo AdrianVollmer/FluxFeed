@@ -1,52 +1,39 @@
 <div class="card hover:shadow-lg transition max-w-full cursor-pointer"
      id="feed-{{ item.feed.id }}"
-     onclick="window.location.href = '/articles?feed_ids={{ item.feed.id }}'">
-    <div class="flex justify-between items-start gap-2">
-        <div class="flex-1 min-w-0">
-            <h3 class="relative overflow-hidden text-xl font-semibold mb-2">
-                <span class="block whitespace-nowrap pr-6">{{ item.feed.title }}</span>
-                {# Fade-out overlay instead of text-overflow, so long titles trail off
-                   smoothly; uses a plain background gradient rather than CSS masks,
-                   which some mobile browsers (e.g. Firefox for Android) don't render. #}
-                <span class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-r from-transparent to-white dark:to-gray-800"></span>
-            </h3>
+     onclick="window.location.href = '/feeds/{{ item.feed.id }}'">
+    <h3 class="relative overflow-hidden text-xl font-semibold mb-2">
+        <span class="block whitespace-nowrap pr-6">{{ item.feed.title }}</span>
+        {# Fade-out overlay instead of text-overflow, so long titles trail off
+           smoothly; uses a plain background gradient rather than CSS masks,
+           which some mobile browsers (e.g. Firefox for Android) don't render. #}
+        <span class="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-r from-transparent to-white dark:to-gray-800"></span>
+    </h3>
 
-            {% if item.feed.description.is_some() %}
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                {{ item.feed.description.as_ref().unwrap() }}
-            </p>
-            {% endif %}
+    {% if item.feed.description.is_some() %}
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+        {{ item.feed.description.as_ref().unwrap() }}
+    </p>
+    {% endif %}
 
-            <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-500 min-w-0">
-                <span class="flex-shrink-0 font-medium" title="Read / total articles">
-                    {{ item.read }}/{{ item.total }}
-                </span>
+    <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-500 min-w-0">
+        <span class="flex-shrink-0 font-medium" title="Read / total articles">
+            {{ item.read }}/{{ item.total }}
+        </span>
 
-                {% if item.feed.site_url.is_some() %}
-                <span class="flex items-center flex-shrink-0" onclick="event.stopPropagation()">
-                    {% include "icons/globe.html" %}
-                    <a href="{{ item.feed.site_url.as_ref().unwrap() }}" target="_blank" class="hover:underline">
-                        Site
-                    </a>
-                </span>
-                {% endif %}
-
-                <span class="flex items-center min-w-0" onclick="event.stopPropagation()">
-                    {% include "icons/link.html" %}
-                    <a href="{{ item.feed.url }}" target="_blank" class="hover:underline truncate min-w-0">
-                        {{ item.feed.url }}
-                    </a>
-                </span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3 flex-shrink-0 ml-4">
-            <a href="/feeds/{{ item.feed.id }}/edit"
-               title="Edit feed"
-               onclick="event.stopPropagation()"
-               class="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400">
-                {% include "icons/edit.html" %}
+        {% if item.feed.site_url.is_some() %}
+        <span class="flex items-center flex-shrink-0" onclick="event.stopPropagation()">
+            {% include "icons/globe.html" %}
+            <a href="{{ item.feed.site_url.as_ref().unwrap() }}" target="_blank" class="hover:underline">
+                Site
             </a>
-        </div>
+        </span>
+        {% endif %}
+
+        <span class="flex items-center min-w-0" onclick="event.stopPropagation()">
+            {% include "icons/link.html" %}
+            <a href="{{ item.feed.url }}" target="_blank" class="hover:underline truncate min-w-0">
+                {{ item.feed.url }}
+            </a>
+        </span>
     </div>
 </div>
