@@ -59,6 +59,16 @@ pub async fn mark_all_read(
     Ok(repository::mark_all_articles_read(pool, feed_id).await?)
 }
 
+/// Fetch the full digest queue: every feed with unread articles, sorted
+/// rarest-publisher-first. Unlike `get_smart_feed_pills`, nothing is truncated —
+/// the digest page is a queue to work through, not a highlight reel.
+pub async fn get_digest_queue(
+    pool: &SqlitePool,
+) -> Result<Vec<FeedPublishStats>, ArticleServiceError> {
+    let stats = repository::get_feed_publish_stats_for_unread(pool).await?;
+    Ok(sort_feeds_by_rarity(stats))
+}
+
 /// Fetch and rank the feeds shown as "smart" pills under the articles header.
 pub async fn get_smart_feed_pills(
     pool: &SqlitePool,
