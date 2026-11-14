@@ -136,14 +136,14 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                     hx-get="{{ filters.articles_url(offset + limit) }}"
                     hx-target="#articles-cards"
                     hx-swap="beforeend"
-                    class="btn btn-primary w-full sm:w-44 flex items-center justify-center gap-2">
+                    class="btn btn-primary w-full sm:w-auto sm:min-w-[11rem] whitespace-nowrap flex items-center justify-center gap-2">
                     Show More Articles
                 </button>
                 {% endif %}
 
                 <button
                     onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
-                    class="btn btn-secondary w-full sm:w-44 flex items-center justify-center gap-2">
+                    class="btn btn-secondary w-full sm:w-auto sm:min-w-[11rem] whitespace-nowrap flex items-center justify-center gap-2">
                     {% include "icons/arrow-up.html" %}
                     Scroll to Top
                 </button>
@@ -152,7 +152,7 @@ document.currentScript.parentElement.classList.add('fullscreen-main');
                 <button
                     hx-post="{{ filters.mark_all_read_url() }}"
                     hx-confirm="Are you sure you want to mark all {% if !filters.feed_ids.is_empty() || !filters.group_ids.is_empty() %}filtered {% endif %}articles as read?"
-                    class="btn btn-secondary w-full sm:w-44 flex items-center justify-center gap-2">
+                    class="btn btn-secondary w-full sm:w-auto sm:min-w-[11rem] whitespace-nowrap flex items-center justify-center gap-2">
                     {% include "icons/check-double.html" %}
                     Mark All as Read
                 </button>
