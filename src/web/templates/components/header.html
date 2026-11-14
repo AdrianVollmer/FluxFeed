@@ -17,6 +17,9 @@
 
                 {# Desktop Nav #}
                 <div class="hidden md:flex space-x-4 md:ml-4">
+                    <a href="/digest" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                        Digest
+                    </a>
                     <a href="/articles" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                         Articles
                     </a>
@@ -59,6 +62,11 @@
 
     {# Nav links #}
     <nav class="flex flex-col p-4 space-y-1">
+        <a href="/digest"
+           onclick="document.getElementById('mobile-nav-toggle').checked = false"
+           class="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            Digest
+        </a>
         <a href="/articles"
            onclick="document.getElementById('mobile-nav-toggle').checked = false"
            class="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
