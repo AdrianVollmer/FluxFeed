@@ -1,14 +1,17 @@
 /**
  * Digest page functionality
  * - Swipe left on the feed card advances to the next feed, exactly like clicking
- *   the "Next Feed" link. Non-destructive: it never changes read state, so it
- *   needs no confirmation (unlike "Mark Read & Next", which stays a tap + confirm
- *   dialog everywhere, never a bare gesture).
+ *   a "Next Feed" link. Non-destructive: it never changes read state, so it
+ *   needs no confirmation (unlike "Mark Read & Next", which stays a native
+ *   confirm dialog everywhere, never a bare gesture).
+ * - "Mark Read & Next" is a plain link (a GET that marks the feed read and
+ *   redirects), gated by a native confirm() dialog read from a `data-confirm`
+ *   attribute - no fetch/htmx involved, so the click is a real navigation.
  */
 
 function initDigestSwipe(): void {
   const card = document.getElementById('digest-card');
-  const nextLink = document.getElementById('digest-next-link') as HTMLAnchorElement | null;
+  const nextLink = document.querySelector('a[data-digest-next]') as HTMLAnchorElement | null;
   if (!card || !nextLink) return;
 
   let touchStartX = 0;
@@ -35,4 +38,17 @@ function initDigestSwipe(): void {
   }, { passive: true });
 }
 
-document.addEventListener('DOMContentLoaded', initDigestSwipe);
+function initDigestConfirmLinks(): void {
+  document.querySelectorAll<HTMLAnchorElement>('a[data-confirm]').forEach((link) => {
+    link.addEventListener('click', (e: MouseEvent) => {
+      if (!window.confirm(link.dataset.confirm || '')) {
+        e.preventDefault();
+      }
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initDigestSwipe();
+  initDigestConfirmLinks();
+});

@@ -1,0 +1,21 @@
+{# Previous/Next/Mark-Read-and-Next controls, included twice (top and bottom of
+   the feed card) - see src/web/templates/digest/show.html #}
+<div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+    {% if has_previous %}
+    <a href="/digest?skip={{ prev_skip }}"
+       class="btn btn-secondary w-full sm:w-44 flex items-center justify-center gap-2">
+        &larr; Previous Feed
+    </a>
+    {% endif %}
+    <a data-digest-next
+       href="/digest?skip={{ next_skip }}"
+       class="btn btn-secondary w-full sm:w-44 flex items-center justify-center gap-2">
+        Next Feed &rarr;
+    </a>
+    <a href="/digest/{{ feed.as_ref().unwrap().feed_id }}/mark-read?skip={{ skip }}"
+       data-confirm="Mark all {{ feed.as_ref().unwrap().unread_count }} articles in &quot;{{ feed.as_ref().unwrap().title }}&quot; as read? This can't be undone."
+       class="btn btn-primary w-full sm:w-44 flex items-center justify-center gap-2">
+        {% include "icons/check-double.html" %}
+        Mark Read &amp; Next
+    </a>
+</div>

@@ -119,6 +119,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .route("/tags/:id/edit", get(api::tags::show_edit_tag_form))
         .route("/digest", get(api::digest::show_digest))
+        .route(
+            "/digest/:feed_id/mark-read",
+            get(api::digest::mark_read_and_advance),
+        )
         .route("/articles", get(api::articles::list_articles))
         .route("/articles/search", get(api::articles::search_articles))
         .route(

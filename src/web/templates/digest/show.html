@@ -41,6 +41,10 @@
             </span>
         </div>
 
+        <div class="mb-6">
+            {% include "digest/_controls.html" %}
+        </div>
+
         <div class="space-y-4">
             {% include "articles/_article_rows.html" %}
         </div>
@@ -54,20 +58,7 @@
         {% endif %}
     </div>
 
-    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-        <a id="digest-next-link"
-           href="/digest?skip={{ next_skip }}"
-           class="btn btn-secondary w-full sm:w-44 flex items-center justify-center gap-2">
-            Next Feed &rarr;
-        </a>
-        <button
-            hx-post="/articles/mark-all-read?feed_ids={{ feed.as_ref().unwrap().feed_id }}"
-            hx-confirm="Mark all {{ feed.as_ref().unwrap().unread_count }} articles in &quot;{{ feed.as_ref().unwrap().title }}&quot; as read? This can't be undone."
-            class="btn btn-primary w-full sm:w-44 flex items-center justify-center gap-2">
-            {% include "icons/check-double.html" %}
-            Mark Read &amp; Next
-        </button>
-    </div>
+    {% include "digest/_controls.html" %}
     {% endif %}
 </div>
 {% endblock %}

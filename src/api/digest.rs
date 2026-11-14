@@ -5,15 +5,34 @@ use crate::infrastructure::repository;
 use crate::web::templates::{DigestTemplate, ErrorTemplate};
 use askama::Template;
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     http::StatusCode,
-    response::{Html, IntoResponse, Response},
+    response::{Html, IntoResponse, Redirect, Response},
 };
 use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct DigestParams {
     pub skip: Option<usize>,
+}
+
+#[derive(Deserialize)]
+pub struct MarkReadParams {
+    pub skip: Option<usize>,
+}
+
+/// Marks every article in `feed_id` as read, then redirects back to the same
+/// `skip` position - a plain GET link + server redirect rather than an htmx
+/// request, so it's a real browser navigation (resets scroll to top) instead of
+/// an in-place reload (which preserves scroll).
+pub async fn mark_read_and_advance(
+    State(state): State<AppState>,
+    Path(feed_id): Path<i64>,
+    Query(params): Query<MarkReadParams>,
+) -> Result<Redirect, AppError> {
+    article_service::mark_all_read(&state.db_pool, Some(feed_id)).await?;
+    let skip = params.skip.unwrap_or(0);
+    Ok(Redirect::to(&format!("/digest?skip={}", skip)))
 }
 
 pub async fn show_digest(
@@ -32,6 +51,9 @@ pub async fn show_digest(
             feed: None,
             articles: Vec::new(),
             has_more_articles: false,
+            skip: 0,
+            has_previous: false,
+            prev_skip: 0,
             next_skip: 0,
         };
         return Ok(Html(template.render()?));
@@ -66,6 +88,9 @@ pub async fn show_digest(
         feed: Some(feed_stats),
         articles,
         has_more_articles,
+        skip,
+        has_previous: skip > 0,
+        prev_skip: skip.saturating_sub(1),
         next_skip: skip + 1,
     };
 
