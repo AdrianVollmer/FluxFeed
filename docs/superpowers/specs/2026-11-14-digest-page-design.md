@@ -128,8 +128,8 @@ pub struct DigestTemplate {
     pub caught_up: bool,
     pub queue_position: usize,   // 1-based; meaningless when caught_up
     pub queue_total: usize,
-    pub feed: Option<Feed>,
-    pub unread_total: i64,
+    pub feed: Option<FeedPublishStats>, // already carries title/color/feed_id/unread_count;
+                                         // reusing it avoids a redundant Feed fetch
     pub articles: Vec<ArticleWithFeed>,
     pub has_more_articles: bool,
     pub next_skip: usize,
