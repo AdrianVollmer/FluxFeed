@@ -18,6 +18,10 @@
         {% endif %}
     </div>
 
+    {% if !caught_up %}
+    {% include "digest/_breadcrumb.html" %}
+    {% endif %}
+
     {% if caught_up %}
     <div class="card empty-state">
         <div class="empty-state-icon">

@@ -2,7 +2,7 @@ use crate::api::articles::attach_tags_to_articles;
 use crate::api::feeds::AppState;
 use crate::domain::article_service;
 use crate::infrastructure::repository;
-use crate::web::templates::{DigestTemplate, ErrorTemplate};
+use crate::web::templates::{BreadcrumbPill, DigestTemplate, ErrorTemplate};
 use askama::Template;
 use axum::{
     extract::{Path, Query, State},
@@ -55,9 +55,23 @@ pub async fn show_digest(
             has_previous: false,
             prev_skip: 0,
             next_skip: 0,
+            breadcrumb: Vec::new(),
         };
         return Ok(Html(template.render()?));
     }
+
+    // Previous (if any) + current + every upcoming feed, for the breadcrumb row.
+    let breadcrumb: Vec<BreadcrumbPill> = queue
+        .iter()
+        .enumerate()
+        .skip(skip.saturating_sub(1))
+        .map(|(i, f)| BreadcrumbPill {
+            title: f.title.clone(),
+            color: f.color.clone(),
+            is_current: i == skip,
+            is_previous: i + 1 == skip,
+        })
+        .collect();
 
     let feed_stats = queue
         .into_iter()
@@ -92,6 +106,7 @@ pub async fn show_digest(
         has_previous: skip > 0,
         prev_skip: skip.saturating_sub(1),
         next_skip: skip + 1,
+        breadcrumb,
     };
 
     Ok(Html(template.render()?))

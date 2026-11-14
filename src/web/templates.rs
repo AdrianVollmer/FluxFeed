@@ -271,6 +271,18 @@ pub struct TagFormTemplate {
 
 // Digest templates
 
+/// One pill in the digest's breadcrumb row: a non-interactive position marker
+/// (not a filter/link, unlike the articles page's old smart pills). `is_previous`
+/// fades it out toward the left, `is_current` highlights it; everything else is an
+/// upcoming feed in the queue, left to fade out on overflow via the row's own
+/// right-edge mask.
+pub struct BreadcrumbPill {
+    pub title: String,
+    pub color: String,
+    pub is_current: bool,
+    pub is_previous: bool,
+}
+
 #[derive(Template)]
 #[template(path = "digest/show.html")]
 pub struct DigestTemplate {
@@ -284,4 +296,5 @@ pub struct DigestTemplate {
     pub has_previous: bool,
     pub prev_skip: usize,
     pub next_skip: usize,
+    pub breadcrumb: Vec<BreadcrumbPill>,
 }
