@@ -1,6 +1,6 @@
 use axum::{http::StatusCode, Router};
 use axum_test::TestServer;
-use fluxfeed::api::{articles, feeds, health};
+use fluxfeed::api::{articles, digest, feeds, health};
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -44,6 +44,7 @@ async fn setup_test_app() -> (TestServer, SqlitePool) {
             "/articles/mark-all-read",
             axum::routing::post(articles::mark_all_read),
         )
+        .route("/digest", axum::routing::get(digest::show_digest))
         .with_state(state);
 
     let server = TestServer::new(app).unwrap();
@@ -115,6 +116,17 @@ async fn test_list_articles_empty() {
     let body = response.text();
     // Should render articles list page
     assert!(body.contains("Articles") || body.contains("article"));
+}
+
+#[tokio::test]
+async fn test_digest_empty() {
+    let (server, _pool) = setup_test_app().await;
+
+    let response = server.get("/digest").await;
+
+    assert_eq!(response.status_code(), StatusCode::OK);
+    let body = response.text();
+    assert!(body.contains("caught up"));
 }
 
 #[tokio::test]

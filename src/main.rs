@@ -118,6 +118,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             delete(api::tags::delete_tag).put(api::tags::update_tag),
         )
         .route("/tags/:id/edit", get(api::tags::show_edit_tag_form))
+        .route("/digest", get(api::digest::show_digest))
         .route("/articles", get(api::articles::list_articles))
         .route("/articles/search", get(api::articles::search_articles))
         .route(
