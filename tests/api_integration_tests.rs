@@ -130,6 +130,35 @@ async fn test_digest_empty() {
 }
 
 #[tokio::test]
+async fn test_digest_shows_feed_with_unread_articles() {
+    let (server, pool) = setup_test_app().await;
+
+    sqlx::query!(
+        r#"INSERT INTO feeds (url, title, color, fetch_frequency, fetch_interval_minutes, created_at)
+           VALUES ('https://example.com/feed.xml', 'My Test Feed', '#3b82f6', 'adaptive', 60, datetime('now'))"#
+    )
+    .execute(&pool)
+    .await
+    .expect("Failed to insert test feed");
+
+    sqlx::query!(
+        r#"INSERT INTO articles (feed_id, guid, title, url, content, published_at, created_at, updated_at)
+           VALUES (1, 'guid-1', 'Unread Article', 'https://example.com/article-1', 'Some content', datetime('now'), datetime('now'), datetime('now'))"#
+    )
+    .execute(&pool)
+    .await
+    .expect("Failed to insert test article");
+
+    let response = server.get("/digest").await;
+
+    assert_eq!(response.status_code(), StatusCode::OK);
+    let body = response.text();
+    assert!(body.contains("My Test Feed"));
+    assert!(!body.contains("caught up"));
+    assert!(body.contains("Feed 1 of 1"));
+}
+
+#[tokio::test]
 async fn test_toggle_read_nonexistent_article() {
     let (server, _pool) = setup_test_app().await;
 

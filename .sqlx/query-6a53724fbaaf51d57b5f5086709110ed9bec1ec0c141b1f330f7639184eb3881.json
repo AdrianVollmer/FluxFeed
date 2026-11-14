@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO feeds (url, title, color, fetch_frequency, fetch_interval_minutes, created_at)\n           VALUES ('https://example.com/feed.xml', 'My Test Feed', '#3b82f6', 'adaptive', 60, datetime('now'))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "6a53724fbaaf51d57b5f5086709110ed9bec1ec0c141b1f330f7639184eb3881"
+}
