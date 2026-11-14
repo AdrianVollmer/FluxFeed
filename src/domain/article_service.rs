@@ -68,20 +68,26 @@ pub async fn get_smart_feed_pills(
     Ok(rank_feeds_by_rarity(stats, limit))
 }
 
-/// Rank feeds by how rarely they publish, rarest first, and keep only the top `limit`.
+/// Sort feeds by how rarely they publish, rarest first.
 ///
 /// A feed's rarity is the average time between its articles: the longer that gap, the
 /// more likely a reader is to miss its occasional unread article among feeds that post
 /// constantly. Feeds with fewer than two articles have no measurable interval, so they
 /// are treated as maximally rare and sort first.
-fn rank_feeds_by_rarity(mut stats: Vec<FeedPublishStats>, limit: usize) -> Vec<FeedPublishStats> {
+fn sort_feeds_by_rarity(mut stats: Vec<FeedPublishStats>) -> Vec<FeedPublishStats> {
     stats.sort_by(|a, b| {
         rarity_seconds(b)
             .partial_cmp(&rarity_seconds(a))
             .unwrap_or(std::cmp::Ordering::Equal)
     });
-    stats.truncate(limit);
     stats
+}
+
+/// Sort feeds by rarity (see `sort_feeds_by_rarity`) and keep only the top `limit`.
+fn rank_feeds_by_rarity(stats: Vec<FeedPublishStats>, limit: usize) -> Vec<FeedPublishStats> {
+    let mut sorted = sort_feeds_by_rarity(stats);
+    sorted.truncate(limit);
+    sorted
 }
 
 /// Average number of seconds between a feed's articles. `f64::MAX` when it can't be
@@ -152,27 +158,27 @@ mod tests {
     }
 
     #[test]
-    fn rank_feeds_by_rarity_puts_infrequent_publisher_first() {
+    fn sort_feeds_by_rarity_puts_infrequent_publisher_first() {
         // Feed 1 posts daily over 10 days (10 articles), feed 2 posts twice a year (2
         // articles, 180 day gap) - feed 2 should rank first despite fewer unread articles.
         let frequent = stats(1, 10, 10, 3);
         let rare = stats(2, 2, 180, 1);
 
-        let ranked = rank_feeds_by_rarity(vec![frequent, rare], 10);
+        let sorted = sort_feeds_by_rarity(vec![frequent, rare]);
 
-        assert_eq!(ranked[0].feed_id, 2);
-        assert_eq!(ranked[1].feed_id, 1);
+        assert_eq!(sorted[0].feed_id, 2);
+        assert_eq!(sorted[1].feed_id, 1);
     }
 
     #[test]
-    fn rank_feeds_by_rarity_treats_single_article_feed_as_rarest() {
+    fn sort_feeds_by_rarity_treats_single_article_feed_as_rarest() {
         let established = stats(1, 20, 30, 5);
         let mut single = stats(2, 1, 0, 1);
         single.first_published_at = single.last_published_at;
 
-        let ranked = rank_feeds_by_rarity(vec![established, single], 10);
+        let sorted = sort_feeds_by_rarity(vec![established, single]);
 
-        assert_eq!(ranked[0].feed_id, 2);
+        assert_eq!(sorted[0].feed_id, 2);
     }
 
     #[test]
