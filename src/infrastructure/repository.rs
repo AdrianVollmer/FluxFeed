@@ -1401,6 +1401,82 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_get_feed_publish_stats_for_unread_excludes_fully_read_feeds() {
+        let pool = setup_test_db().await;
+
+        let unread_feed = super::create_feed(
+            &pool,
+            CreateFeed {
+                url: "https://unread.example.com/feed".to_string(),
+                title: "Has Unread".to_string(),
+                description: None,
+            },
+        )
+        .await
+        .unwrap();
+
+        let read_feed = super::create_feed(
+            &pool,
+            CreateFeed {
+                url: "https://read.example.com/feed".to_string(),
+                title: "All Read".to_string(),
+                description: None,
+            },
+        )
+        .await
+        .unwrap();
+
+        insert_article_if_new(
+            &pool,
+            NewArticle {
+                feed_id: unread_feed.id,
+                guid: "unread-guid".to_string(),
+                title: "Unread Article".to_string(),
+                url: None,
+                content: None,
+                summary: None,
+                author: None,
+                published_at: Some(Utc::now()),
+                og_image: None,
+                og_description: None,
+                og_site_name: None,
+            },
+        )
+        .await
+        .unwrap();
+
+        let read_article = insert_article_if_new(
+            &pool,
+            NewArticle {
+                feed_id: read_feed.id,
+                guid: "read-guid".to_string(),
+                title: "Read Article".to_string(),
+                url: None,
+                content: None,
+                summary: None,
+                author: None,
+                published_at: Some(Utc::now()),
+                og_image: None,
+                og_description: None,
+                og_site_name: None,
+            },
+        )
+        .await
+        .unwrap()
+        .unwrap();
+
+        update_article_read_status(&pool, read_article.id, true)
+            .await
+            .unwrap();
+
+        let stats = get_feed_publish_stats_for_unread(&pool).await.unwrap();
+
+        assert_eq!(stats.len(), 1);
+        assert_eq!(stats[0].feed_id, unread_feed.id);
+        assert_eq!(stats[0].unread_count, 1);
+    }
+
+    #[tokio::test]
     async fn test_mark_all_articles_read() {
         let pool = setup_test_db().await;
 
