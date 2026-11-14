@@ -270,3 +270,17 @@ pub struct TagListContentTemplate {
 pub struct TagFormTemplate {
     pub tag: Option<Tag>,
 }
+
+// Digest templates
+
+#[derive(Template)]
+#[template(path = "digest/show.html")]
+pub struct DigestTemplate {
+    pub caught_up: bool,
+    pub queue_position: usize, // 1-based; meaningless when caught_up is true
+    pub queue_total: usize,
+    pub feed: Option<FeedPublishStats>,
+    pub articles: Vec<ArticleWithFeed>,
+    pub has_more_articles: bool,
+    pub next_skip: usize,
+}

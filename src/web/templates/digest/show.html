@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Digest - FluxFeed{% endblock %}
+
+{% block scripts %}
+<script src="{{ "articles.js"|js_path }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Digest</h1>
+        {% if !caught_up %}
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+            Feed {{ queue_position }} of {{ queue_total }}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if caught_up %}
+    <div class="card empty-state">
+        <div class="empty-state-icon">
+            {% include "icons/newspaper.html" %}
+        </div>
+        <p class="empty-state-title">You're all caught up!</p>
+        <p class="empty-state-description">
+            No feeds have unread articles right now.
+            <a href="/articles" class="text-blue-600 hover:underline">View all articles</a>
+        </p>
+    </div>
+    {% else %}
+    <div id="digest-card" class="card mb-6">
+        <div class="flex items-center justify-between gap-4 mb-4">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: {{ feed.as_ref().unwrap().color }}"></span>
+                <h2 class="text-xl font-semibold truncate">{{ feed.as_ref().unwrap().title }}</h2>
+            </div>
+            <span class="flex-shrink-0 text-sm text-gray-500 dark:text-gray-400">
+                {{ feed.as_ref().unwrap().unread_count }} unread
+            </span>
+        </div>
+
+        <div class="space-y-4">
+            {% include "articles/_article_rows.html" %}
+        </div>
+
+        {% if has_more_articles %}
+        <p class="mt-4 text-sm">
+            <a href="/articles?feed_ids={{ feed.as_ref().unwrap().feed_id }}&amp;is_read=false" class="text-blue-600 hover:underline">
+                View all {{ feed.as_ref().unwrap().unread_count }} unread in Articles
+            </a>
+        </p>
+        {% endif %}
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <a id="digest-next-link"
+           href="/digest?skip={{ next_skip }}"
+           class="btn btn-secondary w-full sm:w-44 flex items-center justify-center gap-2">
+            Next Feed &rarr;
+        </a>
+        <button
+            hx-post="/articles/mark-all-read?feed_ids={{ feed.as_ref().unwrap().feed_id }}"
+            hx-confirm="Mark all {{ feed.as_ref().unwrap().unread_count }} articles in &quot;{{ feed.as_ref().unwrap().title }}&quot; as read? This can't be undone."
+            class="btn btn-primary w-full sm:w-44 flex items-center justify-center gap-2">
+            {% include "icons/check-double.html" %}
+            Mark Read &amp; Next
+        </button>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
