@@ -1,4 +1,5 @@
 pub mod articles;
+pub mod digest;
 pub mod feeds;
 pub mod groups;
 pub mod health;
