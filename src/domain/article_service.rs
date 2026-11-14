@@ -3,10 +3,6 @@ use crate::infrastructure::repository;
 use sqlx::SqlitePool;
 use thiserror::Error;
 
-/// Number of smart feed pills shown under the articles header, not counting
-/// the "All" pill or the trailing "more filters" pill.
-pub const SMART_FEED_PILL_LIMIT: usize = 4;
-
 #[derive(Error, Debug)]
 pub enum ArticleServiceError {
     #[error("Database error: {0}")]
@@ -60,22 +56,12 @@ pub async fn mark_all_read(
 }
 
 /// Fetch the full digest queue: every feed with unread articles, sorted
-/// rarest-publisher-first. Unlike `get_smart_feed_pills`, nothing is truncated —
-/// the digest page is a queue to work through, not a highlight reel.
+/// rarest-publisher-first - the digest page works through this one feed at a time.
 pub async fn get_digest_queue(
     pool: &SqlitePool,
 ) -> Result<Vec<FeedPublishStats>, ArticleServiceError> {
     let stats = repository::get_feed_publish_stats_for_unread(pool).await?;
     Ok(sort_feeds_by_rarity(stats))
-}
-
-/// Fetch and rank the feeds shown as "smart" pills under the articles header.
-pub async fn get_smart_feed_pills(
-    pool: &SqlitePool,
-    limit: usize,
-) -> Result<Vec<FeedPublishStats>, ArticleServiceError> {
-    let stats = repository::get_feed_publish_stats_for_unread(pool).await?;
-    Ok(rank_feeds_by_rarity(stats, limit))
 }
 
 /// Sort feeds by how rarely they publish, rarest first.
@@ -91,13 +77,6 @@ fn sort_feeds_by_rarity(mut stats: Vec<FeedPublishStats>) -> Vec<FeedPublishStat
             .unwrap_or(std::cmp::Ordering::Equal)
     });
     stats
-}
-
-/// Sort feeds by rarity (see `sort_feeds_by_rarity`) and keep only the top `limit`.
-fn rank_feeds_by_rarity(stats: Vec<FeedPublishStats>, limit: usize) -> Vec<FeedPublishStats> {
-    let mut sorted = sort_feeds_by_rarity(stats);
-    sorted.truncate(limit);
-    sorted
 }
 
 /// Average number of seconds between a feed's articles. `f64::MAX` when it can't be
@@ -189,14 +168,5 @@ mod tests {
         let sorted = sort_feeds_by_rarity(vec![established, single]);
 
         assert_eq!(sorted[0].feed_id, 2);
-    }
-
-    #[test]
-    fn rank_feeds_by_rarity_respects_limit() {
-        let feeds = vec![stats(1, 5, 5, 1), stats(2, 5, 5, 1), stats(3, 5, 5, 1)];
-
-        let ranked = rank_feeds_by_rarity(feeds, 2);
-
-        assert_eq!(ranked.len(), 2);
     }
 }

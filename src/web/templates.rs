@@ -88,8 +88,6 @@ pub struct ArticlesListTemplate {
     pub active_filter: String,
     pub all_tags: Vec<Tag>,
     pub view_mode: String,
-    pub smart_feed_pills: Vec<FeedPublishStats>,
-    pub other_unread_count: i64,
 }
 
 #[derive(Template)]
@@ -282,5 +280,8 @@ pub struct DigestTemplate {
     pub feed: Option<FeedPublishStats>,
     pub articles: Vec<ArticleWithFeed>,
     pub has_more_articles: bool,
+    pub skip: usize,
+    pub has_previous: bool,
+    pub prev_skip: usize,
     pub next_skip: usize,
 }
