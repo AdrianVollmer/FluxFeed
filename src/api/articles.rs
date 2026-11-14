@@ -69,7 +69,7 @@ fn get_cookie_value(headers: &HeaderMap, name: &str) -> Option<String> {
 }
 
 /// Fetch tags for all unique feeds and attach to articles
-async fn attach_tags_to_articles(
+pub(crate) async fn attach_tags_to_articles(
     pool: &SqlitePool,
     mut articles: Vec<ArticleWithFeed>,
 ) -> Result<Vec<ArticleWithFeed>, sqlx::Error> {
